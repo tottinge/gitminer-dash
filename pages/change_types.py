@@ -1,9 +1,11 @@
 from functools import cache
+from typing import Tuple, Dict, Protocol
 
 import pandas as pd
 import plotly.express as px
 from dash import html, dcc, register_page, callback, Output, Input
 from dash.dash_table import DataTable
+from plotly.graph_objs import Figure
 
 # Note: PyCharm tags these as invalid imports, but we run
 # the app from the parent dir and these are okay.
@@ -18,7 +20,7 @@ register_page(
 
 
 @cache
-def prepared_data_frame():
+def change_series_20day():
     repo = get_repo()
     last_20 = get_most_recent_tags(repo, 20)
     if not last_20:
@@ -44,6 +46,16 @@ layout = html.Div(
     ]
 )
 
+type StyleDict = dict[str, str]
+style_show: StyleDict = {"display": "block"}
+style_hide: StyleDict = {"display": "none"}
+
+type ChangeTypeCallbackResult = (
+    Figure,     # Graphic to draw
+    list,       # same data as a list
+    StyleDict,  # graphic container show/hide style
+    StyleDict   # no data show/hide style
+)
 
 @callback(
     [
@@ -54,10 +66,8 @@ layout = html.Div(
     ],
     Input("id-graph-container", "n_clicks")
 )
-def update_graph(_):
-    style_show = {"display": "block"}
-    style_hide = {"display": "none"}
-    data = prepared_data_frame()
+def update_graph(_) -> ChangeTypeCallbackResult:
+    data = change_series_20day()
     if data.empty:
         figure = {"data": []}
         table_data = []

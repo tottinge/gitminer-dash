@@ -1,0 +1,4 @@
+set -ex
+git pull --rebase
+uv sync
+pytest --doctest-modules

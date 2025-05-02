@@ -1,3 +1,4 @@
+import doctest
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -76,3 +77,8 @@ def update_graph(_):
     ninety_days_ago = today - timedelta(days=90)
     diffs_in_period = get_diffs_in_period(ninety_days_ago, today)
     return make_figure(diffs_in_period)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

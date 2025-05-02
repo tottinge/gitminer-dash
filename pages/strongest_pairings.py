@@ -39,6 +39,10 @@ layout = html.Div(
 
 
 def create_affinity_list(start: datetime, end: datetime) -> list[dict[str, str]]:
+    """
+    >>> print("Hello")
+    hello
+    """
     affinities = defaultdict(int)
     for commit in data.commits_in_period(start, end):
         files_in_commit = len(commit.stats.files)
