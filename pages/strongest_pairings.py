@@ -1,10 +1,12 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import combinations
+from typing import Iterable
 
 from dash import register_page, html, callback, Output, Input
 from dash.dash_table import DataTable
 from dash.dcc import Dropdown
+from git import Commit
 
 import data
 
@@ -38,13 +40,13 @@ layout = html.Div(
 )
 
 
-def create_affinity_list(start: datetime, end: datetime) -> list[dict[str, str]]:
+def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     """
     >>> print("Hello")
-    hello
+    Hello
     """
     affinities = defaultdict(int)
-    for commit in data.commits_in_period(start, end):
+    for commit in dataset:
         files_in_commit = len(commit.stats.files)
         if files_in_commit < 2:
             continue
@@ -66,8 +68,8 @@ def create_affinity_list(start: datetime, end: datetime) -> list[dict[str, str]]
 def handle_period_selection(period: str):
     ending = datetime.today().astimezone()
     starting = ending - timedelta(days=periods[period])
-    data = create_affinity_list(starting, ending)
-    if not data:
+    affinity_list = create_affinity_list(data.commits_in_period(starting, ending))
+    if not affinity_list:
         return [{"Affinity": "-----",
                  "Pairing": "No commits detected in period"}]
-    return data
+    return affinity_list

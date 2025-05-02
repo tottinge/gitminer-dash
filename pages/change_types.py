@@ -46,16 +46,16 @@ layout = html.Div(
     ]
 )
 
-type StyleDict = dict[str, str]
+StyleDict = dict[str, str]
 style_show: StyleDict = {"display": "block"}
 style_hide: StyleDict = {"display": "none"}
 
-type ChangeTypeCallbackResult = (
+ChangeTypeCallbackResult = Tuple[
     Figure,     # Graphic to draw
     list,       # same data as a list
     StyleDict,  # graphic container show/hide style
     StyleDict   # no data show/hide style
-)
+]
 
 @callback(
     [
