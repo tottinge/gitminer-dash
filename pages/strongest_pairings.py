@@ -44,6 +44,9 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     """
     >>> print("Hello")
     Hello
+
+    >>> create_affinity_list([])
+
     """
     affinities = defaultdict(int)
     for commit in dataset:
