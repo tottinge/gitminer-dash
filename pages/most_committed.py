@@ -29,7 +29,7 @@ layout = html.Div(
                                  'Last 30 days',
                                  'Last 60 days',
                                  'Last 90 days',
-                                 'Last 1 year',
+                                 'Last 1 Year',
                                  'Ever'
                              ],
                              value='Last 30 days',
@@ -58,22 +58,19 @@ layout = html.Div(
 
 
 def calculate_usages(period: str):
+    end = datetime.today().astimezone()
     period = period or ""
     days = 14
     if "30" in period:
-        days = 30
+        begin = end - timedelta(days=30)
     elif "60" in period:
-        days = 60
+        begin = end - timedelta(days=60)
     elif "90" in period:
-        days = 90
+        begin = end - timedelta(days=90)
     elif "1 year" in period:
-        days = 365
-    elif "ever" in period:
-        days = 20 * 365
-
-
-    end = datetime.today().astimezone()
-    begin = end - timedelta(days=days)
+        begin = end - timedelta(years=1)
+    else:
+        begin = datetime(1970, 1, 1, tzinfo=end.tzinfo)
 
     counter = Counter()
     all_commits = list(data.commits_in_period(begin, end))
