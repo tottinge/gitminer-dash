@@ -38,11 +38,25 @@ layout = html.Div(
             children="No tags found in repository."
         ),
         html.Div(id="id-graph-container",
-                 children=[dcc.Graph(id="id-local_graph")]
+                 children=[
+                     dcc.Loading(
+                         id="loading-change-types-graph",
+                         type="circle",
+                         children=[
+                             dcc.Graph(id="id-local_graph")
+                         ]
+                     )
+                 ]
                  ),
         html.Hr(),
         html.H2("Source Data"),
-        DataTable(id="id-data-table"),
+        dcc.Loading(
+            id="loading-change-types-table",
+            type="circle",
+            children=[
+                DataTable(id="id-data-table")
+            ]
+        ),
     ]
 )
 

@@ -62,4 +62,12 @@ def update_merge_graph(n_clicks: int):
         hover_name="date",
         hover_data=["files", "lines", "comment"]
     )
-    return [dcc.Graph(figure=bar_chart_figure)]
+    return [
+        dcc.Loading(
+            id="loading-merge-graph",
+            type="circle",
+            children=[
+                dcc.Graph(figure=bar_chart_figure)
+            ]
+        )
+    ]

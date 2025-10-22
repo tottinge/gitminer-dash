@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from itertools import combinations
 from typing import Iterable
 
-from dash import register_page, html, callback, Output, Input
+from dash import register_page, html, callback, Output, Input, dcc
 from dash.dash_table import DataTable
 from dash.dcc import Dropdown
 from git import Commit
@@ -21,14 +21,20 @@ layout = html.Div(
             options=date_utils.PERIOD_OPTIONS,
             value=date_utils.PERIOD_OPTIONS[0],  # 'Last 7 days'
         ),
-        DataTable(
-            id="id-strongest-pairings-table",
-            columns=[
-                {"name": i, "id": i, 'presentation': 'markdown'}
-                for i in ['Affinity', 'Pairing']
-            ],
-            style_cell={'textAlign': 'left'},
-            data=[]
+        dcc.Loading(
+            id="loading-strongest-pairings-table",
+            type="circle",
+            children=[
+                DataTable(
+                    id="id-strongest-pairings-table",
+                    columns=[
+                        {"name": i, "id": i, 'presentation': 'markdown'}
+                        for i in ['Affinity', 'Pairing']
+                    ],
+                    style_cell={'textAlign': 'left'},
+                    data=[]
+                )
+            ]
         )
     ]
 )

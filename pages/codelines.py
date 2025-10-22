@@ -18,7 +18,13 @@ layout = html.Div(
             id="id-code-lines-container",
             style={"display": "none"},
             children=[
-                dcc.Graph(id="code-lines-graph", figure={"data": []}),
+                dcc.Loading(
+                    id="loading-code-lines-graph",
+                    type="circle",
+                    children=[
+                        dcc.Graph(id="code-lines-graph", figure={"data": []}),
+                    ]
+                ),
             ]
         ),
         html.P(id="code-lines-description-1", children=[

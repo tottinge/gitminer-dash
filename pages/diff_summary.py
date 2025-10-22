@@ -22,7 +22,13 @@ layout = html.Div(
             id="id-diff-summary-container",
             children=[
                 html.P("This page shows summed net changes for a given day."),
-                dcc.Graph(id="diff-summary-graph", figure={"data": []}),
+                dcc.Loading(
+                    id="loading-diff-summary-graph",
+                    type="circle",
+                    children=[
+                        dcc.Graph(id="diff-summary-graph", figure={"data": []}),
+                    ]
+                ),
             ]
         ),
         html.P(id="id-diff-summary-description", children=[

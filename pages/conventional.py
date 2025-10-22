@@ -3,7 +3,7 @@ from collections import Counter
 from datetime import datetime, timedelta
 
 import plotly.express as px
-from dash import html, register_page, callback, Output, Input
+from dash import html, register_page, callback, Output, Input, dcc
 from dash.dash_table import DataTable
 from dash.dcc import Graph
 from pandas import DataFrame
@@ -34,12 +34,24 @@ layout = html.Div(
             id="id-conventional-refresh-button",
             children="Refresh"
         ),
-        Graph(id="id-conventional-graph"),
-        DataTable(
-            id="id-conventional-table",
-            columns=[{"name": i, "id": i} for i in ["date", "message"]],
-            style_cell={'textAlign': 'left'},
-            data=[]
+        dcc.Loading(
+            id="loading-conventional-graph",
+            type="circle",
+            children=[
+                Graph(id="id-conventional-graph"),
+            ]
+        ),
+        dcc.Loading(
+            id="loading-conventional-table",
+            type="circle",
+            children=[
+                DataTable(
+                    id="id-conventional-table",
+                    columns=[{"name": i, "id": i} for i in ["date", "message"]],
+                    style_cell={'textAlign': 'left'},
+                    data=[]
+                ),
+            ]
         ),
     ]
 )
