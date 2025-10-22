@@ -59,18 +59,18 @@ layout = html.Div(
 
 def calculate_usages(period: str):
     end = datetime.today().astimezone()
-    period = period or ""
-    days = 14
-    if "30" in period:
-        begin = end - timedelta(days=30)
-    elif "60" in period:
-        begin = end - timedelta(days=60)
-    elif "90" in period:
-        begin = end - timedelta(days=90)
-    elif "1 year" in period:
-        begin = end - timedelta(years=1)
-    else:
-        begin = datetime(1970, 1, 1, tzinfo=end.tzinfo)
+    period = period or "30 days"
+    match period.lower():
+        case p if "30" in p:
+            begin = end - timedelta(days=30)
+        case p if "60" in p:
+            begin = end - timedelta(days=60)
+        case p if "90" in p:
+            begin = end - timedelta(days=90)
+        case p if "1 year" in p:
+            begin = end - timedelta(years=1)
+        case _:
+            begin = datetime(1970, 1, 1, tzinfo=end.tzinfo)
 
     counter = Counter()
     all_commits = list(data.commits_in_period(begin, end))

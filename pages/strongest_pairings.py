@@ -14,7 +14,9 @@ periods = {
     "Last 7 Days": 7,
     "Last 30 Days": 30,
     "Last 60 days": 60,
-    "Last 90 days": 90
+    "Last 90 days": 90,
+    "Last 1 Year": 365,
+    "Ever": None
 }
 
 register_page(__name__)
@@ -77,7 +79,10 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
 )
 def handle_period_selection(period: str):
     ending = datetime.today().astimezone()
-    starting = ending - timedelta(days=periods[period])
+    if period == "Ever":
+        starting = datetime(1970, 1, 1, tzinfo=ending.tzinfo)
+    else:
+        starting = ending - timedelta(days=periods[period])
     affinity_list = create_affinity_list(data.commits_in_period(starting, ending))
     if not affinity_list:
         return [{"Affinity": "-----",
