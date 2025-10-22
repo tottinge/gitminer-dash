@@ -9,15 +9,7 @@ from dash.dcc import Dropdown
 from git import Commit
 
 import data
-
-periods = {
-    "Last 7 Days": 7,
-    "Last 30 Days": 30,
-    "Last 60 days": 60,
-    "Last 90 days": 90,
-    "Last 1 Year": 365,
-    "Ever": None
-}
+import date_utils
 
 register_page(__name__)
 
@@ -26,8 +18,8 @@ layout = html.Div(
         html.H1("Strongest Commit Affinities"),
         Dropdown(
             id="id-pairings-period-dropdown",
-            options=[x for x in periods.keys()],
-            value=[x for x in periods.keys()][0],
+            options=date_utils.PERIOD_OPTIONS,
+            value=date_utils.PERIOD_OPTIONS[0],  # 'Last 7 days'
         ),
         DataTable(
             id="id-strongest-pairings-table",
@@ -78,11 +70,9 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     Input("id-pairings-period-dropdown", "value"),
 )
 def handle_period_selection(period: str):
-    ending = datetime.today().astimezone()
-    if period == "Ever":
-        starting = datetime(1970, 1, 1, tzinfo=ending.tzinfo)
-    else:
-        starting = ending - timedelta(days=periods[period])
+    # Use the shared date_utils module to calculate begin and end dates
+    starting, ending = date_utils.calculate_date_range(period)
+    
     affinity_list = create_affinity_list(data.commits_in_period(starting, ending))
     if not affinity_list:
         return [{"Affinity": "-----",

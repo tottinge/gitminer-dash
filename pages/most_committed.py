@@ -8,6 +8,7 @@ from dash.exceptions import PreventUpdate
 from pandas import DataFrame
 
 import data
+import date_utils
 
 register_page(
     module=__name__,  # Where it's found
@@ -25,14 +26,8 @@ layout = html.Div(
                            htmlFor="id-period-dropdown",
                            style={"display": "inline-block"}),
                 dcc.Dropdown(id='id-period-dropdown',
-                             options=[
-                                 'Last 30 days',
-                                 'Last 60 days',
-                                 'Last 90 days',
-                                 'Last 1 Year',
-                                 'Ever'
-                             ],
-                             value='Last 30 days',
+                             options=date_utils.PERIOD_OPTIONS,
+                             value=date_utils.PERIOD_OPTIONS[1],  # 'Last 30 days'
                              style={
                                  "display": "inline-block",
                                  "width": "100%",
@@ -58,19 +53,8 @@ layout = html.Div(
 
 
 def calculate_usages(period: str):
-    end = datetime.today().astimezone()
-    period = period or "30 days"
-    match period.lower():
-        case p if "30" in p:
-            begin = end - timedelta(days=30)
-        case p if "60" in p:
-            begin = end - timedelta(days=60)
-        case p if "90" in p:
-            begin = end - timedelta(days=90)
-        case p if "1 year" in p:
-            begin = end - timedelta(years=1)
-        case _:
-            begin = datetime(1970, 1, 1, tzinfo=end.tzinfo)
+    # Use the shared date_utils module to calculate begin and end dates
+    begin, end = date_utils.calculate_date_range(period)
 
     counter = Counter()
     all_commits = list(data.commits_in_period(begin, end))
