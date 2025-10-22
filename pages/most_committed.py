@@ -64,6 +64,11 @@ def calculate_usages(period: str):
         days = 60
     elif "90" in period:
         days = 90
+    elif "1 year" in period:
+        days = 365
+    elif "ever" in period:
+        days =
+
 
     end = datetime.today().astimezone()
     begin = end - timedelta(days=days)
