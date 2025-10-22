@@ -45,14 +45,14 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     This method should be called with a series of commits, and will provide pairings
     that occur together frequently (other than in massive merge checkins).
 
-    >>> a = create_affinity_list('a','b','c')
+    > a = create_affinity_list([commit_with('a','b','c'), commit_with('b','a')])
 
 
     Called with an empty list, returns an empty list.
-    >>> create_affinity_list([])
+    > create_affinity_list([])
     []
 
-    >>> create_affinity_list([commit_with(['a','b']), commit_with(['b','c'])])\
+    > create_affinity_list([commit_with(['a','b']), commit_with(['b','c'])])\
 
     """
     affinities = defaultdict(int)
