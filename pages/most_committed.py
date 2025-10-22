@@ -40,13 +40,25 @@ layout = html.Div(
             id='id-most-committed-graph-holder',
             style={"display": "none"},
             children=[
-                dcc.Graph(id='id-commit-graph', figure={"data": []}),
+                dcc.Loading(
+                    id="loading-graph",
+                    type="circle",
+                    children=[
+                        dcc.Graph(id='id-commit-graph', figure={"data": []}),
+                    ]
+                ),
             ]
         ),
 
         html.Hr(),
         html.H2("Source Data"),
-        DataTable(id='table-data')
+        dcc.Loading(
+            id="loading-table",
+            type="circle",
+            children=[
+                DataTable(id='table-data')
+            ]
+        )
     ]
 
 )
