@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Colors for terminal output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+# Use parameter expansion to get the git repository path
+# ${1:?error_message} will display the error_message and exit if $1 is not provided
+REPO_PATH=${1:?"Error: Git repository path is required. Usage: ./run <path-to-git-repository>"}
+
+# Check if the provided path exists
+if [ ! -d "$REPO_PATH" ]; then
+    echo -e "${RED}Error: The provided path '$REPO_PATH' does not exist or is not a directory.${NC}"
+    exit 1
+fi
+
+# Check if the provided path is a git repository
+if [ ! -d "$REPO_PATH/.git" ]; then
+    echo -e "${RED}Error: The provided path '$REPO_PATH' is not a git repository.${NC}"
+    exit 1
+fi
+
+# Check if virtual environment exists
+if [ ! -d ".venv" ]; then
+    echo -e "${YELLOW}Virtual environment not found. Running onboard script first...${NC}"
+    ./onboard
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to set up the environment. Please run ./onboard manually.${NC}"
+        exit 1
+    fi
+fi
+
+# Activate virtual environment and run the application
+echo -e "${GREEN}Starting gitminer-dash with repository: $REPO_PATH${NC}"
+source .venv/bin/activate && python app.py "$REPO_PATH"

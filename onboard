@@ -1,0 +1,138 @@
+#!/bin/bash
+
+# Colors for terminal output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}Welcome to the gitminer-dash onboarding script!${NC}"
+echo "This script will check for required dependencies and set up your environment."
+echo ""
+
+# Check for Python 3.10+
+echo -e "${YELLOW}Checking for Python 3.10+...${NC}"
+if command -v python3 &> /dev/null; then
+    PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+    PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
+    PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
+    
+    if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 10 ]; then
+        echo -e "${GREEN}✓ Python $PYTHON_VERSION detected.${NC}"
+    else
+        echo -e "${RED}✗ Python $PYTHON_VERSION detected, but version 3.10+ is required.${NC}"
+        echo "Please install Python 3.10 or higher and try again."
+        echo "You can download it from https://www.python.org/downloads/"
+        exit 1
+    fi
+else
+    echo -e "${RED}✗ Python 3 not found.${NC}"
+    echo "Please install Python 3.10 or higher and try again."
+    echo "You can download it from https://www.python.org/downloads/"
+    exit 1
+fi
+
+# Check for uv
+echo -e "${YELLOW}Checking for uv package manager...${NC}"
+if command -v uv &> /dev/null; then
+    echo -e "${GREEN}✓ uv detected.${NC}"
+else
+    echo -e "${RED}✗ uv not found.${NC}"
+    echo "uv is required for dependency management."
+    echo "Would you like to install uv now? (y/n)"
+    read -r install_uv
+    
+    if [[ $install_uv =~ ^[Yy]$ ]]; then
+        echo "Installing uv..."
+        if command -v pip3 &> /dev/null; then
+            pip3 install uv
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}✓ uv installed successfully.${NC}"
+            else
+                echo -e "${RED}✗ Failed to install uv.${NC}"
+                echo "Please install uv manually: pip install uv"
+                exit 1
+            fi
+        else
+            echo -e "${RED}✗ pip3 not found. Cannot install uv.${NC}"
+            echo "Please install pip first, then install uv: pip install uv"
+            exit 1
+        fi
+    else
+        echo "Please install uv manually and run this script again."
+        echo "You can install uv with: pip install uv"
+        exit 1
+    fi
+fi
+
+# Check for git
+echo -e "${YELLOW}Checking for git...${NC}"
+if command -v git &> /dev/null; then
+    echo -e "${GREEN}✓ git detected.${NC}"
+else
+    echo -e "${RED}✗ git not found.${NC}"
+    echo "git is required for this application to work."
+    echo "Please install git and try again."
+    echo "You can download it from https://git-scm.com/downloads"
+    exit 1
+fi
+
+echo ""
+echo -e "${GREEN}All required global utilities are installed!${NC}"
+echo ""
+
+# Create virtual environment
+echo -e "${YELLOW}Setting up virtual environment...${NC}"
+
+# Check if .venv already exists
+if [ -d ".venv" ]; then
+    echo "A virtual environment already exists in .venv directory."
+    echo "Would you like to recreate it? (y/n)"
+    read -r recreate_venv
+    
+    if [[ $recreate_venv =~ ^[Yy]$ ]]; then
+        echo "Removing existing virtual environment..."
+        rm -rf .venv
+    else
+        echo "Using existing virtual environment."
+    fi
+fi
+
+# Create virtual environment if it doesn't exist
+if [ ! -d ".venv" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv .venv
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}✗ Failed to create virtual environment.${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✓ Virtual environment created.${NC}"
+fi
+
+# Install dependencies
+echo -e "${YELLOW}Installing dependencies...${NC}"
+source .venv/bin/activate
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}✗ Failed to activate virtual environment.${NC}"
+    exit 1
+fi
+
+echo "Using uv to install dependencies from pyproject.toml..."
+uv pip install -e .
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✓ Dependencies installed successfully.${NC}"
+else
+    echo -e "${RED}✗ Failed to install dependencies.${NC}"
+    exit 1
+fi
+
+echo ""
+echo -e "${GREEN}Setup complete!${NC}"
+echo ""
+echo "To use gitminer-dash:"
+echo "1. Activate the virtual environment: source .venv/bin/activate"
+echo "2. Run the application: python app.py path-to-local-git-workspace"
+echo ""
+echo "Enjoy using gitminer-dash!"
