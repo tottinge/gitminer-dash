@@ -28,7 +28,9 @@ layout = html.Div(
                              options=[
                                  'Last 30 days',
                                  'Last 60 days',
-                                 'Last 90 days'
+                                 'Last 90 days',
+                                 'Last 1 year',
+                                 'Ever'
                              ],
                              value='Last 30 days',
                              style={
@@ -67,7 +69,7 @@ def calculate_usages(period: str):
     elif "1 year" in period:
         days = 365
     elif "ever" in period:
-        days =
+        days = 20 * 365
 
 
     end = datetime.today().astimezone()
