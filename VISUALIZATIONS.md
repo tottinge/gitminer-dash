@@ -45,3 +45,21 @@ The visualization aggregates these pairings over a period to help identify:
 Positive case: A source file and its test file (e.g., X and test_X) having strong affinity, indicating good test coverage.
 
 Negative case: Files from different modules (e.g., moduleA/X and moduleB/Y) changing together frequently without tests, suggesting problematic cross-module dependencies.
+
+## Affinity Groups
+
+Affinity Groups provides a network visualization of files that frequently change together. Files are represented as nodes in a graph, with edges connecting files that are often committed together. The visualization uses several visual elements to convey information:
+
+- **Node color**: Files are grouped by color based on community detection, showing clusters of files that tend to change together
+- **Node size**: Larger nodes represent files that have connections to many other files
+- **Edge thickness**: Thicker lines indicate stronger affinity between files
+
+The visualization includes controls to:
+- Select different time periods to analyze
+- Adjust the maximum number of nodes displayed to focus on the most important files
+- Set the minimum affinity factor to control the threshold for displaying connections between files
+
+This visualization helps identify:
+- Cohesive modules in your codebase (files that naturally belong together)
+- Central files that affect many other parts of the system
+- Unexpected dependencies between different areas of the codebase

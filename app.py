@@ -8,7 +8,7 @@ if len(sys.argv) < 2:
     print("Usage: app.py <repo_name>")
     exit(1)
 
-app = Dash(__name__, use_pages=True)
+app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
 
 app.layout = html.Div([
     html.H1(f"The Git Miner: {data.get_repo_name()}", style={"text-align": "center"}),
