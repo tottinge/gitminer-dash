@@ -1,5 +1,4 @@
 from collections import Counter
-from datetime import datetime, timedelta
 
 import plotly.express as px
 from dash import html, register_page, dcc, callback, Output, Input
@@ -34,8 +33,6 @@ layout = html.Div(
                              }),
             ]
         ),
-
-        # html.Div(id='page-content', children=[]),
         html.Div(
             id='id-most-committed-graph-holder',
             style={"display": "none"},
@@ -49,7 +46,6 @@ layout = html.Div(
                 ),
             ]
         ),
-
         html.Hr(),
         html.H2("Source Data"),
         dcc.Loading(
@@ -69,8 +65,7 @@ def calculate_usages(period: str):
     begin, end = date_utils.calculate_date_range(period)
 
     counter = Counter()
-    all_commits = list(data.commits_in_period(begin, end))
-    for commit in all_commits:
+    for commit in data.commits_in_period(begin, end):
         try:
             files = commit.stats.files.keys()
             counter.update(files)
@@ -87,7 +82,7 @@ def calculate_usages(period: str):
         Output('id-most-committed-graph-holder', 'style')
     ],
     Input('id-period-dropdown', 'value'),
-    running=(Output('id-period-dropdown', 'disabled'), True, False)
+    running=[(Output('id-period-dropdown', 'disabled'), True, False)]
 )
 def populate_graph(period_input):
     if not period_input:

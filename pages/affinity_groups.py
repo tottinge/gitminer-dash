@@ -95,6 +95,17 @@ layout = html.Div(
     ]
 )
 
+def calculate_affinities(commits):
+    """Calculate file affinities based on commit data."""
+    affinities = defaultdict(float)
+    for commit in commits:
+        files_in_commit = len(commit.stats.files)
+        if files_in_commit < 2:
+            continue
+        for combo in combinations(commit.stats.files, 2):
+            ordered_key = tuple(sorted(combo))
+            affinities[ordered_key] += 1 / files_in_commit
+    return affinities
 
 def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
     """
@@ -118,16 +129,8 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
     elif not hasattr(commits, '__len__'):
         commits = list(commits)
     
-    # Calculate affinities
-    affinities = defaultdict(float)
-    for commit in commits:
-        files_in_commit = len(commit.stats.files)
-        if files_in_commit < 2:
-            continue
-        for combo in combinations(commit.stats.files, 2):
-            ordered_key = tuple(sorted(combo))
-            affinities[ordered_key] += 1 / files_in_commit
-    
+    affinities = calculate_affinities(commits)
+
     # Get unique files and their total affinities
     file_total_affinity = defaultdict(float)
     for (file1, file2), affinity in affinities.items():
@@ -146,10 +149,7 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
     
     if not relevant_affinities:
         return 0.2, 0, 0  # Default if no relevant affinities
-    
-    # Sort affinities in descending order
-    sorted_affinities = sorted(relevant_affinities, reverse=True)
-    
+
     # Try different thresholds to find one that gives us the target node count
     thresholds = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
     best_threshold = 0.2  # Default if we can't find a better one
@@ -199,26 +199,15 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
     """
     if not commits:
         return nx.Graph(), []
-        
-    # Calculate affinities as in strongest_pairings.py
-    affinities = defaultdict(float)
-    for commit in commits:
-        files_in_commit = len(commit.stats.files)
-        if files_in_commit < 2:
-            continue
-        for combo in combinations(commit.stats.files, 2):
-            ordered_key = tuple(sorted(combo))
-            affinities[ordered_key] += 1 / files_in_commit
-    
-    # Create a network graph
+
+
+    affinities = calculate_affinities(commits)
     G = nx.Graph()
-    
-    # Add nodes (files)
     all_files = set()
     for file_pair in affinities.keys():
         all_files.update(file_pair)
-    
-    # Sort files by their total affinity and limit to max_nodes
+
+    # Calculate total affinity for each file by summing all its edge affinities
     file_total_affinity = defaultdict(float)
     for (file1, file2), affinity in affinities.items():
         file_total_affinity[file1] += affinity
@@ -235,20 +224,15 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
     for (file1, file2), affinity in affinities.items():
         if file1 in top_file_set and file2 in top_file_set and affinity >= min_affinity:
             G.add_edge(file1, file2, weight=affinity)
-    
-    # Find communities/clusters using Louvain method
-    # Check if the graph has any nodes before calling louvain_communities
-    if len(G.nodes()) > 0:
-        communities = nx.community.louvain_communities(G)
-        
-        # Assign community ID to each node
-        for i, community in enumerate(communities):
-            for node in community:
-                G.nodes[node]['community'] = i
-    else:
-        # Return empty communities list if graph is empty
+
+    if G.number_of_nodes() <= 0:
         communities = []
-    
+    else:
+        communities = nx.community.louvain_communities(G)
+        for group_number, community in enumerate(communities):
+            for node in community:
+                G.nodes[node]['community'] = group_number
+
     return G, communities
 
 
@@ -264,21 +248,20 @@ def create_network_visualization(G, communities):
         A Plotly figure object
     """
     if len(G.nodes()) == 0:
-        # Return a figure with a 'no data' message
-        fig = go.Figure()
-        fig.add_annotation(
+        no_data_figure = go.Figure()
+        no_data_figure.add_annotation(
             text="No data available for the selected time period",
             xref="paper", yref="paper",
             x=0.5, y=0.5,
             showarrow=False,
             font=dict(size=20)
         )
-        fig.update_layout(
+        no_data_figure.update_layout(
             title='File Affinity Network - No Data',
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
         )
-        return fig
+        return no_data_figure
     
     # Use a force-directed layout algorithm
     pos = nx.spring_layout(G, seed=42)
@@ -287,19 +270,25 @@ def create_network_visualization(G, communities):
     edge_x = []
     edge_y = []
     edge_weights = []
-    
-    # Check if there are any edges before creating edge trace
-    if len(G.edges()) > 0:
+
+    if len(G.edges()) <= 0:
+        edge_trace = go.Scatter(
+            x=[], y=[],
+            line=dict(width=0, color='#888'),
+            hoverinfo='none',
+            mode='lines')
+        edge_traces = [edge_trace]
+    else:
         for edge in G.edges():
             x0, y0 = pos[edge[0]]
             x1, y1 = pos[edge[1]]
             edge_x.extend([x0, x1, None])
             edge_y.extend([y0, y1, None])
             edge_weights.append(G.edges[edge]['weight'])
-        
+
         # Normalize edge weights for width
         max_weight = max(edge_weights) if edge_weights else 1
-        
+
         # Create separate edge traces for each edge with its own width
         edge_traces = []
         for i in range(0, len(edge_x), 3):  # Each edge is 3 points (x0, x1, None)
@@ -310,7 +299,7 @@ def create_network_visualization(G, communities):
                     width = 2 + (edge_weights[edge_idx] / max_weight) * 6
                 else:
                     width = 2  # Default width if index is out of range
-                
+
                 # Create a trace for this single edge
                 edge_trace = go.Scatter(
                     x=edge_x[i:i+3],  # Just this edge's x coordinates
@@ -321,7 +310,7 @@ def create_network_visualization(G, communities):
                     showlegend=False
                 )
                 edge_traces.append(edge_trace)
-        
+
         # If no edges were created, create an empty edge trace
         if not edge_traces:
             edge_trace = go.Scatter(
@@ -331,15 +320,7 @@ def create_network_visualization(G, communities):
                 mode='lines'
             )
             edge_traces = [edge_trace]
-    else:
-        # Create an empty edge trace if there are no edges
-        edge_trace = go.Scatter(
-            x=[], y=[],
-            line=dict(width=0, color='#888'),
-            hoverinfo='none',
-            mode='lines')
-        edge_traces = [edge_trace]
-    
+
     # Create node traces (one per community for different colors)
     node_traces = []
     
@@ -420,7 +401,7 @@ def create_network_visualization(G, communities):
             node_traces.append(node_trace)
     
     # Create figure
-    fig = go.Figure(data=[*edge_traces, *node_traces],
+    no_data_figure = go.Figure(data=[*edge_traces, *node_traces],
                  layout=go.Layout(
                     title='File Affinity Network',
                     title_font=dict(size=16),  # Changed from titlefont to title_font
@@ -431,7 +412,7 @@ def create_network_visualization(G, communities):
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
                 ))
     
-    return fig
+    return no_data_figure
 
 
 @callback(
