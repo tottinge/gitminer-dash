@@ -14,9 +14,14 @@ from pathlib import Path
 import networkx as nx
 from collections import defaultdict
 from itertools import combinations
+from dash import Dash
+
+# Create a Dash app instance to prevent PageError when importing pages
+app = Dash(__name__, suppress_callback_exceptions=True)
 
 # Import project modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Import after Dash app instantiation to avoid PageError
 from pages.affinity_groups import calculate_ideal_affinity, create_file_affinity_network
 
 # Test data directory

@@ -1,191 +1,166 @@
 """
 Tests for the date_utils module.
 
-This module contains tests for the date_utils module, including doctests
-and additional test cases.
+This module contains tests for the date_utils module using pytest.
 """
-import unittest
-import doctest
+import pytest
 from datetime import datetime, timedelta
-from unittest.mock import patch
 
+# Import date_utils module
 import date_utils
 
+# Create a consistent mock date for all tests
+MOCK_DATE = datetime(2025, 10, 22, 17, 59)
 
-class TestDateUtils(unittest.TestCase):
-    """Test cases for the date_utils module."""
+# Fixture to mock datetime in date_utils module
+@pytest.fixture
+def mock_datetime(monkeypatch):
+    """Fixture to mock datetime.today() to return a fixed date."""
+    class MockDatetime:
+        @classmethod
+        def today(cls):
+            return MOCK_DATE
+            
+        @staticmethod
+        def astimezone(dt):
+            return dt
+            
+    # Apply the monkeypatch to replace datetime in date_utils
+    monkeypatch.setattr(date_utils, 'datetime', MockDatetime)
+    
+    # For the 'Ever' test case, we need to handle datetime constructor
+    original_datetime = datetime
+    
+    class MockDatetimeWithConstructor(MockDatetime):
+        def __new__(cls, *args, **kwargs):
+            if args or kwargs:
+                return original_datetime(*args, **kwargs)
+            return super().__new__(cls)
+    
+    # Return the mock for use in tests that need special handling
+    return MockDatetimeWithConstructor
 
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_7_days(self, mock_datetime):
-        """Test calculate_date_range with 'Last 7 days'."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
+def test_calculate_date_range_7_days(mock_datetime):
+    """Test calculate_date_range with 'Last 7 days'."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('Last 7 days')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2025, 10, 15).date()
+    assert (end.date() - begin.date()).days == 7
 
-        # Call function
-        begin, end = date_utils.calculate_date_range('Last 7 days')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2025, 10, 15).date())
-        self.assertEqual((end.date() - begin.date()).days, 7)
+def test_calculate_date_range_30_days(mock_datetime):
+    """Test calculate_date_range with 'Last 30 days'."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('Last 30 days')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2025, 9, 22).date()
+    assert (end.date() - begin.date()).days == 30
 
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_30_days(self, mock_datetime):
-        """Test calculate_date_range with 'Last 30 days'."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
+def test_calculate_date_range_60_days(mock_datetime):
+    """Test calculate_date_range with 'Last 60 days'."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('Last 60 days')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2025, 8, 23).date()
+    assert (end.date() - begin.date()).days == 60
 
-        # Call function
-        begin, end = date_utils.calculate_date_range('Last 30 days')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2025, 9, 22).date())
-        self.assertEqual((end.date() - begin.date()).days, 30)
+def test_calculate_date_range_90_days(mock_datetime):
+    """Test calculate_date_range with 'Last 90 days'."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('Last 90 days')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2025, 7, 24).date()
+    assert (end.date() - begin.date()).days == 90
 
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_60_days(self, mock_datetime):
-        """Test calculate_date_range with 'Last 60 days'."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
+def test_calculate_date_range_6_months(mock_datetime):
+    """Test calculate_date_range with 'Last 6 Months'."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('Last 6 Months')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2025, 4, 22).date()
 
-        # Call function
-        begin, end = date_utils.calculate_date_range('Last 60 days')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2025, 8, 23).date())
-        self.assertEqual((end.date() - begin.date()).days, 60)
+def test_calculate_date_range_1_year(mock_datetime):
+    """Test calculate_date_range with 'Last 1 Year'."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('Last 1 Year')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2024, 10, 22).date()
+    assert begin.year == end.year - 1
+    assert begin.month == end.month
+    assert begin.day == end.day
 
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_90_days(self, mock_datetime):
-        """Test calculate_date_range with 'Last 90 days'."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
+def test_calculate_date_range_5_years(mock_datetime):
+    """Test calculate_date_range with 'Last 5 Years'."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('Last 5 Years')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2020, 10, 22).date()
+    assert begin.year == end.year - 5
+    assert begin.month == end.month
+    assert begin.day == end.day
 
-        # Call function
-        begin, end = date_utils.calculate_date_range('Last 90 days')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2025, 7, 24).date())
-        self.assertEqual((end.date() - begin.date()).days, 90)
+def test_calculate_date_range_ever(monkeypatch):
+    """Test calculate_date_range with 'Ever'."""
+    # For this test, we need special handling for datetime constructor
+    class MockDatetime:
+        @classmethod
+        def today(cls):
+            return MOCK_DATE
+            
+        @staticmethod
+        def astimezone(dt):
+            return dt
+            
+        def __call__(self, *args, **kwargs):
+            return datetime(*args, **kwargs)
+    
+    mock_dt = MockDatetime()
+    monkeypatch.setattr(date_utils, 'datetime', mock_dt)
+    
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('Ever')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(1970, 1, 1).date()
 
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_6_months(self, mock_datetime):
-        """Test calculate_date_range with 'Last 6 Months'."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
+def test_calculate_date_range_default_none(mock_datetime):
+    """Test calculate_date_range with None (default)."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range(None)
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2025, 9, 22).date()
+    assert (end.date() - begin.date()).days == 30
 
-        # Call function
-        begin, end = date_utils.calculate_date_range('Last 6 Months')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2025, 4, 22).date())
-        # Check that the month is decreased by 6, day remains the same
-        self.assertEqual(begin.year, end.year)
-        self.assertEqual(begin.month, end.month - 6)
-        self.assertEqual(begin.day, end.day)
+def test_calculate_date_range_default_empty(mock_datetime):
+    """Test calculate_date_range with empty string (default)."""
+    # Call function under test
+    begin, end = date_utils.calculate_date_range('')
+    
+    # Assertions
+    assert end.date() == MOCK_DATE.date()
+    assert begin.date() == datetime(2025, 9, 22).date()
+    assert (end.date() - begin.date()).days == 30
 
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_1_year(self, mock_datetime):
-        """Test calculate_date_range with 'Last 1 Year'."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
-
-        # Call function
-        begin, end = date_utils.calculate_date_range('Last 1 Year')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2024, 10, 22).date())
-        # Check that the year is decreased by 1, month and day remain the same
-        self.assertEqual(begin.year, end.year - 1)
-        self.assertEqual(begin.month, end.month)
-        self.assertEqual(begin.day, end.day)
-
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_5_years(self, mock_datetime):
-        """Test calculate_date_range with 'Last 5 Years'."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
-
-        # Call function
-        begin, end = date_utils.calculate_date_range('Last 5 Years')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2020, 10, 22).date())
-        # Check that the year is decreased by 5, month and day remain the same
-        self.assertEqual(begin.year, end.year - 5)
-        self.assertEqual(begin.month, end.month)
-        self.assertEqual(begin.day, end.day)
-
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_ever(self, mock_datetime):
-        """Test calculate_date_range with 'Ever'."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
-        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
-
-        # Call function
-        begin, end = date_utils.calculate_date_range('Ever')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(1970, 1, 1).date())
-
-
-    @patch('date_utils.datetime')
-    def test_calculate_date_range_default(self, mock_datetime):
-        """Test calculate_date_range with None or empty string."""
-        # Setup mock
-        mock_date = datetime(2025, 10, 22, 17, 59)
-        mock_datetime.today.return_value = mock_date
-        mock_datetime.astimezone = lambda x: x
-
-        # Call function with None
-        begin, end = date_utils.calculate_date_range(None)
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2025, 9, 22).date())
-        self.assertEqual((end.date() - begin.date()).days, 30)
-
-        # Call function with empty string
-        begin, end = date_utils.calculate_date_range('')
-        
-        # Assertions - compare only the date parts
-        self.assertEqual(end.date(), mock_date.date())
-        self.assertEqual(begin.date(), datetime(2025, 9, 22).date())
-        self.assertEqual((end.date() - begin.date()).days, 30)
-
-
-def load_tests(loader, tests, ignore):
-    """Load doctests and return combined test suite."""
-    tests.addTests(doctest.DocTestSuite(date_utils))
-    return tests
-
-
+# Run doctests when file is executed directly
 if __name__ == '__main__':
-    # Run doctests first
+    import doctest
     doctest_results = doctest.testmod(date_utils)
     if doctest_results.failed == 0:
         print(f"All {doctest_results.attempted} doctests passed!")
@@ -193,5 +168,5 @@ if __name__ == '__main__':
         print(f"Failed {doctest_results.failed} out of {doctest_results.attempted} doctests.")
         exit(1)
     
-    # Then run unittest tests
-    unittest.main()
+    # Run pytest
+    pytest.main([__file__])

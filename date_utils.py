@@ -6,7 +6,6 @@ used by various visualization pages.
 """
 from datetime import datetime, timedelta
 from typing import Tuple, List
-import calendar
 from dateutil.relativedelta import relativedelta
 
 
@@ -46,7 +45,7 @@ def calculate_date_range(period: str) -> Tuple[datetime, datetime]:
     period = period or "30 days"
     
     match period.lower():
-        case p if "7" in p:
+        case p if "last 7 " in p:
             begin = end - timedelta(days=7)
         case p if "30" in p:
             begin = end - timedelta(days=30)

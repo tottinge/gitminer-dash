@@ -1,6 +1,10 @@
 import sys
 import plotly.graph_objects as go
 from datetime import datetime
+from dash import Dash
+
+# Create a Dash app instance to prevent PageError when importing pages
+app = Dash(__name__, suppress_callback_exceptions=True)
 
 # Test the callback with and without a repository path
 def test_callback_with_repo_path():

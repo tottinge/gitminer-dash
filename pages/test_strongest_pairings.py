@@ -21,7 +21,7 @@ def parse_record(result):
 class MyTestCase(unittest.TestCase):
     def setUp(self):
         with patch('dash.register_page'):
-            from strongest_pairings import create_affinity_list
+            from pages.strongest_pairings import create_affinity_list
             self.create_affinity_list = create_affinity_list
 
     def test_empty_inputs(self):
