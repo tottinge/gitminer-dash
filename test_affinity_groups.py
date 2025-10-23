@@ -1,12 +1,9 @@
-import sys
 import networkx as nx
 import plotly.graph_objects as go
-import plotly.express as px
+
 
 def test_edge_width_fix():
     """Test that creating a scatter plot with edge widths works correctly."""
-    print("Testing edge width fix...")
-    
     # Create a simple test graph
     G = nx.Graph()
     G.add_node("A")
@@ -15,25 +12,25 @@ def test_edge_width_fix():
     G.add_edge("A", "B", weight=0.5)
     G.add_edge("B", "C", weight=0.8)
     G.add_edge("A", "C", weight=0.3)
-    
+
     # Create a simple layout
     pos = {"A": (0, 0), "B": (1, 1), "C": (2, 0)}
-    
+
     # Create edge traces
     edge_x = []
     edge_y = []
     edge_weights = []
-    
+
     for edge in G.edges():
         x0, y0 = pos[edge[0]]
         x1, y1 = pos[edge[1]]
         edge_x.extend([x0, x1, None])
         edge_y.extend([y0, y1, None])
         edge_weights.append(G.edges[edge]['weight'])
-    
+
     # Normalize edge weights for width
     max_weight = max(edge_weights) if edge_weights else 1
-    
+
     # Create separate edge traces for each edge with its own width
     edge_traces = []
     for i in range(0, len(edge_x), 3):  # Each edge is 3 points (x0, x1, None)
@@ -44,18 +41,18 @@ def test_edge_width_fix():
                 width = 2 + (edge_weights[edge_idx] / max_weight) * 6
             else:
                 width = 2  # Default width if index is out of range
-            
+
             # Create a trace for this single edge
             edge_trace = go.Scatter(
-                x=edge_x[i:i+3],  # Just this edge's x coordinates
-                y=edge_y[i:i+3],  # Just this edge's y coordinates
+                x=edge_x[i:i + 3],  # Just this edge's x coordinates
+                y=edge_y[i:i + 3],  # Just this edge's y coordinates
                 line=dict(width=width, color='#888'),
                 hoverinfo='none',
                 mode='lines',
                 showlegend=False
             )
             edge_traces.append(edge_trace)
-    
+
     # Create a simple node trace
     node_trace = go.Scatter(
         x=[pos[node][0] for node in G.nodes()],
@@ -65,13 +62,10 @@ def test_edge_width_fix():
         text=list(G.nodes()),
         hoverinfo='text'
     )
-    
+
     # Create figure
     fig = go.Figure(data=[*edge_traces, node_trace])
-    
-    # This would have failed before our fix
-    print("Test completed successfully!")
-    return True
+
 
 if __name__ == "__main__":
     test_edge_width_fix()
