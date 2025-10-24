@@ -52,8 +52,8 @@ layout = html.Div(
                             id="id-affinity-min-slider",
                             min=0.05,
                             max=0.5,
-                            step=0.05,
-                            value=0.5,
+                            step=0.01,
+                            value=0.2,
                             marks={i/100: str(i/100) for i in range(5, 51, 5)},
                         ),
                         html.Div(
@@ -106,6 +106,62 @@ def calculate_affinities(commits):
             ordered_key = tuple(sorted(combo))
             affinities[ordered_key] += 1 / files_in_commit
     return affinities
+
+def find_affinity_range(commits, max_nodes=50):
+    """
+    Find the minimum and maximum affinity values in the dataset.
+    
+    Args:
+        commits: Iterable of commit objects
+        max_nodes: Maximum number of nodes to consider (default: 50)
+        
+    Returns:
+        A tuple of (min_affinity, max_affinity, ideal_affinity)
+    """
+    if not commits:
+        return 0.05, 0.5, 0.2  # Default values if no commits
+    
+    # Reset commits iterator if it was consumed
+    if hasattr(commits, 'seek') and callable(getattr(commits, 'seek')):
+        commits.seek(0)
+    elif not hasattr(commits, '__len__'):
+        commits = list(commits)
+    
+    affinities = calculate_affinities(commits)
+    
+    if not affinities:
+        return 0.05, 0.5, 0.2  # Default values if no affinities
+    
+    # Get unique files and their total affinities
+    file_total_affinity = defaultdict(float)
+    for (file1, file2), affinity in affinities.items():
+        file_total_affinity[file1] += affinity
+        file_total_affinity[file2] += affinity
+    
+    # Get top files by total affinity
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_file_set = {file for file, _ in top_files}
+    
+    # Get all affinity values between top files
+    relevant_affinities = []
+    for (file1, file2), affinity in affinities.items():
+        if file1 in top_file_set and file2 in top_file_set:
+            relevant_affinities.append(affinity)
+    
+    if not relevant_affinities:
+        return 0.05, 0.5, 0.2  # Default values if no relevant affinities
+    
+    # Find min and max affinity values
+    min_affinity = max(0.05, min(relevant_affinities))  # Ensure min is at least 0.05
+    max_affinity = min(0.5, max(relevant_affinities))   # Ensure max is at most 0.5
+    
+    # Calculate ideal affinity
+    ideal_affinity, _, _ = calculate_ideal_affinity(commits, target_node_count=15, max_nodes=max_nodes)
+    
+    # Ensure ideal affinity is within the min-max range
+    ideal_affinity = max(min_affinity, min(max_affinity, ideal_affinity))
+    
+    return min_affinity, max_affinity, ideal_affinity
 
 def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
     """
@@ -416,7 +472,10 @@ def create_network_visualization(G, communities):
 
 
 @callback(
+    Output("id-affinity-min-slider", "min"),
+    Output("id-affinity-min-slider", "max"),
     Output("id-affinity-min-slider", "value"),
+    Output("id-affinity-min-slider", "marks"),
     Output("id-auto-affinity-info", "children"),
     [Input("id-auto-affinity-button", "n_clicks")],
     [State("id-affinity-period-dropdown", "value"),
@@ -425,7 +484,7 @@ def create_network_visualization(G, communities):
 )
 def auto_calculate_affinity(n_clicks, period, max_nodes):
     """
-    Calculate the ideal affinity threshold based on the current commit data.
+    Calculate the affinity range and ideal threshold based on the current commit data.
     
     Args:
         n_clicks: Number of button clicks (not used, but required for callback)
@@ -433,28 +492,59 @@ def auto_calculate_affinity(n_clicks, period, max_nodes):
         max_nodes: Maximum number of nodes
         
     Returns:
-        Tuple of (ideal_affinity_value, info_text)
+        Tuple of (min_affinity, max_affinity, ideal_affinity, marks, info_text)
     """
     if not n_clicks:
-        return no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update
     
     try:
         # Get commit data for the selected period
         starting, ending = date_utils.calculate_date_range(period)
         commits_data = data.commits_in_period(starting, ending)
         
-        # Calculate ideal affinity
-        ideal_affinity, node_count, edge_count = calculate_ideal_affinity(
+        # Find affinity range and ideal value
+        min_affinity, max_affinity, ideal_affinity = find_affinity_range(
+            commits_data, max_nodes=max_nodes
+        )
+        
+        # Round values for display
+        min_affinity_rounded = round(min_affinity, 2)
+        max_affinity_rounded = round(max_affinity, 2)
+        ideal_affinity_rounded = round(ideal_affinity, 2)
+        
+        # Create marks for the slider
+        # Ensure we have at least 3 marks (min, ideal, max)
+        marks = {
+            min_affinity_rounded: str(min_affinity_rounded),
+            ideal_affinity_rounded: str(ideal_affinity_rounded),
+            max_affinity_rounded: str(max_affinity_rounded)
+        }
+        
+        # Add intermediate marks if there's enough space
+        if max_affinity_rounded - min_affinity_rounded >= 0.1:
+            step = round((max_affinity_rounded - min_affinity_rounded) / 5, 2)
+            for i in range(1, 5):
+                value = round(min_affinity_rounded + i * step, 2)
+                if value > min_affinity_rounded and value < max_affinity_rounded and value != ideal_affinity_rounded:
+                    marks[value] = str(value)
+        
+        # Get node and edge counts for info text
+        _, node_count, edge_count = calculate_ideal_affinity(
             commits_data, target_node_count=15, max_nodes=max_nodes
         )
         
         # Create info text
-        info_text = f"Calculated ideal affinity: {ideal_affinity:.2f} " + \
+        info_text = f"Min: {min_affinity_rounded}, Ideal: {ideal_affinity_rounded}, Max: {max_affinity_rounded} " + \
                    f"(estimated {node_count} nodes, {edge_count} edges)"
         
-        return ideal_affinity, info_text
+        return min_affinity_rounded, max_affinity_rounded, ideal_affinity_rounded, marks, info_text
     except Exception as e:
-        return 0.2, f"Error calculating ideal affinity: {str(e)}"
+        # Return default values in case of error
+        default_min = 0.05
+        default_max = 0.5
+        default_value = 0.2
+        default_marks = {i/100: str(i/100) for i in range(5, 51, 5)}
+        return default_min, default_max, default_value, default_marks, f"Error calculating affinity range: {str(e)}"
 
 
 @callback(
@@ -466,19 +556,60 @@ def auto_calculate_affinity(n_clicks, period, max_nodes):
 def update_file_affinity_graph(period: str, max_nodes: int, min_affinity: float):
     try:
         starting, ending = date_utils.calculate_date_range(period)
-        commits_data = data.commits_in_period(starting, ending)
+        # Convert commits_data to a list to prevent the iterator from being consumed
+        commits_data = list(data.commits_in_period(starting, ending))
         
-        # If min_affinity is set to the maximum value (0.5), auto-calculate an ideal value
-        if min_affinity >= 0.5:
-            ideal_affinity, _, _ = calculate_ideal_affinity(
-                commits_data, target_node_count=15, max_nodes=max_nodes
-            )
-            min_affinity = ideal_affinity
+        # Calculate ideal affinity
+        ideal_affinity, _, _ = calculate_ideal_affinity(
+            commits_data, target_node_count=15, max_nodes=max_nodes
+        )
         
+        # Use the provided min_affinity value
         G, communities = create_file_affinity_network(commits_data, min_affinity=min_affinity, max_nodes=max_nodes)
         return create_network_visualization(G, communities)
+    except ValueError as e:
+        # Check if this is the specific error about missing repository path
+        if "No repository path provided" in str(e):
+            # Create a figure with a helpful message about repository path
+            fig = go.Figure()
+            fig.add_annotation(
+                text="No repository path provided. Please run the application with a repository path as a command-line argument.",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                showarrow=False,
+                font=dict(size=16, color="red")
+            )
+            fig.add_annotation(
+                text="Example: python app.py /path/to/your/git/repository",
+                xref="paper", yref="paper",
+                x=0.5, y=0.6,
+                showarrow=False,
+                font=dict(size=14)
+            )
+            fig.update_layout(
+                title='File Affinity Network - Repository Path Required',
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+            )
+            return fig
+        else:
+            # Handle other ValueError exceptions
+            fig = go.Figure()
+            fig.add_annotation(
+                text=f"Error with input values: {str(e)}",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                showarrow=False,
+                font=dict(size=16, color="red")
+            )
+            fig.update_layout(
+                title='File Affinity Network - Input Error',
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+            )
+            return fig
     except Exception as e:
-        # Create a figure with an error message
+        # Create a figure with a general error message
         fig = go.Figure()
         fig.add_annotation(
             text=f"Error generating affinity graph: {str(e)}",
