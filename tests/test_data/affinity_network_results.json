@@ -1,0 +1,1250 @@
+[
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.5,
+    "max_nodes": 50,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 8,
+    "num_communities": 13,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.8888888888888888,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.7038690476190474,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.3846153846153846,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.1,
+    "max_nodes": 20,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 51,
+    "num_communities": 3,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 1,
+      "avg": 5.666666666666667,
+      "max": 12
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.28431372549019607,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 3,
+      "avg": 6.0,
+      "max": 8
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.1,
+    "max_nodes": 50,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 51,
+    "num_communities": 3,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 1,
+      "avg": 5.666666666666667,
+      "max": 12
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.28431372549019607,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 3,
+      "avg": 6.0,
+      "max": 8
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.1,
+    "max_nodes": 100,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 51,
+    "num_communities": 3,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 1,
+      "avg": 5.666666666666667,
+      "max": 12
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.28431372549019607,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 3,
+      "avg": 6.0,
+      "max": 8
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.2,
+    "max_nodes": 20,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 18,
+    "num_communities": 9,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.0,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5158730158730159,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.2,
+    "max_nodes": 50,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 18,
+    "num_communities": 9,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.0,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5158730158730159,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.2,
+    "max_nodes": 100,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 18,
+    "num_communities": 9,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.0,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5158730158730159,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.3,
+    "max_nodes": 20,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 18,
+    "num_communities": 9,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.0,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5158730158730159,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.3,
+    "max_nodes": 50,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 18,
+    "num_communities": 9,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.0,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5158730158730159,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.3,
+    "max_nodes": 100,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 18,
+    "num_communities": 9,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.0,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5158730158730159,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.4,
+    "max_nodes": 20,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 9,
+    "num_communities": 13,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.0,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.47619047619047616,
+      "avg": 0.6785714285714284,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.3846153846153846,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.4,
+    "max_nodes": 50,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 9,
+    "num_communities": 13,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.0,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.47619047619047616,
+      "avg": 0.6785714285714284,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.3846153846153846,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.4,
+    "max_nodes": 100,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 9,
+    "num_communities": 13,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.0,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.47619047619047616,
+      "avg": 0.6785714285714284,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.3846153846153846,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.5,
+    "max_nodes": 20,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 8,
+    "num_communities": 13,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.8888888888888888,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.7038690476190474,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.3846153846153846,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.5,
+    "max_nodes": 50,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 8,
+    "num_communities": 13,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.8888888888888888,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.7038690476190474,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.3846153846153846,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 6 Months",
+    "min_affinity": 0.5,
+    "max_nodes": 100,
+    "num_commits": 17,
+    "num_unique_files": 19,
+    "num_nodes": 18,
+    "num_edges": 8,
+    "num_communities": 13,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.8888888888888888,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.7038690476190474,
+      "max": 0.8928571428571428
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.3846153846153846,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.5,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.1,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 30,
+    "num_communities": 11,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 3.0,
+      "max": 9
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.3799422799422799,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.8181818181818181,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.1,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 52,
+    "num_communities": 16,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 3.25,
+      "max": 12
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.31031468531468537,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 8
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.1,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 52,
+    "num_communities": 16,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 3.25,
+      "max": 12
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.31031468531468537,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 8
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.2,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 29,
+    "num_communities": 11,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.9,
+      "max": 9
+    },
+    "edge_weight_stats": {
+      "min": 0.2121212121212121,
+      "avg": 0.38811762949693984,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.8181818181818181,
+      "max": 5
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.2,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 35,
+    "num_communities": 19,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.1875,
+      "max": 9
+    },
+    "edge_weight_stats": {
+      "min": 0.2121212121212121,
+      "avg": 0.3882498453927027,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.6842105263157894,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.2,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 35,
+    "num_communities": 19,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.1875,
+      "max": 9
+    },
+    "edge_weight_stats": {
+      "min": 0.2121212121212121,
+      "avg": 0.3882498453927027,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.6842105263157894,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.3,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 13,
+    "num_communities": 14,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.3,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3787878787878788,
+      "avg": 0.6047286047286048,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.4285714285714286,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.3,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 19,
+    "num_communities": 22,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.1875,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5365686944634313,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.4545454545454546,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.3,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 19,
+    "num_communities": 22,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.1875,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5365686944634313,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.4545454545454546,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.4,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 8,
+    "num_communities": 16,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.8,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5216450216450216,
+      "avg": 0.7406655844155844,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.25,
+      "max": 3
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.4,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.4,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.5,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 8,
+    "num_communities": 16,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.8,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5216450216450216,
+      "avg": 0.7406655844155844,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.25,
+      "max": 3
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.5,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 1 Year",
+    "min_affinity": 0.5,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.5,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.1,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 30,
+    "num_communities": 11,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 3.0,
+      "max": 9
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.3799422799422799,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.8181818181818181,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.1,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 52,
+    "num_communities": 16,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 3.25,
+      "max": 12
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.31031468531468537,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 8
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.1,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 52,
+    "num_communities": 16,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 3.25,
+      "max": 12
+    },
+    "edge_weight_stats": {
+      "min": 0.14285714285714285,
+      "avg": 0.31031468531468537,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 2.0,
+      "max": 8
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.2,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 29,
+    "num_communities": 11,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.9,
+      "max": 9
+    },
+    "edge_weight_stats": {
+      "min": 0.2121212121212121,
+      "avg": 0.38811762949693984,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.8181818181818181,
+      "max": 5
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.2,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 35,
+    "num_communities": 19,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.1875,
+      "max": 9
+    },
+    "edge_weight_stats": {
+      "min": 0.2121212121212121,
+      "avg": 0.3882498453927027,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.6842105263157894,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.2,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 35,
+    "num_communities": 19,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 2.1875,
+      "max": 9
+    },
+    "edge_weight_stats": {
+      "min": 0.2121212121212121,
+      "avg": 0.3882498453927027,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.6842105263157894,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.3,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 13,
+    "num_communities": 14,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.3,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3787878787878788,
+      "avg": 0.6047286047286048,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.4285714285714286,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.3,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 19,
+    "num_communities": 22,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.1875,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5365686944634313,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.4545454545454546,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.3,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 19,
+    "num_communities": 22,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 1.1875,
+      "max": 6
+    },
+    "edge_weight_stats": {
+      "min": 0.3333333333333333,
+      "avg": 0.5365686944634313,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.4545454545454546,
+      "max": 6
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.4,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 8,
+    "num_communities": 16,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.8,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5216450216450216,
+      "avg": 0.7406655844155844,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.25,
+      "max": 3
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.4,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.4,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.5,
+    "max_nodes": 20,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 20,
+    "num_edges": 8,
+    "num_communities": 16,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.8,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5216450216450216,
+      "avg": 0.7406655844155844,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.25,
+      "max": 3
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.5,
+    "max_nodes": 50,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  },
+  {
+    "period": "Last 5 Years",
+    "min_affinity": 0.5,
+    "max_nodes": 100,
+    "num_commits": 20,
+    "num_unique_files": 32,
+    "num_nodes": 32,
+    "num_edges": 10,
+    "num_communities": 26,
+    "is_valid": true,
+    "node_degree_stats": {
+      "min": 0,
+      "avg": 0.625,
+      "max": 4
+    },
+    "edge_weight_stats": {
+      "min": 0.5,
+      "avg": 0.6925324675324676,
+      "max": 0.9383116883116882
+    },
+    "community_size_stats": {
+      "min": 1,
+      "avg": 1.2307692307692308,
+      "max": 4
+    }
+  }
+]
