@@ -66,7 +66,18 @@ layout = html.Div(
                         {"name":"Avg Lines/Commit", "id":"avg_changes"},
                         {"name":"Change (lines)", "id":"total_change"},
                         {"name":"Change (percent)", "id":"percent_change"},
-                    ]
+                    ],
+                    style_cell_conditional=[
+                        {
+                            'if': {'column_id': 'filename'},
+                            'width': '20%',
+                            'textAlign': 'left'
+                        },
+                        {
+                            'if': {'column_id': 'count'},
+                            'width': '10%'
+                        },
+                        {}]
                 )
             ]
         )
