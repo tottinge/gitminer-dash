@@ -8,6 +8,7 @@ from pandas import DataFrame
 
 import data
 import date_utils
+from algorithms.file_changes import files_changes_over_period
 
 register_page(
     module=__name__,  # Where it's found
@@ -52,18 +53,31 @@ layout = html.Div(
             id="loading-table",
             type="circle",
             children=[
-                DataTable(id='table-data')
+                #                 'filename': filename,
+                #                 'count': count,
+                #                 'avg_changes': 0.0,
+                #                 'total_change': 0,
+                #                 'percent_change': 0.0
+                DataTable(
+                    id='table-data',
+                    columns = [
+                        {"name":"File", "id":"filename"},
+                        {"name":"Commits", "id":"count"},
+                        {"name":"Avg Lines/Commit", "id":"avg_changes"},
+                        {"name":"Change (lines)", "id":"total_change"},
+                        {"name":"Change (percent)", "id":"percent_change"},
+                    ]
+                )
             ]
         )
     ]
-
 )
-
 
 def calculate_usages(period: str):
     # Use the shared date_utils module to calculate begin and end dates
     begin, end = date_utils.calculate_date_range(period)
 
+    # Count file occurrences using Counter
     counter = Counter()
     for commit in data.commits_in_period(begin, end):
         try:
@@ -72,7 +86,40 @@ def calculate_usages(period: str):
         except ValueError as e:
             print("Stop me if you've seen this one before")
             raise e
-    return counter.most_common(20)
+
+    # Get the 20 most common files
+    most_common_files = counter.most_common(20)
+
+    # Extract just the filenames
+    filenames = [filename for filename, _ in most_common_files]
+
+    # Get additional metrics for these files
+    repo = data.get_repo()
+    file_stats = files_changes_over_period(filenames, begin, end, repo)
+
+    # Create a list of dictionaries with all metrics
+    result = []
+    for filename, count in most_common_files:
+        if filename in file_stats:
+            stats = file_stats[filename]
+            result.append({
+                'filename': filename,
+                'count': count,
+                'avg_changes': round(stats.avg_changes, 2),
+                'total_change': stats.total_change,
+                'percent_change': round(stats.percent_change, 2)
+            })
+        else:
+            # If no stats available, use zeros for the additional metrics
+            result.append({
+                'filename': filename,
+                'count': count,
+                'avg_changes': 0.0,
+                'total_change': 0,
+                'percent_change': 0.0
+            })
+
+    return result
 
 
 @callback(
@@ -87,11 +134,17 @@ def calculate_usages(period: str):
 def populate_graph(period_input):
     if not period_input:
         raise PreventUpdate
+
+    # Get file usage data with additional metrics
     usages = calculate_usages(period_input)
-    frame = DataFrame(data=usages, columns=['filename', 'count'])
+
+    # Create DataFrame with all metrics
+    frame = DataFrame(data=usages)
+
+    # Create bar chart using just filename and count
     figure = px.bar(data_frame=frame, x='filename', y='count')
 
-    frame = DataFrame(data=usages, columns=['filename', 'count'])
+    # Convert DataFrame to dict for table display
     table_data = frame.to_dict('records')
 
     style_show = {"display": "block"}
