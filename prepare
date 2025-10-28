@@ -13,9 +13,8 @@ uv sync
 # Check tests still pass
 uv run pytest -q
 
-# Synch the precommit hook
+# Sync the precommit hook
 if [ -f utils/pre-commit ]; then
-  mkdir -p .git/hooks
   if [ ! -f .git/hooks/pre-commit ] || [ utils/pre-commit -nt .git/hooks/pre-commit ]; then
     cp utils/pre-commit .git/hooks/pre-commit
     chmod +x .git/hooks/pre-commit
