@@ -1,6 +1,3 @@
-from collections import defaultdict
-from datetime import datetime, timedelta
-from itertools import combinations
 from typing import Iterable
 
 from dash import register_page, html, callback, Output, Input, dcc
@@ -10,6 +7,7 @@ from git import Commit
 
 import data
 import date_utils
+from algorithms.affinity_calculator import calculate_affinities
 
 register_page(__name__)
 
@@ -55,14 +53,10 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     > create_affinity_list([commit_with(['a','b']), commit_with(['b','c'])])\
 
     """
-    affinities = defaultdict(int)
-    for commit in dataset:
-        files_in_commit = len(commit.stats.files)
-        if files_in_commit < 2:
-            continue
-        for combo in combinations(commit.stats.files, 2):
-            ordered_key = tuple(sorted(combo))
-            affinities[ordered_key] += 1 / files_in_commit
+    # Use shared affinity calculator
+    affinities = calculate_affinities(dataset)
+    
+    # Format for display
     affinity_first_list = [
         dict(Affinity=f"{value:6.2f}", Pairing="\n\n".join(key))
         for key, value in affinities.items()

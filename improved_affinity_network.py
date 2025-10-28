@@ -9,7 +9,7 @@ import networkx as nx
 import plotly.graph_objects as go
 import plotly.express as px
 from collections import defaultdict
-from itertools import combinations
+from algorithms.affinity_calculator import calculate_affinities
 
 
 def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=50, min_edge_count=1):
@@ -56,16 +56,15 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
     # Count total commits
     stats["total_commits"] = sum(1 for _ in commits)
     
-    # Reset commits iterator if it was consumed
-    if hasattr(commits, 'seek') and callable(getattr(commits, 'seek')):
-        commits.seek(0)
-    elif not hasattr(commits, '__len__'):
+    # Convert to list to handle iterator consumption (done by calculate_affinities)
+    if not isinstance(commits, list):
         commits = list(commits)
     
-    # Calculate affinities
-    affinities = defaultdict(float)
-    file_counts = defaultdict(int)  # Count how many times each file appears in commits
+    # Calculate affinities using shared function
+    affinities = calculate_affinities(commits)
     
+    # Count how many times each file appears in commits
+    file_counts = defaultdict(int)
     for commit in commits:
         files_in_commit = len(commit.stats.files)
         
@@ -73,14 +72,8 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
         for file in commit.stats.files:
             file_counts[file] += 1
         
-        if files_in_commit < 2:
-            continue
-            
-        stats["commits_with_multiple_files"] += 1
-        
-        for combo in combinations(commit.stats.files, 2):
-            ordered_key = tuple(sorted(combo))
-            affinities[ordered_key] += 1 / files_in_commit
+        if files_in_commit >= 2:
+            stats["commits_with_multiple_files"] += 1
     
     # Get unique files
     all_files = set()

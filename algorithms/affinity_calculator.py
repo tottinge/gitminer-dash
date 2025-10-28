@@ -1,0 +1,76 @@
+"""
+Core affinity calculation module.
+
+This module provides the fundamental algorithm for calculating file affinities
+based on commit history. Files that are modified together in the same commit
+have affinity for each other.
+"""
+from collections import defaultdict
+from itertools import combinations
+from typing import Iterable, Dict, Tuple
+
+
+def calculate_affinities(commits: Iterable) -> Dict[Tuple[str, str], float]:
+    """
+    Calculate file affinities based on commit history.
+    
+    Files that are modified together in commits have "affinity" for each other.
+    The affinity score is weighted by the number of files in each commit:
+    - A commit with 2 files contributes 1/2 = 0.5 to each pair's affinity
+    - A commit with 10 files contributes 1/10 = 0.1 to each pair's affinity
+    
+    This weighting prevents large commits (like merges) from dominating the
+    affinity scores.
+    
+    Args:
+        commits: Iterable of commit objects with a stats.files attribute.
+                 Automatically handles iterator consumption by converting to list.
+    
+    Returns:
+        A defaultdict mapping (file1, file2) tuples to affinity scores.
+        File pairs are always sorted alphabetically to ensure consistent keys.
+        Returns empty defaultdict if commits is empty or None.
+    
+    Examples:
+        >>> from unittest.mock import Mock
+        >>> commit1 = Mock()
+        >>> commit1.stats.files = {'a.py': {}, 'b.py': {}}
+        >>> commit2 = Mock()
+        >>> commit2.stats.files = {'b.py': {}, 'c.py': {}}
+        >>> affinities = calculate_affinities([commit1, commit2])
+        >>> affinities[('a.py', 'b.py')]
+        0.5
+        >>> affinities[('b.py', 'c.py')]
+        0.5
+    """
+    affinities = defaultdict(float)
+    
+    # Handle None input
+    if commits is None:
+        return affinities
+    
+    # Convert to list to handle iterator consumption
+    # This ensures we can iterate multiple times if needed
+    if not isinstance(commits, list):
+        commits = list(commits)
+    
+    # If empty after conversion, return empty defaultdict
+    if not commits:
+        return affinities
+    
+    # Calculate affinities for each commit
+    for commit in commits:
+        files_in_commit = len(commit.stats.files)
+        
+        # Skip commits with only one file (no pairs possible)
+        if files_in_commit < 2:
+            continue
+        
+        # Calculate affinity for all file pairs in this commit
+        # Weight by 1/files_in_commit to reduce impact of large commits
+        for combo in combinations(commit.stats.files, 2):
+            # Always sort the pair to ensure consistent keys
+            ordered_key = tuple(sorted(combo))
+            affinities[ordered_key] += 1 / files_in_commit
+    
+    return affinities

@@ -2,13 +2,13 @@ import networkx as nx
 import plotly.graph_objects as go
 import plotly.express as px
 from collections import defaultdict
-from itertools import combinations
 from dash import register_page, html, callback, Output, Input, dcc, State, no_update
 from dash.dcc import Dropdown, Slider
 from dash.html import Button
 
 import data
 import date_utils
+from algorithms.affinity_calculator import calculate_affinities
 
 register_page(__name__, title="Affinity Groups")
 
@@ -95,17 +95,6 @@ layout = html.Div(
     ]
 )
 
-def calculate_affinities(commits):
-    """Calculate file affinities based on commit data."""
-    affinities = defaultdict(float)
-    for commit in commits:
-        files_in_commit = len(commit.stats.files)
-        if files_in_commit < 2:
-            continue
-        for combo in combinations(commit.stats.files, 2):
-            ordered_key = tuple(sorted(combo))
-            affinities[ordered_key] += 1 / files_in_commit
-    return affinities
 
 def find_affinity_range(commits, max_nodes=50):
     """
