@@ -12,6 +12,7 @@ from collections import defaultdict
 from typing import Tuple, Dict, List, Any
 
 from algorithms.affinity_calculator import calculate_affinities
+from utils.git import ensure_list
 
 
 def calculate_node_size(commit_count: int, degree: int) -> float:
@@ -72,8 +73,7 @@ def create_file_affinity_network(
         return nx.Graph(), [], {"error": "No commits provided"}
     
     # Convert to list to handle iterator consumption
-    if not isinstance(commits, list):
-        commits = list(commits)
+    commits = ensure_list(commits)
     
     stats["total_commits"] = len(commits)
     

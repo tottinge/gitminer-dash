@@ -13,6 +13,7 @@ from algorithms.affinity_analysis import (
     calculate_ideal_affinity
 )
 from visualization.network_graph import create_file_affinity_network, create_network_visualization
+from utils.git import ensure_list
 
 register_page(__name__, title="Affinity Groups")
 
@@ -187,7 +188,7 @@ def update_file_affinity_graph(period: str, max_nodes: int, min_affinity: float)
     try:
         starting, ending = date_utils.calculate_date_range(period)
         # Convert commits_data to a list to prevent the iterator from being consumed
-        commits_data = list(data.commits_in_period(starting, ending))
+        commits_data = ensure_list(data.commits_in_period(starting, ending))
         
         # Calculate ideal affinity
         ideal_affinity, _, _ = calculate_ideal_affinity(

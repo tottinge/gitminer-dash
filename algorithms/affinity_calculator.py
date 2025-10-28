@@ -8,6 +8,7 @@ have affinity for each other.
 from collections import defaultdict
 from itertools import combinations
 from typing import Iterable, Dict, Tuple
+from utils.git import ensure_list
 
 
 def _calculate_affinities_from_commits(commits, affinities):
@@ -70,8 +71,7 @@ def calculate_affinities(commits: Iterable) -> Dict[Tuple[str, str], float]:
     if commits is None:
         return affinities
 
-    if not isinstance(commits, list):
-        commits = list(commits)
+    commits = ensure_list(commits)
 
     if not commits:
         return affinities

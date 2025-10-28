@@ -7,6 +7,7 @@ including finding optimal affinity thresholds and analyzing affinity ranges.
 from collections import defaultdict
 from typing import Tuple, Iterable, Set, List
 from algorithms.affinity_calculator import calculate_affinities
+from utils.git import ensure_list
 
 
 def get_top_files_and_affinities(commits, affinities, max_nodes):
@@ -50,11 +51,8 @@ def find_affinity_range(commits, max_nodes=50):
     if not commits:
         return 0.05, 0.5, 0.2  # Default values if no commits
     
-    # Reset commits iterator if it was consumed
-    if hasattr(commits, 'seek') and callable(getattr(commits, 'seek')):
-        commits.seek(0)
-    elif not hasattr(commits, '__len__'):
-        commits = list(commits)
+    # Normalize to list for safe reuse
+    commits = ensure_list(commits)
     
     affinities = calculate_affinities(commits)
     
@@ -95,11 +93,8 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
     if not commits:
         return 0.2, 0, 0  # Default values if no commits
     
-    # Reset commits iterator if it was consumed
-    if hasattr(commits, 'seek') and callable(getattr(commits, 'seek')):
-        commits.seek(0)
-    elif not hasattr(commits, '__len__'):
-        commits = list(commits)
+    # Normalize to list for safe reuse
+    commits = ensure_list(commits)
     
     affinities = calculate_affinities(commits)
     
