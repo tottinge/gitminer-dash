@@ -41,19 +41,15 @@ def file_changes_over_period(
     Returns:
         A tuple of (commits, avg_changes, total_change, percent_change)
     """
-    # Set default values
     start = start or datetime.now() - timedelta(days=365)
     end = end or datetime.now()
     repo = repo or Repo('.')
     
-    # Get commits that modified the file
     total_commits = list(repo.iter_commits(paths=target_file, since=start, until=end))
     
-    # If no commits found, return zeros
     if not total_commits:
         return 0, 0.0, 0, 0.0
     
-    # Calculate statistics
     commits = len(total_commits)
     avg_changes = mean(commit.stats.files[target_file]['lines'] for commit in total_commits)
     
@@ -61,7 +57,6 @@ def file_changes_over_period(
     final_size = repo.commit(total_commits[-1]).tree[target_file].size
     total_change = abs(final_size - original_size)
     
-    # Avoid division by zero
     percent_change = (final_size - original_size) / original_size * 100 if original_size > 0 else 0.0
     
     return commits, avg_changes, total_change, percent_change
@@ -85,23 +80,18 @@ def files_changes_over_period(
     Returns:
         A dictionary mapping file paths to FileChangeStats objects
     """
-    # Set default values
     start = start or datetime.now() - timedelta(days=365)
     end = end or datetime.now()
     repo = repo or Repo('.')
     
-    # Initialize result dictionary
     results = {}
     
-    # Process each file
     for file_path in target_files:
         try:
-            # Get statistics for the file
             commits, avg_changes, total_change, percent_change = file_changes_over_period(
                 file_path, start, end, repo
             )
             
-            # Create a FileChangeStats object
             stats = FileChangeStats(
                 file_path=file_path,
                 commits=commits,
@@ -110,13 +100,10 @@ def files_changes_over_period(
                 percent_change=percent_change
             )
             
-            # Add to results
             results[file_path] = stats
             
         except Exception as e:
-            # Handle errors (file not found, etc.)
             print(f"Error processing file {file_path}: {str(e)}")
-            # Add an entry with zeros to indicate the file was processed but had errors
             results[file_path] = FileChangeStats(
                 file_path=file_path,
                 commits=0,

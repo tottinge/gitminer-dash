@@ -12,6 +12,19 @@ from collections import defaultdict
 from algorithms.affinity_calculator import calculate_affinities
 
 
+def _calculate_node_size(commit_count: int, degree: int) -> float:
+    """Calculate node size based on commit count and degree."""
+    base_size = 10
+    commit_factor = min(commit_count * 0.5, 20)
+    degree_factor = degree * 2
+    return base_size + commit_factor + degree_factor
+
+
+def _create_node_tooltip(node: str, commit_count: int, degree: int) -> str:
+    """Create informative tooltip text for a node."""
+    return f"File: {node}<br>Commits: {commit_count}<br>Connections: {degree}"
+
+
 def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=50, min_edge_count=1):
     """
     Create an improved network graph of file affinities based on commit history.
@@ -276,16 +289,10 @@ def create_improved_network_visualization(G, communities, title="Improved File A
             node_x.append(x)
             node_y.append(y)
             
-            # Create informative tooltip text
             commit_count = G.nodes[node].get('commit_count', 0)
             degree = G.degree(node)
-            node_text.append(f"File: {node}<br>Commits: {commit_count}<br>Connections: {degree}")
-            
-            # Node size based on commit count and degree
-            base_size = 10
-            commit_factor = min(commit_count * 0.5, 20)  # Cap the size increase
-            degree_factor = degree * 2
-            node_size.append(base_size + commit_factor + degree_factor)
+            node_text.append(_create_node_tooltip(node, commit_count, degree))
+            node_size.append(_calculate_node_size(commit_count, degree))
         
         node_trace = go.Scatter(
             x=node_x, y=node_y,
@@ -317,16 +324,10 @@ def create_improved_network_visualization(G, communities, title="Improved File A
                 node_x.append(x)
                 node_y.append(y)
                 
-                # Create informative tooltip text
                 commit_count = G.nodes[node].get('commit_count', 0)
                 degree = G.degree(node)
-                node_text.append(f"File: {node}<br>Commits: {commit_count}<br>Connections: {degree}")
-                
-                # Node size based on commit count and degree
-                base_size = 10
-                commit_factor = min(commit_count * 0.5, 20)  # Cap the size increase
-                degree_factor = degree * 2
-                node_size.append(base_size + commit_factor + degree_factor)
+                node_text.append(_create_node_tooltip(node, commit_count, degree))
+                node_size.append(_calculate_node_size(commit_count, degree))
             
             color = community_colors[community_id % len(community_colors)]
             

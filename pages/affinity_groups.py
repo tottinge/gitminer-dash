@@ -95,6 +95,33 @@ layout = html.Div(
 )
 
 
+def _get_top_files_and_affinities(commits, affinities, max_nodes):
+    """Get top files by affinity and their relevant affinity values.
+    
+    Args:
+        commits: Iterable of commit objects
+        affinities: Dictionary of file pair affinities
+        max_nodes: Maximum number of nodes to consider
+        
+    Returns:
+        A tuple of (top_file_set, relevant_affinities)
+    """
+    file_total_affinity = defaultdict(float)
+    for (file1, file2), affinity in affinities.items():
+        file_total_affinity[file1] += affinity
+        file_total_affinity[file2] += affinity
+    
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_file_set = {file for file, _ in top_files}
+    
+    relevant_affinities = [
+        affinity for (file1, file2), affinity in affinities.items()
+        if file1 in top_file_set and file2 in top_file_set
+    ]
+    
+    return top_file_set, relevant_affinities
+
+
 def find_affinity_range(commits, max_nodes=50):
     """
     Find the minimum and maximum affinity values in the dataset.
@@ -118,23 +145,9 @@ def find_affinity_range(commits, max_nodes=50):
     affinities = calculate_affinities(commits)
     
     if not affinities:
-        return 0.05, 0.5, 0.2  # Default values if no affinities
+        return 0.05, 0.5, 0.2
     
-    # Get unique files and their total affinities
-    file_total_affinity = defaultdict(float)
-    for (file1, file2), affinity in affinities.items():
-        file_total_affinity[file1] += affinity
-        file_total_affinity[file2] += affinity
-    
-    # Get top files by total affinity
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
-    top_file_set = {file for file, _ in top_files}
-    
-    # Get all affinity values between top files
-    relevant_affinities = []
-    for (file1, file2), affinity in affinities.items():
-        if file1 in top_file_set and file2 in top_file_set:
-            relevant_affinities.append(affinity)
+    top_file_set, relevant_affinities = _get_top_files_and_affinities(commits, affinities, max_nodes)
     
     if not relevant_affinities:
         return 0.05, 0.5, 0.2  # Default values if no relevant affinities
@@ -174,22 +187,8 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
         commits = list(commits)
     
     affinities = calculate_affinities(commits)
-
-    # Get unique files and their total affinities
-    file_total_affinity = defaultdict(float)
-    for (file1, file2), affinity in affinities.items():
-        file_total_affinity[file1] += affinity
-        file_total_affinity[file2] += affinity
     
-    # Get top files by total affinity
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
-    top_file_set = {file for file, _ in top_files}
-    
-    # Get all affinity values between top files
-    relevant_affinities = []
-    for (file1, file2), affinity in affinities.items():
-        if file1 in top_file_set and file2 in top_file_set:
-            relevant_affinities.append(affinity)
+    top_file_set, relevant_affinities = _get_top_files_and_affinities(commits, affinities, max_nodes)
     
     if not relevant_affinities:
         return 0.2, 0, 0  # Default if no relevant affinities

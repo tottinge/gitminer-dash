@@ -45,31 +45,22 @@ def calculate_affinities(commits: Iterable) -> Dict[Tuple[str, str], float]:
     """
     affinities = defaultdict(float)
     
-    # Handle None input
     if commits is None:
         return affinities
     
-    # Convert to list to handle iterator consumption
-    # This ensures we can iterate multiple times if needed
     if not isinstance(commits, list):
         commits = list(commits)
     
-    # If empty after conversion, return empty defaultdict
     if not commits:
         return affinities
     
-    # Calculate affinities for each commit
     for commit in commits:
         files_in_commit = len(commit.stats.files)
         
-        # Skip commits with only one file (no pairs possible)
         if files_in_commit < 2:
             continue
         
-        # Calculate affinity for all file pairs in this commit
-        # Weight by 1/files_in_commit to reduce impact of large commits
         for combo in combinations(commit.stats.files, 2):
-            # Always sort the pair to ensure consistent keys
             ordered_key = tuple(sorted(combo))
             affinities[ordered_key] += 1 / files_in_commit
     

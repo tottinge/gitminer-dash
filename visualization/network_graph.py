@@ -14,6 +14,19 @@ from typing import Tuple, Dict, List, Any
 from algorithms.affinity_calculator import calculate_affinities
 
 
+def _calculate_node_size(commit_count: int, degree: int) -> float:
+    """Calculate node size based on commit count and degree."""
+    base_size = 10
+    commit_factor = min(commit_count * 0.5, 20)
+    degree_factor = degree * 2
+    return base_size + commit_factor + degree_factor
+
+
+def _create_node_tooltip(node: str, commit_count: int, degree: int) -> str:
+    """Create informative tooltip text for a node."""
+    return f"File: {node}<br>Commits: {commit_count}<br>Connections: {degree}"
+
+
 def create_file_affinity_network(
     commits, 
     min_affinity: float = 0.2, 
@@ -360,13 +373,8 @@ def _create_single_community_trace(G: nx.Graph, pos: Dict, color: str) -> go.Sca
         
         commit_count = G.nodes[node].get('commit_count', 0)
         degree = G.degree(node)
-        node_text.append(f"File: {node}<br>Commits: {commit_count}<br>Connections: {degree}")
-        
-        # Node size based on commit count and degree
-        base_size = 10
-        commit_factor = min(commit_count * 0.5, 20)
-        degree_factor = degree * 2
-        node_size.append(base_size + commit_factor + degree_factor)
+        node_text.append(_create_node_tooltip(node, commit_count, degree))
+        node_size.append(_calculate_node_size(commit_count, degree))
     
     return go.Scatter(
         x=node_x, y=node_y,
@@ -402,13 +410,8 @@ def _create_community_trace(
         
         commit_count = G.nodes[node].get('commit_count', 0)
         degree = G.degree(node)
-        node_text.append(f"File: {node}<br>Commits: {commit_count}<br>Connections: {degree}")
-        
-        # Node size based on commit count and degree
-        base_size = 10
-        commit_factor = min(commit_count * 0.5, 20)
-        degree_factor = degree * 2
-        node_size.append(base_size + commit_factor + degree_factor)
+        node_text.append(_create_node_tooltip(node, commit_count, degree))
+        node_size.append(_calculate_node_size(commit_count, degree))
     
     return go.Scatter(
         x=node_x, y=node_y,
