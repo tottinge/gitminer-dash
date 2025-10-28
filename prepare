@@ -1,11 +1,24 @@
 set -ex
-# clean and recreate a dedicated temp directory each run
-rm -rf .tmp || true
 
+# update sources
 git pull --rebase
 
+# update environment
+rm -rf .tmp || true
 mkdir -p .tmp
 chmod 700 .tmp || true
 export TMPDIR="$(pwd)/.tmp"
 uv sync
+
+# Check tests still pass
 uv run pytest -q
+
+# Synch the precommit hook
+if [ -f utils/pre-commit ]; then
+  mkdir -p .git/hooks
+  if [ ! -f .git/hooks/pre-commit ] || [ utils/pre-commit -nt .git/hooks/pre-commit ]; then
+    cp utils/pre-commit .git/hooks/pre-commit
+    chmod +x .git/hooks/pre-commit
+    echo "prepare: installed/updated .git/hooks/pre-commit from utils/pre-commit"
+  fi
+fi
