@@ -88,11 +88,16 @@ def populate_graph(store_data):
     repo = data.get_repo()
     usages = calculate_file_commit_frequency(commits_data, repo, begin, end, top_n=20)
 
-    # Create DataFrame with all metrics
-    frame = DataFrame(data=usages)
+    # Create DataFrame with all metrics (ensure columns even when no data)
+    columns = ['filename', 'count', 'avg_changes', 'total_change', 'percent_change']
+    frame = DataFrame(usages if usages else [], columns=columns)
 
     # Create bar chart using just filename and count
     figure = px.bar(data_frame=frame, x='filename', y='count')
+    if frame.empty:
+        import plotly.graph_objects as go
+        figure = go.Figure()
+        figure.add_annotation(text="No data in selected period", xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
 
     # Convert DataFrame to dict for table display
     table_data = frame.to_dict('records')
