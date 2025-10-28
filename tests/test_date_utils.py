@@ -12,7 +12,7 @@ from datetime import datetime
 import pytest
 
 # Import date_utils module
-import date_utils
+from utils import date_utils
 
 # Create a consistent mock date for all tests
 MOCK_DATE = datetime(2025, 10, 22, 17, 59)

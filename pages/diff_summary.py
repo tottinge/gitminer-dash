@@ -8,7 +8,7 @@ import plotly.express as px
 from dash import register_page, html, dcc, callback, Output, Input
 
 import data
-from logging_wrapper import log
+from utils.logging_wrapper import log
 
 register_page(
     module=__name__,  # Where it's found

@@ -26,7 +26,7 @@ from itertools import combinations
 
 # Import project modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import date_utils
+from utils import date_utils
 
 
 # Copy of functions from affinity_groups.py to avoid Dash initialization issues

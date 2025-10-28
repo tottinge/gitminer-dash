@@ -5,7 +5,7 @@ from dash.dcc import Dropdown, Slider
 from dash.html import Button
 
 import data
-import date_utils
+from utils import date_utils
 from algorithms.affinity_calculator import calculate_affinities
 from visualization.network_graph import create_file_affinity_network, create_network_visualization
 

@@ -6,7 +6,7 @@ from dash.dcc import Dropdown
 from git import Commit
 
 import data
-import date_utils
+from utils import date_utils
 from algorithms.affinity_calculator import calculate_affinities
 
 register_page(__name__)

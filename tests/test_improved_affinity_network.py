@@ -21,7 +21,7 @@ from git import Repo
 
 # Import project modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import date_utils
+from utils import date_utils
 from improved_affinity_network import create_improved_file_affinity_network, create_improved_network_visualization
 
 # Import original functions (copied to avoid Dash initialization issues)
