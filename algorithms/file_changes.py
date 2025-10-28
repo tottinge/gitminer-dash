@@ -4,6 +4,7 @@ from statistics import mean
 import logging
 import git
 from git import Repo
+from utils.git import get_repo as get_repo_util, tree_entry_size
 
 
 class FileChangeStats(NamedTuple):
@@ -44,7 +45,7 @@ def file_changes_over_period(
     """
     start = start or datetime.now() - timedelta(days=365)
     end = end or datetime.now()
-    repo = repo or Repo('.')
+    repo = repo or get_repo_util()
     
     total_commits = list(repo.iter_commits(paths=target_file, since=start, until=end))
     
@@ -61,14 +62,8 @@ def file_changes_over_period(
 
     first_commit = touched[0]
     last_commit = touched[-1]
-    try:
-        original_size = repo.commit(first_commit).tree[target_file].size
-    except Exception:
-        original_size = 0
-    try:
-        final_size = repo.commit(last_commit).tree[target_file].size
-    except Exception:
-        final_size = original_size
+    original_size = tree_entry_size(repo, first_commit, target_file)
+    final_size = tree_entry_size(repo, last_commit, target_file) or original_size
 
     total_change = abs(final_size - original_size)
     percent_change = (final_size - original_size) / original_size * 100 if original_size > 0 else 0.0
@@ -96,7 +91,7 @@ def files_changes_over_period(
     """
     start = start or datetime.now() - timedelta(days=365)
     end = end or datetime.now()
-    repo = repo or Repo('.')
+    repo = repo or get_repo_util()
     
     results = {}
     
