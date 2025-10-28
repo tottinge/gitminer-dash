@@ -7,6 +7,7 @@ from pandas import DataFrame
 
 from data import commits_in_period
 from algorithms.stacking import SequenceStacker
+from utils import date_utils
 
 register_page(module=__name__, title="Concurrent Efforts")
 
@@ -48,15 +49,21 @@ layout = html.Div(
         Output("id-code-lines-container", "style")
     ],
     Input("code-lines-refresh-button", "n_clicks"),
+    Input("global-date-range", "data"),
     running=[(Output('code-lines-refresh-button', 'disabled'), True, False)]
 
 )
-def update_code_lines_graph(_: int):
+def update_code_lines_graph(_: int, store_data):
     show = {"display": "block"}
 
-    days_duration = 30
-    end_date = datetime.today().astimezone()  # datetime.today().astimezone()
-    start_date = end_date - timedelta(days=days_duration)  # until_today - timedelta(days=90)
+    # Determine range from global store
+    if isinstance(store_data, dict):
+        period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+    else:
+        period = date_utils.DEFAULT_PERIOD
+    end_date = datetime.today().astimezone()
+    start_date, end_date = date_utils.calculate_date_range(period)
+    days_duration = (end_date - start_date).days
 
     # Make all the connections
     graph = nx.Graph()

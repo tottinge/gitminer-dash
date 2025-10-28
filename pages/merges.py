@@ -5,6 +5,7 @@ import plotly.express as px
 from dash import register_page, html, dcc, callback, Output, Input
 
 import data
+from utils import date_utils
 
 register_page(__name__, title="Merge Sizes")
 
@@ -19,11 +20,9 @@ layout = html.Div(
 
 # Doing this synchronously here (called in the layout)
 # makes startup time very slow.
-def prepare_dataframe():
-    today = datetime.today().astimezone()
-    start_date = today - timedelta(days=30)
+def prepare_dataframe(start_date, end_date):
     recent_merges = [
-        commit for commit in data.commits_in_period(start_date, today)
+        commit for commit in data.commits_in_period(start_date, end_date)
         if len(commit.parents) > 1
     ]
     columns = [
@@ -48,12 +47,18 @@ def prepare_dataframe():
 @callback(
     Output("merge-graph-container", "children"),
     Input("merge-refresh-button", "n_clicks"),
+    Input("global-date-range", "data"),
     running=[(Output("merge-refresh-button", "disabled"), True, False)],
 )
-def update_merge_graph(n_clicks: int):
-    data_frame = prepare_dataframe()
+def update_merge_graph(n_clicks: int, store_data):
+    if isinstance(store_data, dict):
+        period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+    else:
+        period = date_utils.DEFAULT_PERIOD
+    start_date, end_date = date_utils.calculate_date_range(period)
+    data_frame = prepare_dataframe(start_date, end_date)
     if data_frame.empty:
-        return html.H3("no merges found in the last 30 days")
+        return html.H3("no merges found in the selected period")
     bar_chart_figure = px.bar(
         data_frame=data_frame,
         x="date",

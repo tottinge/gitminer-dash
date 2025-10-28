@@ -7,6 +7,7 @@ from dash import register_page, html, dcc, callback, Output, Input
 import data
 from algorithms.diff_analysis import get_diffs_in_period
 from utils.logging_wrapper import log
+from utils import date_utils
 
 register_page(
     module=__name__,  # Where it's found
@@ -55,11 +56,15 @@ def make_figure(diffs_in_period):
 
 @callback(
     Output("diff-summary-graph", "figure"),
-    Input("id-diff-summary-container", "n_clicks")
+    Input("id-diff-summary-container", "n_clicks"),
+    Input("global-date-range", "data"),
 )
-def update_graph(_):
-    today = datetime.today().astimezone()
-    ninety_days_ago = today - timedelta(days=90)
+def update_graph(_, store_data):
+    if isinstance(store_data, dict):
+        period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+    else:
+        period = date_utils.DEFAULT_PERIOD
+    ninety_days_ago, today = date_utils.calculate_date_range(period)
     commits_data = data.commits_in_period(ninety_days_ago, today)
     diffs_in_period = get_diffs_in_period(commits_data, ninety_days_ago, today)
     return make_figure(diffs_in_period)

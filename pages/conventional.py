@@ -8,6 +8,7 @@ from pandas import DataFrame
 
 import data
 from algorithms.conventional_commits import prepare_changes_by_date
+from utils import date_utils
 
 register_page(__name__)
 
@@ -59,12 +60,16 @@ layout = html.Div(
 @callback(
     Output("id-conventional-graph", "figure"),
     Input("id-conventional-refresh-button", "n_clicks"),
+    Input("global-date-range", "data"),
 )
-def update_conventional_table(_):
-    today = datetime.today().astimezone()
-    start = today - timedelta(weeks=12)
+def update_conventional_table(_, store_data):
+    if isinstance(store_data, dict):
+        period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+    else:
+        period = date_utils.DEFAULT_PERIOD
+    start, today = date_utils.calculate_date_range(period)
     commits_data = data.commits_in_period(start, today)
-    dataframe = prepare_changes_by_date(commits_data, weeks=12)
+    dataframe = prepare_changes_by_date(commits_data)
     return make_figure(dataframe)  # , make_summary_figure(dataframe))
 
 
