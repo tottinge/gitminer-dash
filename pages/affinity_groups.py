@@ -25,18 +25,7 @@ layout = html.Div(
             style={"display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "20px"},
             children=[
                 html.Div(
-                    style={"width": "30%"},
-                    children=[
-                        html.Label("Time Period:"),
-                        Dropdown(
-                            id="id-affinity-period-dropdown",
-                            options=date_utils.PERIOD_OPTIONS,
-                            value=date_utils.PERIOD_OPTIONS[len(date_utils.PERIOD_OPTIONS)//2],
-                        ),
-                    ]
-                ),
-                html.Div(
-                    style={"width": "30%"},
+                    style={"width": "45%"},
                     children=[
                         html.Label("Maximum Number of Nodes:"),
                         Slider(
@@ -50,7 +39,7 @@ layout = html.Div(
                     ]
                 ),
                 html.Div(
-                    style={"width": "30%"},
+                    style={"width": "45%"},
                     children=[
                         html.Label("Minimum Affinity Factor:"),
                         Slider(
@@ -109,11 +98,11 @@ layout = html.Div(
     Output("id-affinity-min-slider", "marks"),
     Output("id-auto-affinity-info", "children"),
     [Input("id-auto-affinity-button", "n_clicks")],
-    [State("id-affinity-period-dropdown", "value"),
+    [State("global-date-range", "data"),
      State("id-affinity-node-slider", "value")],
     prevent_initial_call=True
 )
-def auto_calculate_affinity(n_clicks, period, max_nodes):
+def auto_calculate_affinity(n_clicks, store_data, max_nodes):
     """
     Calculate the affinity range and ideal threshold based on the current commit data.
     
@@ -130,6 +119,10 @@ def auto_calculate_affinity(n_clicks, period, max_nodes):
     
     try:
         # Get commit data for the selected period
+        if isinstance(store_data, dict):
+            period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+        else:
+            period = store_data or date_utils.DEFAULT_PERIOD
         starting, ending = date_utils.calculate_date_range(period)
         commits_data = data.commits_in_period(starting, ending)
         
@@ -180,12 +173,16 @@ def auto_calculate_affinity(n_clicks, period, max_nodes):
 
 @callback(
     Output("id-file-affinity-graph", "figure"),
-    [Input("id-affinity-period-dropdown", "value"),
+    [Input("global-date-range", "data"),
      Input("id-affinity-node-slider", "value"),
      Input("id-affinity-min-slider", "value")]
 )
-def update_file_affinity_graph(period: str, max_nodes: int, min_affinity: float):
+def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
     try:
+        if isinstance(store_data, dict):
+            period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+        else:
+            period = store_data or date_utils.DEFAULT_PERIOD
         starting, ending = date_utils.calculate_date_range(period)
         # Convert commits_data to a list to prevent the iterator from being consumed
         commits_data = ensure_list(data.commits_in_period(starting, ending))

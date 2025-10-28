@@ -18,21 +18,6 @@ layout = html.Div(
     [
         html.H2("Most Often Committed Files"),
         html.Div(
-            style={"align-items": "center", "display": "flex"},
-            children=[
-                html.Label(children=["Period:"],
-                           htmlFor="id-period-dropdown",
-                           style={"display": "inline-block"}),
-                dcc.Dropdown(id='id-period-dropdown',
-                             options=date_utils.PERIOD_OPTIONS,
-                             value=date_utils.PERIOD_OPTIONS[1],  # 'Last 30 days'
-                             style={
-                                 "display": "inline-block",
-                                 "width": "100%",
-                             }),
-            ]
-        ),
-        html.Div(
             id='id-most-committed-graph-holder',
             style={"display": "none"},
             children=[
@@ -51,11 +36,6 @@ layout = html.Div(
             id="loading-table",
             type="circle",
             children=[
-                #                 'filename': filename,
-                #                 'count': count,
-                #                 'avg_changes': 0.0,
-                #                 'total_change': 0,
-                #                 'percent_change': 0.0
                 DataTable(
                     id='table-data',
                     columns = [
@@ -90,14 +70,14 @@ layout = html.Div(
         Output('table-data', 'data'),
         Output('id-most-committed-graph-holder', 'style')
     ],
-    Input('id-period-dropdown', 'value'),
-    running=[(Output('id-period-dropdown', 'disabled'), True, False)]
+    Input('global-date-range', 'data')
 )
-def populate_graph(period_input):
-    if not period_input:
+def populate_graph(store_data):
+    if not store_data or 'period' not in store_data:
         raise PreventUpdate
 
     # Get file usage data with additional metrics
+    period_input = store_data['period']
     begin, end = date_utils.calculate_date_range(period_input)
     commits_data = data.commits_in_period(begin, end)
     repo = data.get_repo()

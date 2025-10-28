@@ -14,11 +14,6 @@ register_page(__name__)
 layout = html.Div(
     children=[
         html.H1("Strongest Commit Affinities"),
-        Dropdown(
-            id="id-pairings-period-dropdown",
-            options=date_utils.PERIOD_OPTIONS,
-            value=date_utils.PERIOD_OPTIONS[0],  # 'Last 7 days'
-        ),
         dcc.Loading(
             id="loading-strongest-pairings-table",
             type="circle",
@@ -65,10 +60,11 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
 
 @callback(
     Output("id-strongest-pairings-table", "data"),
-    Input("id-pairings-period-dropdown", "value"),
+    Input("global-date-range", "data"),
 )
-def handle_period_selection(period: str):
+def handle_period_selection(store_data):
     # Use the shared date_utils module to calculate begin and end dates
+    period = (store_data or {}).get('period', date_utils.DEFAULT_PERIOD)
     starting, ending = date_utils.calculate_date_range(period)
     
     affinity_list = create_affinity_list(data.commits_in_period(starting, ending))
