@@ -26,7 +26,8 @@ app = Dash(__name__, suppress_callback_exceptions=True)
 # Import project modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import after Dash app instantiation to avoid PageError
-from pages.affinity_groups import calculate_ideal_affinity, create_file_affinity_network
+from pages.affinity_groups import calculate_ideal_affinity
+from visualization.network_graph import create_file_affinity_network
 
 # Test data directory
 TEST_DATA_DIR = Path(os.path.join(os.path.dirname(__file__), "test_data"))
@@ -116,7 +117,7 @@ def test_calculate_ideal_affinity_with_real_data():
             print(f"✗ Node count {node_count} is outside the expected range (5-20)")
         
         # Verify the result by creating a network with the calculated affinity
-        G, communities = create_file_affinity_network(
+        G, communities, stats = create_file_affinity_network(
             mock_commits, min_affinity=ideal_affinity, max_nodes=50
         )
         
@@ -253,7 +254,7 @@ def test_calculate_ideal_affinity_with_synthetic_data():
         print(f"✗ Node count {node_count} is outside the expected range (5-20)")
     
     # Verify the result by creating a network with the calculated affinity
-    G, communities = create_file_affinity_network(
+    G, communities, stats = create_file_affinity_network(
         mock_commits, min_affinity=ideal_affinity, max_nodes=50
     )
     
