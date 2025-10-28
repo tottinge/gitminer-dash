@@ -48,7 +48,7 @@ def prepare_dataframe():
 @callback(
     Output("merge-graph-container", "children"),
     Input("merge-refresh-button", "n_clicks"),
-    running=[Output("merge-refresh-button", "disabled"), True, False],
+    running=[(Output("merge-refresh-button", "disabled"), True, False)],
 )
 def update_merge_graph(n_clicks: int):
     data_frame = prepare_dataframe()

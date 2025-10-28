@@ -1,13 +1,11 @@
-import doctest
-from collections import defaultdict
 from datetime import datetime, timedelta
 
-import pandas as pd
 import plotly
 import plotly.express as px
 from dash import register_page, html, dcc, callback, Output, Input
 
 import data
+from algorithms.diff_analysis import get_diffs_in_period
 from utils.logging_wrapper import log
 
 register_page(
@@ -41,29 +39,10 @@ layout = html.Div(
 )
 
 
-@log
-def get_diffs_in_period(start: datetime, end: datetime) -> pd.DataFrame:
-    counts = defaultdict(int)
-    for commit in data.commits_in_period(start, end):
-        day = commit.committed_datetime.date()
-        inserted = commit.stats.total["insertions"]
-        deleted = commit.stats.total["deletions"]
-
-        possible_mods = min(inserted, deleted)
-        counts[day, "possible mods"] += possible_mods
-        counts[day, "net inserts"] += max(inserted - possible_mods, 0)
-        counts[day, "net deletes"] += max(deleted - possible_mods, 0)
-
-    source_data = sorted(
-        (day, kind, count)
-        for ((day, kind), count) in counts.items()
-    )
-    result = pd.DataFrame(source_data, columns=["date", "kind", "count"])
-    return result
 
 
 @log
-def make_figure(diffs_in_period: pd.DataFrame):
+def make_figure(diffs_in_period):
     bar_chart = px.bar(
         data_frame=diffs_in_period,
         x="date",
@@ -81,7 +60,8 @@ def make_figure(diffs_in_period: pd.DataFrame):
 def update_graph(_):
     today = datetime.today().astimezone()
     ninety_days_ago = today - timedelta(days=90)
-    diffs_in_period = get_diffs_in_period(ninety_days_ago, today)
+    commits_data = data.commits_in_period(ninety_days_ago, today)
+    diffs_in_period = get_diffs_in_period(commits_data, ninety_days_ago, today)
     return make_figure(diffs_in_period)
 
 

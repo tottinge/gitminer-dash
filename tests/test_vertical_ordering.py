@@ -1,6 +1,6 @@
 import unittest
 
-from pages.stacking import SequenceStacker
+from algorithms.stacking import SequenceStacker
 
 
 class MyTestCase(unittest.TestCase):

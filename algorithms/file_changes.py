@@ -1,6 +1,7 @@
 from typing import List, NamedTuple, Optional, Dict, Tuple
 from datetime import datetime, timedelta
 from statistics import mean
+import logging
 import git
 from git import Repo
 
@@ -50,13 +51,26 @@ def file_changes_over_period(
     if not total_commits:
         return 0, 0.0, 0, 0.0
     
-    commits = len(total_commits)
-    avg_changes = mean(commit.stats.files[target_file]['lines'] for commit in total_commits)
-    
-    original_size = repo.commit(total_commits[0]).tree[target_file].size
-    final_size = repo.commit(total_commits[-1]).tree[target_file].size
+    # Consider only commits that touched the target file
+    touched = [c for c in total_commits if target_file in getattr(c.stats, 'files', {})]
+    if not touched:
+        return 0, 0.0, 0, 0.0
+
+    commits = len(touched)
+    avg_changes = mean(c.stats.files[target_file].get('lines', 0) for c in touched)
+
+    first_commit = touched[0]
+    last_commit = touched[-1]
+    try:
+        original_size = repo.commit(first_commit).tree[target_file].size
+    except Exception:
+        original_size = 0
+    try:
+        final_size = repo.commit(last_commit).tree[target_file].size
+    except Exception:
+        final_size = original_size
+
     total_change = abs(final_size - original_size)
-    
     percent_change = (final_size - original_size) / original_size * 100 if original_size > 0 else 0.0
     
     return commits, avg_changes, total_change, percent_change
@@ -102,8 +116,8 @@ def files_changes_over_period(
             
             results[file_path] = stats
             
-        except Exception as e:
-            print(f"Error processing file {file_path}: {str(e)}")
+        except Exception:
+            logging.getLogger(__name__).exception(f"Error processing file {file_path}")
             results[file_path] = FileChangeStats(
                 file_path=file_path,
                 commits=0,

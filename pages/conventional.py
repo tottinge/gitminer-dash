@@ -1,5 +1,3 @@
-import re
-from collections import Counter
 from datetime import datetime, timedelta
 
 import plotly.express as px
@@ -9,6 +7,7 @@ from dash.dcc import Graph
 from pandas import DataFrame
 
 import data
+from algorithms.conventional_commits import prepare_changes_by_date
 
 register_page(__name__)
 
@@ -62,7 +61,10 @@ layout = html.Div(
     Input("id-conventional-refresh-button", "n_clicks"),
 )
 def update_conventional_table(_):
-    dataframe = prepare_changes_by_date()
+    today = datetime.today().astimezone()
+    start = today - timedelta(weeks=12)
+    commits_data = data.commits_in_period(start, today)
+    dataframe = prepare_changes_by_date(commits_data, weeks=12)
     return make_figure(dataframe)  # , make_summary_figure(dataframe))
 
 
@@ -88,37 +90,6 @@ def handle_click_on_conventional_graph(click_data):
     return result_data
 
 
-conventional_commit_match_pattern = re.compile(r'^(\w+)[!(:]')
-
-categories = {"build", "chore", "ci", "docs", "feat", "fix", "merge", "perf", "refactor", "revert", "style", "test"}
-
-
-def normalize_intent(intent: str):
-    lower = intent.lower()
-    if lower in categories:
-        return lower
-    for name in categories:
-        if lower in name or name in lower:
-            return name
-    return "unknown"
-
-
-def prepare_changes_by_date(weeks=12) -> DataFrame:
-    today = datetime.today().astimezone()
-    start = today - timedelta(weeks=weeks)
-
-    daily_change_counter = Counter()
-    for commit in data.commits_in_period(start, today):
-        match = conventional_commit_match_pattern.match(commit.message)
-        if match:
-            intent = normalize_intent(match.group(1))
-            daily_change_counter[(commit.committed_datetime.date(), intent)] += 1
-
-    dataset = sorted(
-        (date, intent, count)
-        for ((date, intent), count) in daily_change_counter.items()
-    )
-    return DataFrame(dataset, columns=["date", "reason", "count"])
 
 
 def make_figure(df: DataFrame):

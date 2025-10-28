@@ -48,10 +48,12 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
     """
     if not commits:
         return nx.Graph(), [], {"error": "No commits provided"}
-    
-    # Statistics to return
+
+    if not isinstance(commits, list):
+        commits = list(commits)
+
     stats = {
-        "total_commits": 0,
+        "total_commits": sum(1 for _ in commits),
         "commits_with_multiple_files": 0,
         "unique_files": 0,
         "file_pairs": 0,
@@ -65,98 +67,85 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
         "avg_edge_weight": 0,
         "avg_community_size": 0
     }
-    
-    # Count total commits
-    stats["total_commits"] = sum(1 for _ in commits)
-    
-    # Convert to list to handle iterator consumption (done by calculate_affinities)
-    if not isinstance(commits, list):
-        commits = list(commits)
-    
-    # Calculate affinities using shared function
+
     affinities = calculate_affinities(commits)
-    
-    # Count how many times each file appears in commits
+
     file_counts = defaultdict(int)
     for commit in commits:
         files_in_commit = len(commit.stats.files)
-        
-        # Count files
+
         for file in commit.stats.files:
             file_counts[file] += 1
-        
+
         if files_in_commit >= 2:
             stats["commits_with_multiple_files"] += 1
-    
-    # Get unique files
-    all_files = set()
-    for file_pair in affinities.keys():
-        all_files.update(file_pair)
-    
+
+    all_files = {file for file_pair in affinities for file in file_pair}
+
     stats["unique_files"] = len(all_files)
     stats["file_pairs"] = len(affinities)
-    
+
     # Create a network graph
     G = nx.Graph()
-    
+
     # Sort files by their total affinity and limit to max_nodes
     file_total_affinity = defaultdict(float)
     for (file1, file2), affinity in affinities.items():
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
-    
+
     top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
     top_file_set = {file for file, _ in top_files}
-    
+
     # Add nodes for top files
     for file in top_file_set:
         G.add_node(file, commit_count=file_counts[file])
-    
+
     stats["nodes_before_filtering"] = len(G.nodes())
-    
+
     # Add edges with weights based on affinity
     for (file1, file2), affinity in affinities.items():
         if file1 in top_file_set and file2 in top_file_set and affinity >= min_affinity:
             G.add_edge(file1, file2, weight=affinity)
-    
+
     stats["edges_before_filtering"] = len(G.edges())
-    
+
     # Remove nodes with too few connections
     if min_edge_count > 0:
         nodes_to_remove = [node for node, degree in G.degree() if degree < min_edge_count]
         G.remove_nodes_from(nodes_to_remove)
         stats["isolated_nodes"] = len(nodes_to_remove)
-    
+
     stats["nodes_after_filtering"] = len(G.nodes())
     stats["edges_after_filtering"] = len(G.edges())
-    
+
     # Find communities/clusters using Louvain method
     if len(G.nodes()) > 0:
         communities = nx.community.louvain_communities(G)
         stats["communities"] = len(communities)
-        
+
         # Calculate average community size
         if communities:
             community_sizes = [len(community) for community in communities]
             stats["avg_community_size"] = sum(community_sizes) / len(communities)
-        
+
         # Assign community ID to each node
         for i, community in enumerate(communities):
             for node in community:
                 G.nodes[node]['community'] = i
     else:
         communities = []
-    
+
     # Calculate average node degree
     if len(G.nodes()) > 0:
         degrees = [degree for _, degree in G.degree()]
         stats["avg_node_degree"] = sum(degrees) / len(G.nodes())
-    
+
     # Calculate average edge weight
     if len(G.edges()) > 0:
         weights = [data['weight'] for _, _, data in G.edges(data=True)]
         stats["avg_edge_weight"] = sum(weights) / len(G.edges())
-    
+
     return G, communities, stats
 
 
@@ -197,16 +186,16 @@ def create_improved_network_visualization(G, communities, title="Improved File A
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
         )
         return fig
-    
+
     # Use a force-directed layout algorithm
     pos = nx.spring_layout(G, seed=42)
-    
+
     # Create edge traces
     edge_x = []
     edge_y = []
     edge_weights = []
     edge_texts = []
-    
+
     # Check if there are any edges before creating edge trace
     if len(G.edges()) > 0:
         for edge in G.edges():
@@ -214,16 +203,16 @@ def create_improved_network_visualization(G, communities, title="Improved File A
             x1, y1 = pos[edge[1]]
             edge_x.extend([x0, x1, None])
             edge_y.extend([y0, y1, None])
-            
+
             weight = G.edges[edge]['weight']
             edge_weights.append(weight)
-            
+
             # Create informative tooltip text
             edge_texts.append(f"{edge[0]} - {edge[1]}<br>Affinity: {weight:.2f}")
-        
+
         # Normalize edge weights for width
         max_weight = max(edge_weights) if edge_weights else 1
-        
+
         # Create separate edge traces for each edge with its own width
         edge_traces = []
         for i in range(0, len(edge_x), 3):  # Each edge is 3 points (x0, x1, None)
@@ -236,11 +225,11 @@ def create_improved_network_visualization(G, communities, title="Improved File A
                 else:
                     width = 2  # Default width if index is out of range
                     text = ""
-                
+
                 # Create a trace for this single edge
                 edge_trace = go.Scatter(
-                    x=edge_x[i:i+3],  # Just this edge's x coordinates
-                    y=edge_y[i:i+3],  # Just this edge's y coordinates
+                    x=edge_x[i:i + 3],  # Just this edge's x coordinates
+                    y=edge_y[i:i + 3],  # Just this edge's y coordinates
                     line=dict(width=width, color='#888'),
                     hoverinfo='text',
                     text=text,
@@ -248,7 +237,7 @@ def create_improved_network_visualization(G, communities, title="Improved File A
                     showlegend=False
                 )
                 edge_traces.append(edge_trace)
-        
+
         # If no edges were created, create an empty edge trace
         if not edge_traces:
             edge_trace = go.Scatter(
@@ -266,16 +255,16 @@ def create_improved_network_visualization(G, communities, title="Improved File A
             hoverinfo='none',
             mode='lines')
         edge_traces = [edge_trace]
-    
+
     # Create node traces (one per community for different colors)
     node_traces = []
-    
+
     # Get a color map for communities - use a more distinct color palette
     community_colors = px.colors.qualitative.D3
-    
+
     # Get community IDs from node attributes, handle case where there are no communities
     community_ids = set(nx.get_node_attributes(G, 'community').values())
-    
+
     # If there are no communities but there are nodes, create a single community with all nodes
     if not community_ids and len(G.nodes()) > 0:
         # Create a trace with all nodes in a single color
@@ -283,17 +272,17 @@ def create_improved_network_visualization(G, communities, title="Improved File A
         node_y = []
         node_text = []
         node_size = []
-        
+
         for node in G.nodes():
             x, y = pos[node]
             node_x.append(x)
             node_y.append(y)
-            
+
             commit_count = G.nodes[node].get('commit_count', 0)
             degree = G.degree(node)
             node_text.append(_create_node_tooltip(node, commit_count, degree))
             node_size.append(_calculate_node_size(commit_count, degree))
-        
+
         node_trace = go.Scatter(
             x=node_x, y=node_y,
             mode='markers',
@@ -306,31 +295,31 @@ def create_improved_network_visualization(G, communities, title="Improved File A
             ),
             name='All Files'
         )
-        
+
         node_traces.append(node_trace)
     else:
         # Process each community
         for community_id in community_ids:
-            community_nodes = [node for node, data in G.nodes(data=True) 
-                              if data.get('community') == community_id]
-            
+            community_nodes = [node for node, data in G.nodes(data=True)
+                               if data.get('community') == community_id]
+
             node_x = []
             node_y = []
             node_text = []
             node_size = []
-            
+
             for node in community_nodes:
                 x, y = pos[node]
                 node_x.append(x)
                 node_y.append(y)
-                
+
                 commit_count = G.nodes[node].get('commit_count', 0)
                 degree = G.degree(node)
                 node_text.append(_create_node_tooltip(node, commit_count, degree))
                 node_size.append(_calculate_node_size(commit_count, degree))
-            
+
             color = community_colors[community_id % len(community_colors)]
-            
+
             node_trace = go.Scatter(
                 x=node_x, y=node_y,
                 mode='markers',
@@ -343,19 +332,19 @@ def create_improved_network_visualization(G, communities, title="Improved File A
                 ),
                 name=f'Group {community_id + 1}'
             )
-            
+
             node_traces.append(node_trace)
-    
+
     # Create figure
     fig = go.Figure(data=[*edge_traces, *node_traces],
-                 layout=go.Layout(
-                    title=title,
-                    title_font=dict(size=16),  # Use title_font instead of titlefont
-                    showlegend=True,
-                    hovermode='closest',
-                    margin=dict(b=20,l=5,r=5,t=40),
-                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
-                ))
-    
+                    layout=go.Layout(
+                        title=title,
+                        title_font=dict(size=16),  # Use title_font instead of titlefont
+                        showlegend=True,
+                        hovermode='closest',
+                        margin=dict(b=20, l=5, r=5, t=40),
+                        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+                    ))
+
     return fig

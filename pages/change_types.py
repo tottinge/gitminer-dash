@@ -6,6 +6,7 @@ import plotly.express as px
 from dash import html, dcc, register_page, callback, Output, Input
 from dash.dash_table import DataTable
 from plotly.graph_objs import Figure
+import plotly.graph_objects as go
 
 # Note: PyCharm tags these as invalid imports, but we run
 # the app from the parent dir and these are okay.
@@ -83,7 +84,7 @@ ChangeTypeCallbackResult = Tuple[
 def update_graph(_) -> ChangeTypeCallbackResult:
     data = change_series_20day()
     if data.empty:
-        figure = {"data": []}
+        figure = go.Figure()
         table_data = []
         return figure, table_data, style_hide, style_show
     figure = px.bar(
@@ -91,7 +92,13 @@ def update_graph(_) -> ChangeTypeCallbackResult:
         title="Change Types and Magnitudes Across Tags",
         x="Name",
         y=list(change_name.values()),
-        labels=["Added", "Deleted", "Modified", "Removed"],
+        labels={
+            "Name": "Tag",
+            "Files Added": "Added",
+            "Files Deleted": "Deleted",
+            "Files Renamed": "Renamed",
+            "Files Modified": "Modified"
+        },
         hover_name="Name",
         hover_data=["Date"],
         text_auto='.2s'

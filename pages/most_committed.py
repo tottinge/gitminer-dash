@@ -1,5 +1,3 @@
-from collections import Counter
-
 import plotly.express as px
 from dash import html, register_page, dcc, callback, Output, Input
 from dash.dash_table import DataTable
@@ -7,8 +5,8 @@ from dash.exceptions import PreventUpdate
 from pandas import DataFrame
 
 import data
-import date_utils
-from algorithms.file_changes import files_changes_over_period
+from utils import date_utils
+from algorithms.commit_frequency import calculate_file_commit_frequency
 
 register_page(
     module=__name__,  # Where it's found
@@ -84,53 +82,6 @@ layout = html.Div(
     ]
 )
 
-def calculate_usages(period: str):
-    # Use the shared date_utils module to calculate begin and end dates
-    begin, end = date_utils.calculate_date_range(period)
-
-    # Count file occurrences using Counter
-    counter = Counter()
-    for commit in data.commits_in_period(begin, end):
-        try:
-            files = commit.stats.files.keys()
-            counter.update(files)
-        except ValueError as e:
-            print("Stop me if you've seen this one before")
-            raise e
-
-    # Get the 20 most common files
-    most_common_files = counter.most_common(20)
-
-    # Extract just the filenames
-    filenames = [filename for filename, _ in most_common_files]
-
-    # Get additional metrics for these files
-    repo = data.get_repo()
-    file_stats = files_changes_over_period(filenames, begin, end, repo)
-
-    # Create a list of dictionaries with all metrics
-    result = []
-    for filename, count in most_common_files:
-        if filename in file_stats:
-            stats = file_stats[filename]
-            result.append({
-                'filename': filename,
-                'count': count,
-                'avg_changes': round(stats.avg_changes, 2),
-                'total_change': stats.total_change,
-                'percent_change': round(stats.percent_change, 2)
-            })
-        else:
-            # If no stats available, use zeros for the additional metrics
-            result.append({
-                'filename': filename,
-                'count': count,
-                'avg_changes': 0.0,
-                'total_change': 0,
-                'percent_change': 0.0
-            })
-
-    return result
 
 
 @callback(
@@ -147,7 +98,10 @@ def populate_graph(period_input):
         raise PreventUpdate
 
     # Get file usage data with additional metrics
-    usages = calculate_usages(period_input)
+    begin, end = date_utils.calculate_date_range(period_input)
+    commits_data = data.commits_in_period(begin, end)
+    repo = data.get_repo()
+    usages = calculate_file_commit_frequency(commits_data, repo, begin, end, top_n=20)
 
     # Create DataFrame with all metrics
     frame = DataFrame(data=usages)

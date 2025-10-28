@@ -53,16 +53,14 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     > create_affinity_list([commit_with(['a','b']), commit_with(['b','c'])])\
 
     """
-    # Use shared affinity calculator
     affinities = calculate_affinities(dataset)
     
-    # Format for display
-    affinity_first_list = [
+    # Sort by numeric affinity value, then format for display
+    sorted_pairs = sorted(affinities.items(), key=lambda kv: kv[1], reverse=True)
+    return [
         dict(Affinity=f"{value:6.2f}", Pairing="\n\n".join(key))
-        for key, value in affinities.items()
+        for key, value in sorted_pairs[:50]
     ]
-    sorted_by_strength = sorted(affinity_first_list, reverse=True, key=lambda x: x['Affinity'])
-    return sorted_by_strength[:50]
 
 
 @callback(

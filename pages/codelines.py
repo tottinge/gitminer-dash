@@ -6,7 +6,7 @@ from dash import html, register_page, callback, Output, Input, dcc
 from pandas import DataFrame
 
 from data import commits_in_period
-from .stacking import SequenceStacker
+from algorithms.stacking import SequenceStacker
 
 register_page(module=__name__, title="Concurrent Efforts")
 
@@ -48,7 +48,7 @@ layout = html.Div(
         Output("id-code-lines-container", "style")
     ],
     Input("code-lines-refresh-button", "n_clicks"),
-    running=(Output('code-lines-refresh-button', 'disabled'), True, False)
+    running=[(Output('code-lines-refresh-button', 'disabled'), True, False)]
 
 )
 def update_code_lines_graph(_: int):
