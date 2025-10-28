@@ -64,10 +64,16 @@ def update_graph(_, store_data):
         period = store_data.get('period', date_utils.DEFAULT_PERIOD)
     else:
         period = date_utils.DEFAULT_PERIOD
-    ninety_days_ago, today = date_utils.calculate_date_range(period)
-    commits_data = data.commits_in_period(ninety_days_ago, today)
-    diffs_in_period = get_diffs_in_period(commits_data, ninety_days_ago, today)
+    if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+        from datetime import datetime as _dt
+        start = _dt.fromisoformat(store_data['begin'])
+        end = _dt.fromisoformat(store_data['end'])
+    else:
+        start, end = date_utils.calculate_date_range(period)
+    commits_data = data.commits_in_period(start, end)
+    diffs_in_period = get_diffs_in_period(commits_data, start, end)
     return make_figure(diffs_in_period)
+
 
 
 if __name__ == "__main__":

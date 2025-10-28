@@ -63,12 +63,19 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     Input("global-date-range", "data"),
 )
 def handle_period_selection(store_data):
-    # Use the shared date_utils module to calculate begin and end dates
+    # Use the shared store's explicit begin/end when available
     period = (store_data or {}).get('period', date_utils.DEFAULT_PERIOD)
-    starting, ending = date_utils.calculate_date_range(period)
+    if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+        from datetime import datetime as _dt
+        starting = _dt.fromisoformat(store_data['begin'])
+        ending = _dt.fromisoformat(store_data['end'])
+    else:
+        starting, ending = date_utils.calculate_date_range(period)
     
     affinity_list = create_affinity_list(data.commits_in_period(starting, ending))
     if not affinity_list:
         return [{"Affinity": "-----",
                  "Pairing": "No commits detected in period"}]
     return affinity_list
+
+

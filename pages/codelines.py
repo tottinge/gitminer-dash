@@ -61,9 +61,12 @@ def update_code_lines_graph(_: int, store_data):
         period = store_data.get('period', date_utils.DEFAULT_PERIOD)
     else:
         period = date_utils.DEFAULT_PERIOD
-    end_date = datetime.today().astimezone()
-    start_date, end_date = date_utils.calculate_date_range(period)
-    days_duration = (end_date - start_date).days
+    if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+        from datetime import datetime as _dt
+        start_date = _dt.fromisoformat(store_data['begin'])
+        end_date = _dt.fromisoformat(store_data['end'])
+    else:
+        start_date, end_date = date_utils.calculate_date_range(period)
 
     # Make all the connections
     graph = nx.Graph()
@@ -108,16 +111,22 @@ def update_code_lines_graph(_: int, store_data):
 
     for data in sorted(chain_summary):
         early_timestamp, late_timestamp, commit_counts, duration, earliest, latest = data
-        height = stacker.height_for([early_timestamp, late_timestamp])
+        # Clamp chain span to the selected period
+        clamped_first = max(early_timestamp, start_date)
+        clamped_last = min(late_timestamp, end_date)
+        if clamped_first > clamped_last:
+            continue
+        clamped_duration = clamped_last - clamped_first
+        height = stacker.height_for([clamped_first, clamped_last])
         rows.append(dict(
-            first=early_timestamp.isoformat(),
-            last=late_timestamp.isoformat(),
+            first=clamped_first.isoformat(),
+            last=clamped_last.isoformat(),
             elevation=height,
             commit_counts=commit_counts,
             head=earliest['sha'],
             tail=latest['sha'],
-            duration=duration.days,
-            density=duration.days / commit_counts
+            duration=clamped_duration.days,
+            density=(clamped_duration.days / commit_counts) if commit_counts else 0
         ))
 
     df = DataFrame(
@@ -138,7 +147,7 @@ def update_code_lines_graph(_: int, store_data):
         x_end="last",
         y="elevation",
         color="density",
-        title=f"Code Lines (last {days_duration} days)",
+        title="Code Lines (selected period)",
         labels={
             "elevation": "",
             "density": "Commit Sparsity",
@@ -158,3 +167,5 @@ def update_code_lines_graph(_: int, store_data):
         }
     )
     return figure, show
+
+

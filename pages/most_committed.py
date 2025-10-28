@@ -78,7 +78,12 @@ def populate_graph(store_data):
 
     # Get file usage data with additional metrics
     period_input = store_data['period']
-    begin, end = date_utils.calculate_date_range(period_input)
+    if 'begin' in store_data and 'end' in store_data:
+        from datetime import datetime as _dt
+        begin = _dt.fromisoformat(store_data['begin'])
+        end = _dt.fromisoformat(store_data['end'])
+    else:
+        begin, end = date_utils.calculate_date_range(period_input)
     commits_data = data.commits_in_period(begin, end)
     repo = data.get_repo()
     usages = calculate_file_commit_frequency(commits_data, repo, begin, end, top_n=20)
@@ -94,3 +99,5 @@ def populate_graph(store_data):
 
     style_show = {"display": "block"}
     return figure, table_data, style_show
+
+

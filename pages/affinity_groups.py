@@ -123,7 +123,12 @@ def auto_calculate_affinity(n_clicks, store_data, max_nodes):
             period = store_data.get('period', date_utils.DEFAULT_PERIOD)
         else:
             period = store_data or date_utils.DEFAULT_PERIOD
-        starting, ending = date_utils.calculate_date_range(period)
+        if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+            from datetime import datetime as _dt
+            starting = _dt.fromisoformat(store_data['begin'])
+            ending = _dt.fromisoformat(store_data['end'])
+        else:
+            starting, ending = date_utils.calculate_date_range(period)
         commits_data = data.commits_in_period(starting, ending)
         
         # Find affinity range and ideal value
@@ -183,7 +188,12 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
             period = store_data.get('period', date_utils.DEFAULT_PERIOD)
         else:
             period = store_data or date_utils.DEFAULT_PERIOD
-        starting, ending = date_utils.calculate_date_range(period)
+        if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+            from datetime import datetime as _dt
+            starting = _dt.fromisoformat(store_data['begin'])
+            ending = _dt.fromisoformat(store_data['end'])
+        else:
+            starting, ending = date_utils.calculate_date_range(period)
         # Convert commits_data to a list to prevent the iterator from being consumed
         commits_data = ensure_list(data.commits_in_period(starting, ending))
         
@@ -253,3 +263,5 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
         )
         return fig
+
+

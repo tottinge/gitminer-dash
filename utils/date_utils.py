@@ -27,14 +27,17 @@ DEFAULT_PERIOD: str = 'Last 30 days'
 
 def calculate_date_range(period: str) -> Tuple[datetime, datetime]:
     """
-    Calculate start and end dates based on the selected period.
+    Calculate start and end datetimes for a period, normalized to full-day boundaries.
+
+    - Start is set to 00:00:00 of the start date
+    - End is set to 23:59:59 of the end date (today for relative ranges)
     
     Args:
         period: A string representing the time period (e.g., 'Last 30 days', 'Ever')
                 If None or empty, defaults to "30 days"
     
     Returns:
-        A tuple of (begin_date, end_date) as datetime objects with timezone info
+        A tuple of (begin_date, end_date) as timezone-aware datetime objects
     
     Examples:
         >>> from datetime import datetime, timedelta
@@ -42,30 +45,34 @@ def calculate_date_range(period: str) -> Tuple[datetime, datetime]:
         >>> begin, actual_end = calculate_date_range('Last 30 days')
         >>> actual_end.date() == datetime.today().date()
         True
-        >>> (actual_end - begin).days
+        >>> (actual_end.date() - begin.date()).days
         30
     """
-    end = datetime.today().astimezone()
+    now = datetime.today().astimezone()
+    # Normalize "end" to end-of-day
+    end = now.replace(hour=23, minute=59, second=59, microsecond=0)
     period = period or "30 days"
-    
-    match period.lower():
-        case p if "last 7 " in p:
-            begin = end - timedelta(days=7)
-        case p if "30" in p:
-            begin = end - timedelta(days=30)
-        case p if "60" in p:
-            begin = end - timedelta(days=60)
-        case p if "90" in p:
-            begin = end - timedelta(days=90)
-        case p if "6 months" in p:
-            begin = end - relativedelta(months=6)
-        case p if "1 year" in p:
-            begin = end - relativedelta(years=1)
-        case p if "5 years" in p:
-            begin = end - relativedelta(years=5)
-        case _:
-            begin = datetime(1970, 1, 1, tzinfo=end.tzinfo)
-    
+
+    lower = period.lower()
+    if "last 7 " in lower:
+        begin = (end - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif "30" in lower:
+        begin = (end - timedelta(days=30)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif "60" in lower:
+        begin = (end - timedelta(days=60)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif "90" in lower:
+        begin = (end - timedelta(days=90)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif "6 months" in lower:
+        begin = (end - relativedelta(months=6)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif "1 year" in lower:
+        begin = (end - relativedelta(years=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif "5 years" in lower:
+        begin = (end - relativedelta(years=5)).replace(hour=0, minute=0, second=0, microsecond=0)
+    else:
+        # Ever
+        begin = end.replace(year=1970, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return begin, end
+
     return begin, end
 
 
