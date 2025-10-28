@@ -176,3 +176,6 @@ cython_debug/
 
 # Exclude HTML visualizations in test_data
 test_data/*.html
+
+# Local temp dir for prepare
+.tmp/
