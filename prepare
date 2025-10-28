@@ -1,9 +1,11 @@
 set -ex
 # clean and recreate a dedicated temp directory each run
 rm -rf .tmp || true
+
 git pull --rebase
+
 mkdir -p .tmp
 chmod 700 .tmp || true
 export TMPDIR="$(pwd)/.tmp"
 uv sync
-pytest --doctest-modules
+uv run pytest -q
