@@ -8,11 +8,6 @@ if ! command -v uv >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "pre-commit: running tests (uv run pytest)..."
-# Run tests; if they fail, abort the commit
-if uv run pytest; then
-  echo "pre-commit: tests passed."
-else
-  echo "pre-commit: tests failed; aborting commit." >&2
-  exit 1
-fi
+uv run ruff check --fix
+uv run pytest
+
