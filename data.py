@@ -35,9 +35,7 @@ def get_repo() -> Repo:
 
 @cache
 def get_repo_name():
-    return re.sub(
-        pattern=r"[_\.-]", repl=" ", string=os.path.split(repository_path())[-1]
-    ).title()
+    return re.sub(pattern=r"[_\.-]", repl=" ", string=os.path.split(repository_path())[-1]).title()
 
 
 def _dt_key(dt: datetime) -> str:
@@ -46,11 +44,11 @@ def _dt_key(dt: datetime) -> str:
 
 
 @lru_cache(maxsize=64)
-def _cached_commits(repo_path: str, begin_key: str, end_key: str) -> List[Commit]:
+def _cached_commits(repo_path: str, begin_key: str, end_key: str) -> list[Commit]:
     repo = Repo(repo_path)
     begin = datetime.fromisoformat(begin_key)
     end = datetime.fromisoformat(end_key)
-    result: List[Commit] = []
+    result: list[Commit] = []
     for delta in repo.iter_commits():
         this_date = delta.committed_datetime
         if begin <= this_date <= end:
@@ -63,8 +61,7 @@ def commits_in_period(beginning: datetime, ending: datetime) -> Iterable[Commit]
     repo_path = repository_path()
     begin_key = _dt_key(beginning)
     end_key = _dt_key(ending)
-    for commit in _cached_commits(repo_path, begin_key, end_key):
-        yield commit
+    yield from _cached_commits(repo_path, begin_key, end_key)
 
 
 def clear_commit_cache() -> None:

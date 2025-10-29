@@ -12,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 
 
 # Common period options for dropdowns
-PERIOD_OPTIONS: List[str] = [
+PERIOD_OPTIONS: list[str] = [
     "Last 7 days",
     "Last 30 days",
     "Last 60 days",
@@ -27,7 +27,7 @@ PERIOD_OPTIONS: List[str] = [
 DEFAULT_PERIOD: str = "Last 30 days"
 
 
-def calculate_date_range(period: str) -> Tuple[datetime, datetime]:
+def calculate_date_range(period: str) -> tuple[datetime, datetime]:
     """
     Calculate start and end datetimes for a period, normalized to full-day boundaries.
 
@@ -57,44 +57,28 @@ def calculate_date_range(period: str) -> Tuple[datetime, datetime]:
 
     lower = period.lower()
     if "last 7 " in lower:
-        begin = (end - timedelta(days=7)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        begin = (end - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
     elif "30" in lower:
-        begin = (end - timedelta(days=30)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        begin = (end - timedelta(days=30)).replace(hour=0, minute=0, second=0, microsecond=0)
     elif "60" in lower:
-        begin = (end - timedelta(days=60)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        begin = (end - timedelta(days=60)).replace(hour=0, minute=0, second=0, microsecond=0)
     elif "90" in lower:
-        begin = (end - timedelta(days=90)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        begin = (end - timedelta(days=90)).replace(hour=0, minute=0, second=0, microsecond=0)
     elif "6 months" in lower:
-        begin = (end - relativedelta(months=6)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        begin = (end - relativedelta(months=6)).replace(hour=0, minute=0, second=0, microsecond=0)
     elif "1 year" in lower:
-        begin = (end - relativedelta(years=1)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        begin = (end - relativedelta(years=1)).replace(hour=0, minute=0, second=0, microsecond=0)
     elif "5 years" in lower:
-        begin = (end - relativedelta(years=5)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        begin = (end - relativedelta(years=5)).replace(hour=0, minute=0, second=0, microsecond=0)
     else:
         # Ever
-        begin = end.replace(
-            year=1970, month=1, day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        begin = end.replace(year=1970, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         return begin, end
 
     return begin, end
 
 
-def parse_period_from_query(search: Optional[str]) -> Optional[str]:
+def parse_period_from_query(search: str | None) -> str | None:
     """
     Parse a URL search string (e.g. "?period=Last+60+days") and return a period label
     matching PERIOD_OPTIONS when possible.
@@ -129,6 +113,6 @@ def parse_period_from_query(search: Optional[str]) -> Optional[str]:
     return None
 
 
-def to_iso_range(begin: datetime, end: datetime) -> Dict[str, str]:
+def to_iso_range(begin: datetime, end: datetime) -> dict[str, str]:
     """Return JSON-serializable ISO strings for date range."""
     return {"begin": begin.isoformat(), "end": end.isoformat()}

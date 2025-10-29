@@ -6,7 +6,6 @@ This file contains tests for the file_changes_over_period and files_changes_over
 functions in the algorithms/file_changes.py module.
 """
 
-
 # Import from tests package to set up path
 from tests import setup_path
 

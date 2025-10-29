@@ -45,9 +45,7 @@ def capture_commits_call(monkeypatch):
         ("pages.strongest_pairings.handle_period_selection", lambda: (STORE,)),
     ],
 )
-def test_page_uses_store_begin_end(
-    target, build_args, capture_commits_call, monkeypatch
-):
+def test_page_uses_store_begin_end(target, build_args, capture_commits_call, monkeypatch):
     # Import target function dynamically
     module_name, func_name = target.rsplit(".", 1)
     mod = __import__(module_name, fromlist=[func_name])
@@ -82,17 +80,13 @@ def test_affinity_groups_uses_store_begin_end(capture_commits_call, monkeypatch)
     # Patch heavy functions to no-op figure
     from pages import affinity_groups as ag
 
-    monkeypatch.setattr(
-        ag, "calculate_ideal_affinity", lambda commits_data, **kw: (0.2, 0, 0)
-    )
+    monkeypatch.setattr(ag, "calculate_ideal_affinity", lambda commits_data, **kw: (0.2, 0, 0))
     monkeypatch.setattr(
         ag, "create_file_affinity_network", lambda commits_data, **kw: (None, None, {})
     )
     import plotly.graph_objects as go
 
-    monkeypatch.setattr(
-        ag, "create_network_visualization", lambda G, communities: go.Figure()
-    )
+    monkeypatch.setattr(ag, "create_network_visualization", lambda G, communities: go.Figure())
 
     # Call
     ag.update_file_affinity_graph(STORE, 50, 0.2)

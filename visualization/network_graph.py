@@ -31,7 +31,7 @@ def create_node_tooltip(node: str, commit_count: int, degree: int) -> str:
 
 def create_file_affinity_network(
     commits, min_affinity: float = 0.2, max_nodes: int = 50, min_edge_count: int = 1
-) -> Tuple[nx.Graph, List, Dict[str, Any]]:
+) -> tuple[nx.Graph, list, dict[str, Any]]:
     """
     Create a network graph of file affinities based on commit history.
 
@@ -105,9 +105,7 @@ def create_file_affinity_network(
         file_total_affinity[file2] += affinity
 
     # Get top files by total affinity
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files with commit count attribute
@@ -125,9 +123,7 @@ def create_file_affinity_network(
 
     # Remove nodes with too few connections
     if min_edge_count > 0:
-        nodes_to_remove = [
-            node for node, degree in G.degree() if degree < min_edge_count
-        ]
+        nodes_to_remove = [node for node, degree in G.degree() if degree < min_edge_count]
         G.remove_nodes_from(nodes_to_remove)
         stats["isolated_nodes"] = len(nodes_to_remove)
 
@@ -195,7 +191,7 @@ def create_no_data_figure(
 
 
 def create_network_visualization(
-    G: nx.Graph, communities: List, title: str = "File Affinity Network"
+    G: nx.Graph, communities: list, title: str = "File Affinity Network"
 ) -> go.Figure:
     """
     Create a Plotly figure for visualizing the file affinity network.
@@ -246,7 +242,7 @@ def create_network_visualization(
     return fig
 
 
-def _create_edge_traces(G: nx.Graph, pos: Dict) -> List[go.Scatter]:
+def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
     """
     Create edge traces for the network visualization.
 
@@ -329,7 +325,7 @@ def _create_edge_traces(G: nx.Graph, pos: Dict) -> List[go.Scatter]:
     )
 
 
-def _create_node_traces(G: nx.Graph, pos: Dict, communities: List) -> List[go.Scatter]:
+def _create_node_traces(G: nx.Graph, pos: dict, communities: list) -> list[go.Scatter]:
     """
     Create node traces for the network visualization.
 
@@ -357,9 +353,7 @@ def _create_node_traces(G: nx.Graph, pos: Dict, communities: List) -> List[go.Sc
         # Process each community separately
         for community_id in community_ids:
             community_nodes = [
-                node
-                for node, data in G.nodes(data=True)
-                if data.get("community") == community_id
+                node for node, data in G.nodes(data=True) if data.get("community") == community_id
             ]
 
             # Skip single-node communities
@@ -367,15 +361,13 @@ def _create_node_traces(G: nx.Graph, pos: Dict, communities: List) -> List[go.Sc
                 continue
 
             color = community_colors[community_id % len(community_colors)]
-            node_trace = _create_community_trace(
-                G, pos, community_nodes, color, community_id
-            )
+            node_trace = _create_community_trace(G, pos, community_nodes, color, community_id)
             node_traces.append(node_trace)
 
     return node_traces
 
 
-def _create_single_community_trace(G: nx.Graph, pos: Dict, color: str) -> go.Scatter:
+def _create_single_community_trace(G: nx.Graph, pos: dict, color: str) -> go.Scatter:
     """Create a trace for all nodes in a single color."""
     node_x = []
     node_y = []
@@ -404,7 +396,7 @@ def _create_single_community_trace(G: nx.Graph, pos: Dict, color: str) -> go.Sca
 
 
 def _create_community_trace(
-    G: nx.Graph, pos: Dict, community_nodes: List, color: str, community_id: int
+    G: nx.Graph, pos: dict, community_nodes: list, color: str, community_id: int
 ) -> go.Scatter:
     """Create a trace for a specific community."""
     node_x = []

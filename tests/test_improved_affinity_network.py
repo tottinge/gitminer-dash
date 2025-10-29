@@ -6,7 +6,6 @@ This script compares the original and improved affinity network functions
 using real repository data and shows the benefits of the improvements.
 """
 
-
 # Import from tests package to set up path
 from tests import setup_path
 
@@ -62,9 +61,7 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files
@@ -117,9 +114,7 @@ def create_mock_commit(commit_data):
 
             class MockStats:
                 def __init__(self, files):
-                    self.files = {
-                        file: {"insertions": 1, "deletions": 1} for file in files
-                    }
+                    self.files = {file: {"insertions": 1, "deletions": 1} for file in files}
 
             self.stats = MockStats(data["files"])
 
@@ -143,7 +138,7 @@ def load_commits_data(period):
         print(f"No saved data found for {period}")
         return None
 
-    with open(filepath, "r") as f:
+    with open(filepath) as f:
         commits = json.load(f)
 
     print(f"Loaded {len(commits)} commits from {filepath}")
@@ -339,9 +334,7 @@ def main():
 
         edge_increase = improved["edges"] - original["edges"]
         edge_percent = (
-            (edge_increase / original["edges"] * 100)
-            if original["edges"] > 0
-            else float("inf")
+            (edge_increase / original["edges"] * 100) if original["edges"] > 0 else float("inf")
         )
 
         print(

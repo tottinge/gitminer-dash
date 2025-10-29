@@ -186,9 +186,7 @@ if __name__ == "__main__":
     if doctest_results.failed == 0:
         print(f"All {doctest_results.attempted} doctests passed!")
     else:
-        print(
-            f"Failed {doctest_results.failed} out of {doctest_results.attempted} doctests."
-        )
+        print(f"Failed {doctest_results.failed} out of {doctest_results.attempted} doctests.")
         exit(1)
 
     # Run pytest

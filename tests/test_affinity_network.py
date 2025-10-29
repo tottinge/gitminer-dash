@@ -7,7 +7,6 @@ create_file_affinity_network function, and provides detailed diagnostics about
 the resulting graph.
 """
 
-
 # Import from tests package to set up path
 from tests import setup_path
 
@@ -70,9 +69,7 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files
@@ -233,9 +230,7 @@ def create_network_visualization(G, communities):
         # Process each community
         for community_id in community_ids:
             community_nodes = [
-                node
-                for node, data in G.nodes(data=True)
-                if data.get("community") == community_id
+                node for node, data in G.nodes(data=True) if data.get("community") == community_id
             ]
 
             node_x = []
@@ -259,9 +254,7 @@ def create_network_visualization(G, communities):
                 mode="markers",
                 hoverinfo="text",
                 text=node_text,
-                marker=dict(
-                    color=color, size=node_size, line=dict(width=1, color="#333")
-                ),
+                marker=dict(color=color, size=node_size, line=dict(width=1, color="#333")),
                 name=f"Group {community_id + 1}",
             )
 
@@ -381,7 +374,7 @@ def load_commits_data(period):
         print(f"No saved data found for {period}")
         return None
 
-    with open(filepath, "r") as f:
+    with open(filepath) as f:
         commits = json.load(f)
 
     print(f"Loaded {len(commits)} commits from {filepath}")
@@ -408,9 +401,7 @@ def create_mock_commit(commit_data):
 
             class MockStats:
                 def __init__(self, files):
-                    self.files = {
-                        file: {"insertions": 1, "deletions": 1} for file in files
-                    }
+                    self.files = {file: {"insertions": 1, "deletions": 1} for file in files}
 
             self.stats = MockStats(data["files"])
 
@@ -474,9 +465,7 @@ def analyze_affinity_network(commits, period, min_affinity=0.5, max_nodes=50):
         avg_degree = sum(degrees) / len(degrees) if degrees else 0
         max_degree = max(degrees) if degrees else 0
         min_degree = min(degrees) if degrees else 0
-        print(
-            f"Node degree stats: min={min_degree}, avg={avg_degree:.2f}, max={max_degree}"
-        )
+        print(f"Node degree stats: min={min_degree}, avg={avg_degree:.2f}, max={max_degree}")
 
     # Get edge weights
     if num_edges > 0:
@@ -545,9 +534,7 @@ def save_visualization(G, communities, period, min_affinity, max_nodes):
     fig = create_network_visualization(G, communities)
 
     # Save to file
-    filename = (
-        f"network_{period.replace(' ', '_').lower()}_{min_affinity}_{max_nodes}.html"
-    )
+    filename = f"network_{period.replace(' ', '_').lower()}_{min_affinity}_{max_nodes}.html"
     filepath = TEST_DATA_DIR / filename
     fig.write_html(str(filepath))
 
@@ -589,9 +576,7 @@ def try_affinity_network_with_different_parameters(commits, period):
                     save_visualization(G, communities, period, min_affinity, max_nodes)
 
                 # Analyze the network
-                result = analyze_affinity_network(
-                    mock_commits, period, min_affinity, max_nodes
-                )
+                result = analyze_affinity_network(mock_commits, period, min_affinity, max_nodes)
                 results.append(result)
 
                 print(
@@ -647,9 +632,7 @@ def main():
                 save_visualization(G, communities, period, 0.5, 50)
 
             # Test with different parameters
-            param_results = try_affinity_network_with_different_parameters(
-                commits, period
-            )
+            param_results = try_affinity_network_with_different_parameters(commits, period)
             all_results.extend(param_results)
         except Exception as e:
             print(f"Error analyzing network for {period}: {str(e)}")

@@ -6,7 +6,8 @@ including finding optimal affinity thresholds and analyzing affinity ranges.
 """
 
 from collections import defaultdict
-from typing import Tuple, Iterable, Set, List
+from typing import Tuple, Set, List
+from collections.abc import Iterable
 from algorithms.affinity_calculator import calculate_affinities
 from utils.git import ensure_list
 
@@ -27,9 +28,7 @@ def get_top_files_and_affinities(commits, affinities, max_nodes):
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
     top_file_set = {file for file, _ in top_files}
 
     relevant_affinities = [
@@ -62,9 +61,7 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
 
     affinities = calculate_affinities(commits)
 
-    top_file_set, relevant_affinities = get_top_files_and_affinities(
-        commits, affinities, max_nodes
-    )
+    top_file_set, relevant_affinities = get_top_files_and_affinities(commits, affinities, max_nodes)
 
     if not relevant_affinities:
         return 0.2, 0, 0  # Default if no relevant affinities
@@ -82,11 +79,7 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
         # Estimate connected nodes (this is an approximation)
         connected_nodes = set()
         for (file1, file2), affinity in affinities.items():
-            if (
-                file1 in top_file_set
-                and file2 in top_file_set
-                and affinity >= threshold
-            ):
+            if file1 in top_file_set and file2 in top_file_set and affinity >= threshold:
                 connected_nodes.add(file1)
                 connected_nodes.add(file2)
 

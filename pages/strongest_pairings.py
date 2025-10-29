@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 from dash import register_page, html, callback, Output, Input, dcc
 from dash.dash_table import DataTable
@@ -58,8 +58,7 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     # Sort by numeric affinity value, then format for display
     sorted_pairs = sorted(affinities.items(), key=lambda kv: kv[1], reverse=True)
     return [
-        dict(Affinity=f"{value:6.2f}", Pairing="\n".join(key))
-        for key, value in sorted_pairs[:50]
+        dict(Affinity=f"{value:6.2f}", Pairing="\n".join(key)) for key, value in sorted_pairs[:50]
     ]
 
 

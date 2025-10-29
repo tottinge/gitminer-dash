@@ -70,7 +70,6 @@ def prepare_changes_by_date(commits_data, weeks=12) -> pd.DataFrame:
             daily_change_counter[(commit.committed_datetime.date(), intent)] += 1
 
     dataset = sorted(
-        (date, intent, count)
-        for ((date, intent), count) in daily_change_counter.items()
+        (date, intent, count) for ((date, intent), count) in daily_change_counter.items()
     )
     return pd.DataFrame(dataset, columns=["date", "reason", "count"])

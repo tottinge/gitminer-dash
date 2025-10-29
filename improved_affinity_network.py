@@ -96,9 +96,7 @@ def create_improved_file_affinity_network(
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files
@@ -116,9 +114,7 @@ def create_improved_file_affinity_network(
 
     # Remove nodes with too few connections
     if min_edge_count > 0:
-        nodes_to_remove = [
-            node for node, degree in G.degree() if degree < min_edge_count
-        ]
+        nodes_to_remove = [node for node, degree in G.degree() if degree < min_edge_count]
         G.remove_nodes_from(nodes_to_remove)
         stats["isolated_nodes"] = len(nodes_to_remove)
 
@@ -155,9 +151,7 @@ def create_improved_file_affinity_network(
     return G, communities, stats
 
 
-def create_improved_network_visualization(
-    G, communities, title="Improved File Affinity Network"
-):
+def create_improved_network_visualization(G, communities, title="Improved File Affinity Network"):
     """
     Create an improved Plotly figure for visualizing the file affinity network.
 
@@ -311,9 +305,7 @@ def create_improved_network_visualization(
         # Process each community
         for community_id in community_ids:
             community_nodes = [
-                node
-                for node, data in G.nodes(data=True)
-                if data.get("community") == community_id
+                node for node, data in G.nodes(data=True) if data.get("community") == community_id
             ]
 
             node_x = []
@@ -339,9 +331,7 @@ def create_improved_network_visualization(
                 mode="markers",
                 hoverinfo="text",
                 text=node_text,
-                marker=dict(
-                    color=color, size=node_size, line=dict(width=1, color="#333")
-                ),
+                marker=dict(color=color, size=node_size, line=dict(width=1, color="#333")),
                 name=f"Group {community_id + 1}",
             )
 

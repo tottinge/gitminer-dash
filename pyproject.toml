@@ -44,5 +44,6 @@ ignore = [
 [dependency-groups]
 dev = [
     "black>=25.9.0",
+    "pyupgrade>=3.21.0",
 ]
 

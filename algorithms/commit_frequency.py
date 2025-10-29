@@ -10,9 +10,7 @@ from typing import List, Dict
 import logging
 
 
-def calculate_file_commit_frequency(
-    commits_data, repo, begin, end, top_n=20
-) -> List[Dict]:
+def calculate_file_commit_frequency(commits_data, repo, begin, end, top_n=20) -> list[dict]:
     """
     Calculate commit frequency and change statistics for the most committed files.
 

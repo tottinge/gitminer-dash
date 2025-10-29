@@ -3,7 +3,6 @@
 Test script to verify that one-element communities are excluded from the graph.
 """
 
-
 # Import from tests package to set up path
 from tests import setup_path
 
@@ -45,9 +44,7 @@ def test_exclude_one_element_communities() -> None:
     included_communities = []
     for community_id in community_ids:
         community_nodes = [
-            node
-            for node, data in G.nodes(data=True)
-            if data.get("community") == community_id
+            node for node, data in G.nodes(data=True) if data.get("community") == community_id
         ]
 
         # Skip communities with only one node (this is the logic we're testing)
@@ -65,9 +62,9 @@ def test_exclude_one_element_communities() -> None:
 
     # Verify all conditions
     assert community_count == 2, "Expected 2 communities after filtering"
-    assert set(included_ids) == set(
-        expected_ids
-    ), f"Expected communities {expected_ids}, got {included_ids}"
+    assert set(included_ids) == set(expected_ids), (
+        f"Expected communities {expected_ids}, got {included_ids}"
+    )
 
     # Verify that each included community has more than one node
     for community_id, nodes in included_communities:

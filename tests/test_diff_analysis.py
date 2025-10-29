@@ -61,9 +61,7 @@ def test_dataframe_with_single_commit():
     assert list(result.columns) == ["date", "kind", "count"]
 
     # Assert: Verify the data
-    assert (
-        len(result) == 3
-    )  # Should have 3 rows: possible mods, net inserts, net deletes
+    assert len(result) == 3  # Should have 3 rows: possible mods, net inserts, net deletes
 
     # Check the values
     kinds = result["kind"].tolist()

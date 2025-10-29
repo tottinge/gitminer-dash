@@ -28,10 +28,10 @@ class FileChangeStats(NamedTuple):
 
 def file_changes_over_period(
     target_file: str,
-    start: Optional[datetime] = None,
-    end: Optional[datetime] = None,
-    repo: Optional[git.Repo] = None,
-) -> Tuple[int, float, int, float]:
+    start: datetime | None = None,
+    end: datetime | None = None,
+    repo: git.Repo | None = None,
+) -> tuple[int, float, int, float]:
     """
     Calculate statistics about changes to a file over a period of time.
 
@@ -75,11 +75,11 @@ def file_changes_over_period(
 
 
 def files_changes_over_period(
-    target_files: List[str],
-    start: Optional[datetime] = None,
-    end: Optional[datetime] = None,
-    repo: Optional[git.Repo] = None,
-) -> Dict[str, FileChangeStats]:
+    target_files: list[str],
+    start: datetime | None = None,
+    end: datetime | None = None,
+    repo: git.Repo | None = None,
+) -> dict[str, FileChangeStats]:
     """
     Calculate statistics about changes to multiple files over a period of time.
 
@@ -100,8 +100,8 @@ def files_changes_over_period(
 
     for file_path in target_files:
         try:
-            commits, avg_changes, total_change, percent_change = (
-                file_changes_over_period(file_path, start, end, repo)
+            commits, avg_changes, total_change, percent_change = file_changes_over_period(
+                file_path, start, end, repo
             )
 
             stats = FileChangeStats(

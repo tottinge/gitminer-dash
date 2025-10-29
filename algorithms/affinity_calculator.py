@@ -8,7 +8,8 @@ have affinity for each other.
 
 from collections import defaultdict
 from itertools import combinations
-from typing import Iterable, Dict, Tuple
+from typing import Dict, Tuple
+from collections.abc import Iterable
 from utils.git import ensure_list
 
 
@@ -34,7 +35,7 @@ def _calculate_affinities_from_commits(commits, affinities):
             affinities[ordered_key] += 1 / files_in_commit
 
 
-def calculate_affinities(commits: Iterable) -> Dict[Tuple[str, str], float]:
+def calculate_affinities(commits: Iterable) -> dict[tuple[str, str], float]:
     """
     Calculate file affinities based on commit history.
 
