@@ -13,6 +13,7 @@ dependencies = [
     "pytest>=8.3.5",
     "python-box>=7.3.2",
     "python-dateutil>=2.9.0.post0",
+    "ruff>=0.14.2",
 ]
 
 [project.optional-dependencies]

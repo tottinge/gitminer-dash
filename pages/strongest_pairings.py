@@ -13,7 +13,7 @@ register_page(__name__)
 
 layout = html.Div(
     children=[
-        html.H1("Strongest Commit Affinities"),
+        html.H1("Strongest Commit Affinities", style={"margin": "10px 0"}),
         dcc.Loading(
             id="loading-strongest-pairings-table",
             type="circle",
@@ -25,6 +25,7 @@ layout = html.Div(
                         for i in ['Affinity', 'Pairing']
                     ],
                     style_cell={'textAlign': 'left'},
+                    style_table={'maxHeight': '600px', 'overflowY': 'auto'},
                     data=[]
                 )
             ]

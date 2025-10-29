@@ -16,26 +16,19 @@ register_page(
 
 layout = html.Div(
     [
-        html.H2("Diff Summary"),
+        html.H2("Diff Summary", style={"margin": "10px 0"}),
         html.Div(
             id="id-diff-summary-container",
             children=[
-                html.P("This page shows summed net changes for a given day."),
                 dcc.Loading(
                     id="loading-diff-summary-graph",
                     type="circle",
                     children=[
-                        dcc.Graph(id="diff-summary-graph", figure={"data": []}),
+                        dcc.Graph(id="diff-summary-graph", figure={"data": []}, style={"height": "500px"}),
                     ]
                 ),
             ]
-        ),
-        html.P(id="id-diff-summary-description", children=[
-            "This is a tad sketchy, but here is the idea: we assume if 100 lines were inserted and 100 deleted,"
-            "then it is likely that all those lines were replacements -- all were modified. The leftover are "
-            "net additions or net deletions, and we report them as such"
-        ]),
-        html.P("This must be taken with a grain of salt, as it can be misleading.")
+        )
     ]
 )
 

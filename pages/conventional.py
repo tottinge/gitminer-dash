@@ -28,7 +28,8 @@ layout = html.Div(
     [
         html.H2(
             id="id-conventional-h2",
-            children="Change Type by Conventional Commit Messages"
+            children="Change Type by Conventional Commit Messages",
+            style={"margin": "10px 0"}
         ),
         html.Button(
             id="id-conventional-refresh-button",
@@ -38,7 +39,7 @@ layout = html.Div(
             id="loading-conventional-graph",
             type="circle",
             children=[
-                Graph(id="id-conventional-graph"),
+                Graph(id="id-conventional-graph", style={"height": "500px"}),
             ]
         ),
         dcc.Loading(
@@ -49,6 +50,7 @@ layout = html.Div(
                     id="id-conventional-table",
                     columns=[{"name": i, "id": i} for i in ["date", "message"]],
                     style_cell={'textAlign': 'left'},
+                    style_table={'maxHeight': '400px', 'overflowY': 'auto'},
                     data=[]
                 ),
             ]

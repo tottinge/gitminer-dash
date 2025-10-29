@@ -16,7 +16,7 @@ register_page(
 
 layout = html.Div(
     [
-        html.H2("Most Often Committed Files"),
+        html.H2("Most Often Committed Files", style={"margin": "10px 0"}),
         html.Div(
             id='id-most-committed-graph-holder',
             style={"display": "none"},
@@ -30,8 +30,7 @@ layout = html.Div(
                 ),
             ]
         ),
-        html.Hr(),
-        html.H2("Source Data"),
+        html.H3("Source Data", style={"margin": "10px 0"}),
         dcc.Loading(
             id="loading-table",
             type="circle",
@@ -45,6 +44,7 @@ layout = html.Div(
                         {"name":"Change (lines)", "id":"total_change"},
                         {"name":"Change (percent)", "id":"percent_change"},
                     ],
+                    style_table={'maxHeight': '400px', 'overflowY': 'auto'},
                     style_cell_conditional=[
                         {
                             'if': {'column_id': 'filename'},

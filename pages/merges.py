@@ -11,7 +11,7 @@ register_page(__name__, title="Merge Sizes")
 
 layout = html.Div(
     [
-        html.H2("Merge Magnitudes"),
+        html.H2("Merge Magnitudes", style={"margin": "10px 0"}),
         html.Button(id="merge-refresh-button", children="Refresh"),
         html.Div(id="merge-graph-container"),
     ]
@@ -77,7 +77,7 @@ def update_merge_graph(n_clicks: int, store_data):
             id="loading-merge-graph",
             type="circle",
             children=[
-                dcc.Graph(figure=bar_chart_figure)
+                dcc.Graph(figure=bar_chart_figure, style={"height": "500px"})
             ]
         )
     ]

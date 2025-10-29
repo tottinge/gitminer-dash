@@ -37,46 +37,6 @@ def get_top_files_and_affinities(commits, affinities, max_nodes):
     return top_file_set, relevant_affinities
 
 
-def find_affinity_range(commits, max_nodes=50):
-    """
-    Find the minimum and maximum affinity values in the dataset.
-    
-    Args:
-        commits: Iterable of commit objects
-        max_nodes: Maximum number of nodes to consider (default: 50)
-        
-    Returns:
-        A tuple of (min_affinity, max_affinity, ideal_affinity)
-    """
-    if not commits:
-        return 0.05, 0.5, 0.2  # Default values if no commits
-    
-    # Normalize to list for safe reuse
-    commits = ensure_list(commits)
-    
-    affinities = calculate_affinities(commits)
-    
-    if not affinities:
-        return 0.05, 0.5, 0.2
-    
-    top_file_set, relevant_affinities = get_top_files_and_affinities(commits, affinities, max_nodes)
-    
-    if not relevant_affinities:
-        return 0.05, 0.5, 0.2  # Default values if no relevant affinities
-    
-    # Find min and max affinity values
-    min_affinity = max(0.05, min(relevant_affinities))  # Ensure min is at least 0.05
-    max_affinity = min(0.5, max(relevant_affinities))   # Ensure max is at most 0.5
-    
-    # Calculate ideal affinity
-    ideal_affinity, _, _ = calculate_ideal_affinity(commits, target_node_count=15, max_nodes=max_nodes)
-    
-    # Ensure ideal affinity is within the min-max range
-    ideal_affinity = max(min_affinity, min(max_affinity, ideal_affinity))
-    
-    return min_affinity, max_affinity, ideal_affinity
-
-
 def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
     """
     Calculate an ideal minimum affinity threshold that will result in approximately

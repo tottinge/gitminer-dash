@@ -15,11 +15,11 @@ app.layout = html.Div([
     # Session-scoped date range store
     dcc.Store(id='global-date-range', storage_type='session'),
 
-    html.H1(f"The Git Miner: {data.get_repo_name()}", style={"text-align": "center"}),
+    html.H1(f"The Git Miner: {data.get_repo_name()}", style={"text-align": "center", "margin": "10px 0"}),
 
     # Global period selector
     html.Div(
-        style={"display": "flex", "alignItems": "center", "gap": "10px", "margin": "10px 0"},
+        style={"display": "flex", "alignItems": "center", "gap": "10px", "margin": "5px 0"},
         children=[
             html.Label("Period:"),
             dcc.Dropdown(
@@ -37,7 +37,8 @@ app.layout = html.Div([
         for page in page_registry.values()
     ], style={
         "display": "flex",
-        "justify-content": "space-between"
+        "justify-content": "space-between",
+        "margin": "5px 0"
     }),
     page_container
 ])

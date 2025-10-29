@@ -1,18 +1,12 @@
 import plotly.graph_objects as go
 from collections import defaultdict
 from dash import register_page, html, callback, Output, Input, dcc, State, no_update
-from dash.dcc import Dropdown, Slider, Store
-from dash.html import Button
+from dash.dcc import Slider, Store
 from dash.dash_table import DataTable
 
 import data
 from utils import date_utils
-from algorithms.affinity_calculator import calculate_affinities
-from algorithms.affinity_analysis import (
-    get_top_files_and_affinities,
-    find_affinity_range,
-    calculate_ideal_affinity
-)
+from algorithms.affinity_analysis import calculate_ideal_affinity
 from visualization.network_graph import create_file_affinity_network, create_network_visualization
 from utils.git import ensure_list
 
@@ -20,10 +14,9 @@ register_page(__name__, title="Affinity Groups")
 
 layout = html.Div(
     children=[
-        html.H1("File Affinity Groups"),
-        html.P("Files that frequently change together are grouped by color. Node size indicates how many connections a file has."),
+    html.H1("File Affinity Groups"),
         html.Div(
-            style={"display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "20px"},
+            style={"display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "10px"},
             children=[
                 html.Div(
                     style={"width": "45%"},
@@ -50,20 +43,6 @@ layout = html.Div(
                             step=0.01,
                             value=0.2,
                             marks={i/100: str(i/100) for i in range(5, 51, 5)},
-                        ),
-                        html.Div(
-                            style={"margin-top": "10px", "display": "flex", "justify-content": "space-between"},
-                            children=[
-                                Button(
-                                    id="id-auto-affinity-button",
-                                    children="Auto-calculate Ideal Affinity",
-                                    style={"width": "100%"}
-                                ),
-                            ]
-                        ),
-                        html.Div(
-                            id="id-auto-affinity-info",
-                            style={"margin-top": "5px", "font-size": "0.8em", "color": "#666"}
                         )
                     ]
                 ),
@@ -75,21 +54,11 @@ layout = html.Div(
             children=[
                 dcc.Graph(
                     id="id-file-affinity-graph",
-                    style={'height': '800px'}
+                    style={'height': '600px'}
                 )
             ]
         ),
-        html.Div(
-            children=[
-                html.H3("Interpretation"),
-                html.P("Each colored group represents files that tend to change together."),
-                html.P("Thicker lines indicate stronger affinity between files."),
-                html.P("Larger nodes indicate files that have connections to many other files.")
-            ]
-        ),
-        html.Hr(),
         html.H3("Group Details"),
-        html.P("Click on any node in the graph above to see all files in that group, sorted by commit count."),
         dcc.Loading(
             id="loading-node-details-table",
             type="circle",
@@ -104,6 +73,7 @@ layout = html.Div(
                         {"name": "Connected Groups", "id": "connected_groups"}
                     ],
                     style_cell={'textAlign': 'left'},
+                    style_table={'maxHeight': '300px', 'overflowY': 'auto'},
                     style_data_conditional=[
                         {
                             'if': {'filter_query': '{connected_groups} ne ""'},
@@ -120,91 +90,6 @@ layout = html.Div(
     ]
 )
 
-
-
-@callback(
-    Output("id-affinity-min-slider", "min"),
-    Output("id-affinity-min-slider", "max"),
-    Output("id-affinity-min-slider", "value"),
-    Output("id-affinity-min-slider", "marks"),
-    Output("id-auto-affinity-info", "children"),
-    [Input("id-auto-affinity-button", "n_clicks")],
-    [State("global-date-range", "data"),
-     State("id-affinity-node-slider", "value")],
-    prevent_initial_call=True
-)
-def auto_calculate_affinity(n_clicks, store_data, max_nodes):
-    """
-    Calculate the affinity range and ideal threshold based on the current commit data.
-    
-    Args:
-        n_clicks: Number of button clicks (not used, but required for callback)
-        period: Selected time period
-        max_nodes: Maximum number of nodes
-        
-    Returns:
-        Tuple of (min_affinity, max_affinity, ideal_affinity, marks, info_text)
-    """
-    if not n_clicks:
-        return no_update, no_update, no_update, no_update, no_update
-    
-    try:
-        # Get commit data for the selected period
-        if isinstance(store_data, dict):
-            period = store_data.get('period', date_utils.DEFAULT_PERIOD)
-        else:
-            period = store_data or date_utils.DEFAULT_PERIOD
-        if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
-            from datetime import datetime as _dt
-            starting = _dt.fromisoformat(store_data['begin'])
-            ending = _dt.fromisoformat(store_data['end'])
-        else:
-            starting, ending = date_utils.calculate_date_range(period)
-        commits_data = data.commits_in_period(starting, ending)
-        
-        # Find affinity range and ideal value
-        min_affinity, max_affinity, ideal_affinity = find_affinity_range(
-            commits_data, max_nodes=max_nodes
-        )
-        
-        # Round values for display
-        min_affinity_rounded = round(min_affinity, 2)
-        max_affinity_rounded = round(max_affinity, 2)
-        ideal_affinity_rounded = round(ideal_affinity, 2)
-        
-        # Create marks for the slider
-        # Ensure we have at least 3 marks (min, ideal, max)
-        marks = {
-            min_affinity_rounded: str(min_affinity_rounded),
-            ideal_affinity_rounded: str(ideal_affinity_rounded),
-            max_affinity_rounded: str(max_affinity_rounded)
-        }
-        
-        # Add intermediate marks if there's enough space
-        if max_affinity_rounded - min_affinity_rounded >= 0.1:
-            step = round((max_affinity_rounded - min_affinity_rounded) / 5, 2)
-            for i in range(1, 5):
-                value = round(min_affinity_rounded + i * step, 2)
-                if value > min_affinity_rounded and value < max_affinity_rounded and value != ideal_affinity_rounded:
-                    marks[value] = str(value)
-        
-        # Get node and edge counts for info text
-        _, node_count, edge_count = calculate_ideal_affinity(
-            commits_data, target_node_count=15, max_nodes=max_nodes
-        )
-        
-        # Create info text
-        info_text = f"Min: {min_affinity_rounded}, Ideal: {ideal_affinity_rounded}, Max: {max_affinity_rounded} " + \
-                   f"(estimated {node_count} nodes, {edge_count} edges)"
-        
-        return min_affinity_rounded, max_affinity_rounded, ideal_affinity_rounded, marks, info_text
-    except Exception as e:
-        # Return default values in case of error
-        default_min = 0.05
-        default_max = 0.5
-        default_value = 0.2
-        default_marks = {i/100: str(i/100) for i in range(5, 51, 5)}
-        return default_min, default_max, default_value, default_marks, f"Error calculating affinity range: {str(e)}"
 
 
 @callback(

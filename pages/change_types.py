@@ -44,18 +44,17 @@ layout = html.Div(
                          id="loading-change-types-graph",
                          type="circle",
                          children=[
-                             dcc.Graph(id="id-local_graph")
+                             dcc.Graph(id="id-local_graph", style={"height": "500px"})
                          ]
                      )
                  ]
                  ),
-        html.Hr(),
-        html.H2("Source Data"),
+        html.H3("Source Data", style={"margin": "10px 0"}),
         dcc.Loading(
             id="loading-change-types-table",
             type="circle",
             children=[
-                DataTable(id="id-data-table")
+                DataTable(id="id-data-table", style_table={'maxHeight': '400px', 'overflowY': 'auto'})
             ]
         ),
     ]

@@ -13,7 +13,7 @@ register_page(module=__name__, title="Concurrent Efforts")
 
 layout = html.Div(
     [
-        html.H2("Concurrent Effort"),
+        html.H2("Concurrent Effort", style={"margin": "10px 0"}),
         html.Button(id="code-lines-refresh-button", children=["Refresh"]),
         html.Div(
             id="id-code-lines-container",
@@ -23,22 +23,11 @@ layout = html.Div(
                     id="loading-code-lines-graph",
                     type="circle",
                     children=[
-                        dcc.Graph(id="code-lines-graph", figure={"data": []}),
+                        dcc.Graph(id="code-lines-graph", figure={"data": []}, style={"height": "500px"}),
                     ]
                 ),
             ]
-        ),
-        html.P(id="code-lines-description-1", children=[
-            "In git, commits reference their parent. "
-            "A concurrent effort is a series of single-parent "
-            "(non-merge) commits where each one references the one before it. "
-            "These may be branched or unbranched."
-        ]),
-        html.P(id="code-lines-description-2", children=[
-            "We visualize how much concurrent activity is taking place "
-            "and if the developers commit often or seldom (relative to other code efforts)."
-        ])
-
+        )
     ]
 )
 
