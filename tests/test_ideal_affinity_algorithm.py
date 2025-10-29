@@ -63,7 +63,9 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
         file_total_affinity[file2] += affinity
 
     # Get top files by total affinity
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
+        :max_nodes
+    ]
     top_file_set = {file for file, _ in top_files}
 
     # Get all affinity values between top files
@@ -91,7 +93,11 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
         # Estimate connected nodes (this is an approximation)
         connected_nodes = set()
         for (file1, file2), affinity in affinities.items():
-            if file1 in top_file_set and file2 in top_file_set and affinity >= threshold:
+            if (
+                file1 in top_file_set
+                and file2 in top_file_set
+                and affinity >= threshold
+            ):
                 connected_nodes.add(file1)
                 connected_nodes.add(file2)
 
@@ -155,7 +161,9 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
+        :max_nodes
+    ]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files
@@ -203,7 +211,9 @@ def create_mock_commit(commit_data):
 
             class MockStats:
                 def __init__(self, files):
-                    self.files = {file: {"insertions": 1, "deletions": 1} for file in files}
+                    self.files = {
+                        file: {"insertions": 1, "deletions": 1} for file in files
+                    }
 
             self.stats = MockStats(data["files"])
 
@@ -280,9 +290,13 @@ def test_calculate_ideal_affinity_with_real_data():
 
         # Verify the actual node count is within the expected range (5-20)
         if 5 <= actual_node_count <= 20:
-            print(f"✓ Actual node count {actual_node_count} is within the expected range (5-20)")
+            print(
+                f"✓ Actual node count {actual_node_count} is within the expected range (5-20)"
+            )
         else:
-            print(f"✗ Actual node count {actual_node_count} is outside the expected range (5-20)")
+            print(
+                f"✗ Actual node count {actual_node_count} is outside the expected range (5-20)"
+            )
 
 
 def test_calculate_ideal_affinity_with_edge_cases():
@@ -431,9 +445,13 @@ def test_calculate_ideal_affinity_with_synthetic_data():
 
     # Verify the actual node count is within the expected range (5-20)
     if 5 <= actual_node_count <= 20:
-        print(f"✓ Actual node count {actual_node_count} is within the expected range (5-20)")
+        print(
+            f"✓ Actual node count {actual_node_count} is within the expected range (5-20)"
+        )
     else:
-        print(f"✗ Actual node count {actual_node_count} is outside the expected range (5-20)")
+        print(
+            f"✗ Actual node count {actual_node_count} is outside the expected range (5-20)"
+        )
 
 
 def main():

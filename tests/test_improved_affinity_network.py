@@ -61,7 +61,9 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
+        :max_nodes
+    ]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files
@@ -114,7 +116,9 @@ def create_mock_commit(commit_data):
 
             class MockStats:
                 def __init__(self, files):
-                    self.files = {file: {"insertions": 1, "deletions": 1} for file in files}
+                    self.files = {
+                        file: {"insertions": 1, "deletions": 1} for file in files
+                    }
 
             self.stats = MockStats(data["files"])
 
@@ -334,7 +338,9 @@ def main():
 
         edge_increase = improved["edges"] - original["edges"]
         edge_percent = (
-            (edge_increase / original["edges"] * 100) if original["edges"] > 0 else float("inf")
+            (edge_increase / original["edges"] * 100)
+            if original["edges"] > 0
+            else float("inf")
         )
 
         print(

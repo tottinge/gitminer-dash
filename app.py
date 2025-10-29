@@ -39,7 +39,10 @@ app.layout = html.Div(
         ),
         # Navigation
         html.Div(
-            [dcc.Link(page["name"], href=page["path"]) for page in page_registry.values()],
+            [
+                dcc.Link(page["name"], href=page["path"])
+                for page in page_registry.values()
+            ],
             style={
                 "display": "flex",
                 "justify-content": "space-between",

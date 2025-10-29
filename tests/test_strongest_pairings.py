@@ -32,7 +32,9 @@ class MyTestCase(unittest.TestCase):
         self.assertSequenceEqual(files, ["a", "b"])
 
     def test_one_common_two_leaf_nodes(self):
-        result = self.create_affinity_list([commit_with("a", "b"), commit_with("a", "c")])
+        result = self.create_affinity_list(
+            [commit_with("a", "b"), commit_with("a", "c")]
+        )
         self.assertEqual(2, len(result))
         for record in result:
             with self.subTest(record):

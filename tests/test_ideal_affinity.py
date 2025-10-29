@@ -53,7 +53,9 @@ def create_mock_commit(commit_data):
 
             class MockStats:
                 def __init__(self, files):
-                    self.files = {file: {"insertions": 1, "deletions": 1} for file in files}
+                    self.files = {
+                        file: {"insertions": 1, "deletions": 1} for file in files
+                    }
 
             self.stats = MockStats(data["files"])
 
@@ -130,9 +132,13 @@ def test_calculate_ideal_affinity_with_real_data():
 
         # Verify the actual node count is within the expected range (5-20)
         if 5 <= actual_node_count <= 20:
-            print(f"✓ Actual node count {actual_node_count} is within the expected range (5-20)")
+            print(
+                f"✓ Actual node count {actual_node_count} is within the expected range (5-20)"
+            )
         else:
-            print(f"✗ Actual node count {actual_node_count} is outside the expected range (5-20)")
+            print(
+                f"✗ Actual node count {actual_node_count} is outside the expected range (5-20)"
+            )
 
 
 def test_calculate_ideal_affinity_with_edge_cases():
@@ -281,9 +287,13 @@ def test_calculate_ideal_affinity_with_synthetic_data():
 
     # Verify the actual node count is within the expected range (5-20)
     if 5 <= actual_node_count <= 20:
-        print(f"✓ Actual node count {actual_node_count} is within the expected range (5-20)")
+        print(
+            f"✓ Actual node count {actual_node_count} is within the expected range (5-20)"
+        )
     else:
-        print(f"✗ Actual node count {actual_node_count} is outside the expected range (5-20)")
+        print(
+            f"✗ Actual node count {actual_node_count} is outside the expected range (5-20)"
+        )
 
 
 def main():

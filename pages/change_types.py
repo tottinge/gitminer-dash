@@ -41,7 +41,9 @@ layout = html.Div(
                 dcc.Loading(
                     id="loading-change-types-graph",
                     type="circle",
-                    children=[dcc.Graph(id="id-local_graph", style={"height": "500px"})],
+                    children=[
+                        dcc.Graph(id="id-local_graph", style={"height": "500px"})
+                    ],
                 )
             ],
         ),

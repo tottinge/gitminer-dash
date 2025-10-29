@@ -22,7 +22,9 @@ layout = html.Div(
 # makes startup time very slow.
 def prepare_dataframe(start_date, end_date):
     recent_merges = [
-        commit for commit in data.commits_in_period(start_date, end_date) if len(commit.parents) > 1
+        commit
+        for commit in data.commits_in_period(start_date, end_date)
+        if len(commit.parents) > 1
     ]
     columns = ["hash", "date", "comment", "lines", "files"]
     source = (

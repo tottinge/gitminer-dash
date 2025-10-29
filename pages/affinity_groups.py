@@ -59,7 +59,9 @@ layout = html.Div(
         dcc.Loading(
             id="loading-file-affinity-graph",
             type="circle",
-            children=[dcc.Graph(id="id-file-affinity-graph", style={"height": "600px"})],
+            children=[
+                dcc.Graph(id="id-file-affinity-graph", style={"height": "600px"})
+            ],
         ),
         html.H3("Group Details"),
         dcc.Loading(
@@ -109,7 +111,11 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
             period = store_data.get("period", date_utils.DEFAULT_PERIOD)
         else:
             period = store_data or date_utils.DEFAULT_PERIOD
-        if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
+        if (
+            isinstance(store_data, dict)
+            and "begin" in store_data
+            and "end" in store_data
+        ):
             from datetime import datetime as _dt
 
             starting = _dt.fromisoformat(store_data["begin"])
@@ -268,7 +274,9 @@ def update_node_details_table(click_data, graph_data):
 
             # Format connected groups (only show for bridge nodes)
             if is_bridge:
-                connected_groups_str = ", ".join([f"Group {c + 1}" for c in connected_communities])
+                connected_groups_str = ", ".join(
+                    [f"Group {c + 1}" for c in connected_communities]
+                )
             else:
                 connected_groups_str = ""
 

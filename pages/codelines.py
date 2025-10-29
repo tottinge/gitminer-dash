@@ -64,8 +64,12 @@ def update_code_lines_graph(_: int, store_data):
         if len(commit.parents) > 1:
             continue
         for parent in commit.parents:
-            graph.add_node(parent.hexsha, committed=parent.committed_datetime, sha=parent.hexsha)
-            graph.add_node(commit.hexsha, committed=commit.committed_datetime, sha=commit.hexsha)
+            graph.add_node(
+                parent.hexsha, committed=parent.committed_datetime, sha=parent.hexsha
+            )
+            graph.add_node(
+                commit.hexsha, committed=commit.committed_datetime, sha=commit.hexsha
+            )
             graph.add_edge(parent.hexsha, commit.hexsha)
 
     # Convert connected chains to begin/end pairs of dates
@@ -95,7 +99,9 @@ def update_code_lines_graph(_: int, store_data):
         chain_summary.append(record)
 
     for data in sorted(chain_summary):
-        early_timestamp, late_timestamp, commit_counts, duration, earliest, latest = data
+        early_timestamp, late_timestamp, commit_counts, duration, earliest, latest = (
+            data
+        )
         # Clamp chain span to the selected period
         clamped_first = max(early_timestamp, start_date)
         clamped_last = min(late_timestamp, end_date)

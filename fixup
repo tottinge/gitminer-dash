@@ -1,0 +1,13 @@
+!/bin/env bash
+echo "Experimental - don't run unless you're ready to reset hard"
+echo ""
+echo "This will do all the ruff fixups, reformat with black, and "
+echo "run the pyupgrade pegged to python 3.10 or later."
+echo ""
+echo "This usually is only beneficial. If anything doesn't work after, reset."
+echo "User discretion is advised."
+set -ex
+
+uv run ruff check --fix
+uv run black .
+find . -name "*.py" -type f -not -path "*/.venv/*" -exec uv run pyupgrade --py310-plus {} +

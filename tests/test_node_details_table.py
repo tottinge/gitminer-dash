@@ -18,7 +18,9 @@ from pages.affinity_groups import update_node_details_table
 def test_node_details_with_single_community_node():
     """Test details for nodes in a group when one node is clicked."""
     # Mock click data (simulates clicking on a node)
-    click_data = {"points": [{"text": "File: src/main.py<br>Commits: 10<br>Connections: 3"}]}
+    click_data = {
+        "points": [{"text": "File: src/main.py<br>Commits: 10<br>Connections: 3"}]
+    }
 
     # Mock graph data with multiple nodes in the same community
     graph_data = {
@@ -59,13 +61,17 @@ def test_node_details_with_single_community_node():
     # All should be in Group 1
     for row in result:
         assert row["group"] == "Group 1"
-        assert row["connected_groups"] == ""  # Non-bridge nodes have empty connected_groups
+        assert (
+            row["connected_groups"] == ""
+        )  # Non-bridge nodes have empty connected_groups
 
 
 def test_node_details_with_bridge_node():
     """Test details showing all nodes in a group containing a bridge node."""
     # Mock click data
-    click_data = {"points": [{"text": "File: src/bridge.py<br>Commits: 15<br>Connections: 5"}]}
+    click_data = {
+        "points": [{"text": "File: src/bridge.py<br>Commits: 15<br>Connections: 5"}]
+    }
 
     # Mock graph data with a bridge node and regular node in same community
     graph_data = {
@@ -121,7 +127,9 @@ def test_node_details_with_no_click():
 
 def test_node_details_with_invalid_node():
     """Test handling of clicks on nodes not in the graph data."""
-    click_data = {"points": [{"text": "File: nonexistent.py<br>Commits: 0<br>Connections: 0"}]}
+    click_data = {
+        "points": [{"text": "File: nonexistent.py<br>Commits: 0<br>Connections: 0"}]
+    }
 
     graph_data = {
         "nodes": {
@@ -142,7 +150,9 @@ def test_node_details_with_invalid_node():
 
 def test_node_details_with_empty_graph_data():
     """Test handling of clicks when graph data is empty."""
-    click_data = {"points": [{"text": "File: src/main.py<br>Commits: 10<br>Connections: 3"}]}
+    click_data = {
+        "points": [{"text": "File: src/main.py<br>Commits: 10<br>Connections: 3"}]
+    }
 
     graph_data = {}
 

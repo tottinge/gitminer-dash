@@ -50,7 +50,9 @@ def create_mock_commit(commit_data):
 
             class MockStats:
                 def __init__(self, files):
-                    self.files = {file: {"insertions": 1, "deletions": 1} for file in files}
+                    self.files = {
+                        file: {"insertions": 1, "deletions": 1} for file in files
+                    }
 
             self.stats = MockStats(data["files"])
 
@@ -182,9 +184,9 @@ def test_callback_without_repo_path(mock_commits_in_period):
         ):
             message = figure.layout.annotations[0].text
             print(f"Figure contains annotation: {message}")
-            assert "No repository path provided" in message, (
-                "Figure should contain message about missing repository path"
-            )
+            assert (
+                "No repository path provided" in message
+            ), "Figure should contain message about missing repository path"
 
     except Exception as e:
         print(f"Callback failed without repository path: {str(e)}")

@@ -35,7 +35,9 @@ def get_repo() -> Repo:
 
 @cache
 def get_repo_name():
-    return re.sub(pattern=r"[_\.-]", repl=" ", string=os.path.split(repository_path())[-1]).title()
+    return re.sub(
+        pattern=r"[_\.-]", repl=" ", string=os.path.split(repository_path())[-1]
+    ).title()
 
 
 def _dt_key(dt: datetime) -> str:

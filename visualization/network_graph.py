@@ -105,7 +105,9 @@ def create_file_affinity_network(
         file_total_affinity[file2] += affinity
 
     # Get top files by total affinity
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
+        :max_nodes
+    ]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files with commit count attribute
@@ -123,7 +125,9 @@ def create_file_affinity_network(
 
     # Remove nodes with too few connections
     if min_edge_count > 0:
-        nodes_to_remove = [node for node, degree in G.degree() if degree < min_edge_count]
+        nodes_to_remove = [
+            node for node, degree in G.degree() if degree < min_edge_count
+        ]
         G.remove_nodes_from(nodes_to_remove)
         stats["isolated_nodes"] = len(nodes_to_remove)
 
@@ -353,7 +357,9 @@ def _create_node_traces(G: nx.Graph, pos: dict, communities: list) -> list[go.Sc
         # Process each community separately
         for community_id in community_ids:
             community_nodes = [
-                node for node, data in G.nodes(data=True) if data.get("community") == community_id
+                node
+                for node, data in G.nodes(data=True)
+                if data.get("community") == community_id
             ]
 
             # Skip single-node communities
@@ -361,7 +367,9 @@ def _create_node_traces(G: nx.Graph, pos: dict, communities: list) -> list[go.Sc
                 continue
 
             color = community_colors[community_id % len(community_colors)]
-            node_trace = _create_community_trace(G, pos, community_nodes, color, community_id)
+            node_trace = _create_community_trace(
+                G, pos, community_nodes, color, community_id
+            )
             node_traces.append(node_trace)
 
     return node_traces

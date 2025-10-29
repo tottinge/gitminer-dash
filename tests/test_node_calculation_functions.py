@@ -33,7 +33,9 @@ def _get_top_files_and_affinities(commits, affinities, max_nodes):
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
+        :max_nodes
+    ]
     top_file_set = {file for file, _ in top_files}
 
     relevant_affinities = [
@@ -118,7 +120,9 @@ class TestCreateNodeTooltip:
     def test_special_characters_in_filename(self):
         """Test tooltip with special characters in filename."""
         result = create_node_tooltip("path/to/file-name_v2.py", 10, 5)
-        assert result == "File: path/to/file-name_v2.py<br>Commits: 10<br>Connections: 5"
+        assert (
+            result == "File: path/to/file-name_v2.py<br>Commits: 10<br>Connections: 5"
+        )
 
     def test_long_filename(self):
         """Test tooltip with a long filename."""

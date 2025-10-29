@@ -100,8 +100,8 @@ def files_changes_over_period(
 
     for file_path in target_files:
         try:
-            commits, avg_changes, total_change, percent_change = file_changes_over_period(
-                file_path, start, end, repo
+            commits, avg_changes, total_change, percent_change = (
+                file_changes_over_period(file_path, start, end, repo)
             )
 
             stats = FileChangeStats(
