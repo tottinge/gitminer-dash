@@ -21,10 +21,20 @@ layout = html.Div(
                 DataTable(
                     id="id-strongest-pairings-table",
                     columns=[
-                        {"name": i, "id": i, 'presentation': 'markdown'}
+                        {"name": i, "id": i}
                         for i in ['Affinity', 'Pairing']
                     ],
-                    style_cell={'textAlign': 'left'},
+                    style_cell={
+                        'textAlign': 'left',
+                        'padding': '3px 8px',
+                        'whiteSpace': 'pre-line',
+                        'height': 'auto',
+                        'lineHeight': '1.3'
+                    },
+                    style_data={
+                        'whiteSpace': 'pre-line',
+                        'height': 'auto'
+                    },
                     style_table={'maxHeight': '600px', 'overflowY': 'auto'},
                     data=[]
                 )
@@ -54,7 +64,7 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     # Sort by numeric affinity value, then format for display
     sorted_pairs = sorted(affinities.items(), key=lambda kv: kv[1], reverse=True)
     return [
-        dict(Affinity=f"{value:6.2f}", Pairing="\n\n".join(key))
+        dict(Affinity=f"{value:6.2f}", Pairing="\n".join(key))
         for key, value in sorted_pairs[:50]
     ]
 
