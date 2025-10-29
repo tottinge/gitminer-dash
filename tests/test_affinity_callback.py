@@ -93,8 +93,19 @@ def test_callback_with_mock_data(mock_commits_in_period):
     min_affinity = 0.2
 
     try:
-        figure = update_file_affinity_graph(period, max_nodes, min_affinity)
+        result = update_file_affinity_graph(period, max_nodes, min_affinity)
         print("Callback succeeded with mock data.")
+        print(f"Result type: {type(result)}")
+        
+        # The callback now returns a tuple: (figure, graph_data)
+        if isinstance(result, tuple):
+            figure, graph_data = result
+            print(f"Returned tuple with figure and graph_data")
+            print(f"Graph data keys: {graph_data.keys() if graph_data else 'None'}")
+        else:
+            figure = result
+            print("Returned single figure (legacy)")
+        
         print(f"Figure type: {type(figure)}")
         print(f"Is it a Plotly figure? {isinstance(figure, go.Figure)}")
         assert isinstance(figure, go.Figure)
@@ -139,8 +150,18 @@ def test_callback_without_repo_path(mock_commits_in_period):
     min_affinity = 0.2
 
     try:
-        figure = update_file_affinity_graph(period, max_nodes, min_affinity)
+        result = update_file_affinity_graph(period, max_nodes, min_affinity)
         print("Callback succeeded without repository path.")
+        print(f"Result type: {type(result)}")
+        
+        # The callback now returns a tuple: (figure, graph_data)
+        if isinstance(result, tuple):
+            figure, graph_data = result
+            print(f"Returned tuple with figure and graph_data")
+        else:
+            figure = result
+            print("Returned single figure (legacy)")
+        
         print(f"Figure type: {type(figure)}")
         print(f"Is it a Plotly figure? {isinstance(figure, go.Figure)}")
 
