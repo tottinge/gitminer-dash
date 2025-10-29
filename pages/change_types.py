@@ -25,7 +25,7 @@ def change_series_20day():
     repo = get_repo()
     last_20 = get_most_recent_tags(repo, 20)
     if not last_20:
-        return pd.DataFrame(columns=['Name', 'Date'])
+        return pd.DataFrame(columns=["Name", "Date"])
     # Get the Date, Name, and counters for the most recent commit diffs
     categorized_commits = change_series(start=last_20[0], commit_refs=last_20)
     change_df = pd.DataFrame(categorized_commits)
@@ -34,28 +34,29 @@ def change_series_20day():
 
 layout = html.Div(
     [
-        html.P(
-            id="id-no-data-message",
-            children="No tags found in repository."
+        html.P(id="id-no-data-message", children="No tags found in repository."),
+        html.Div(
+            id="id-graph-container",
+            children=[
+                dcc.Loading(
+                    id="loading-change-types-graph",
+                    type="circle",
+                    children=[
+                        dcc.Graph(id="id-local_graph", style={"height": "500px"})
+                    ],
+                )
+            ],
         ),
-        html.Div(id="id-graph-container",
-                 children=[
-                     dcc.Loading(
-                         id="loading-change-types-graph",
-                         type="circle",
-                         children=[
-                             dcc.Graph(id="id-local_graph", style={"height": "500px"})
-                         ]
-                     )
-                 ]
-                 ),
         html.H3("Source Data", style={"margin": "10px 0"}),
         dcc.Loading(
             id="loading-change-types-table",
             type="circle",
             children=[
-                DataTable(id="id-data-table", style_table={'maxHeight': '400px', 'overflowY': 'auto'})
-            ]
+                DataTable(
+                    id="id-data-table",
+                    style_table={"maxHeight": "400px", "overflowY": "auto"},
+                )
+            ],
         ),
     ]
 )
@@ -65,20 +66,21 @@ style_show: StyleDict = {"display": "block"}
 style_hide: StyleDict = {"display": "none"}
 
 ChangeTypeCallbackResult = Tuple[
-    Figure,     # Graphic to draw
-    list,       # same data as a list
+    Figure,  # Graphic to draw
+    list,  # same data as a list
     StyleDict,  # graphic container show/hide style
-    StyleDict   # no data show/hide style
+    StyleDict,  # no data show/hide style
 ]
+
 
 @callback(
     [
         Output("id-local_graph", "figure"),
         Output("id-data-table", "data"),
         Output("id-graph-container", "style"),
-        Output("id-no-data-message", "style")
+        Output("id-no-data-message", "style"),
     ],
-    Input("id-graph-container", "n_clicks")
+    Input("id-graph-container", "n_clicks"),
 )
 def update_graph(_) -> ChangeTypeCallbackResult:
     data = change_series_20day()
@@ -96,11 +98,11 @@ def update_graph(_) -> ChangeTypeCallbackResult:
             "Files Added": "Added",
             "Files Deleted": "Deleted",
             "Files Renamed": "Renamed",
-            "Files Modified": "Modified"
+            "Files Modified": "Modified",
         },
         hover_name="Name",
         hover_data=["Date"],
-        text_auto='.2s'
+        text_auto=".2s",
     )
-    table_data = data.to_dict('records')
+    table_data = data.to_dict("records")
     return figure, table_data, style_show, style_hide

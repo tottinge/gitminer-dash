@@ -29,18 +29,15 @@ layout = html.Div(
         html.H2(
             id="id-conventional-h2",
             children="Change Type by Conventional Commit Messages",
-            style={"margin": "10px 0"}
+            style={"margin": "10px 0"},
         ),
-        html.Button(
-            id="id-conventional-refresh-button",
-            children="Refresh"
-        ),
+        html.Button(id="id-conventional-refresh-button", children="Refresh"),
         dcc.Loading(
             id="loading-conventional-graph",
             type="circle",
             children=[
                 Graph(id="id-conventional-graph", style={"height": "500px"}),
-            ]
+            ],
         ),
         dcc.Loading(
             id="loading-conventional-table",
@@ -49,11 +46,11 @@ layout = html.Div(
                 DataTable(
                     id="id-conventional-table",
                     columns=[{"name": i, "id": i} for i in ["date", "message"]],
-                    style_cell={'textAlign': 'left'},
-                    style_table={'maxHeight': '400px', 'overflowY': 'auto'},
-                    data=[]
+                    style_cell={"textAlign": "left"},
+                    style_table={"maxHeight": "400px", "overflowY": "auto"},
+                    data=[],
                 ),
-            ]
+            ],
         ),
     ]
 )
@@ -66,13 +63,14 @@ layout = html.Div(
 )
 def update_conventional_table(_, store_data):
     if isinstance(store_data, dict):
-        period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+        period = store_data.get("period", date_utils.DEFAULT_PERIOD)
     else:
         period = date_utils.DEFAULT_PERIOD
-    if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
         from datetime import datetime as _dt
-        start = _dt.fromisoformat(store_data['begin'])
-        today = _dt.fromisoformat(store_data['end'])
+
+        start = _dt.fromisoformat(store_data["begin"])
+        today = _dt.fromisoformat(store_data["end"])
     else:
         start, today = date_utils.calculate_date_range(period)
     commits_data = data.commits_in_period(start, today)
@@ -83,25 +81,23 @@ def update_conventional_table(_, store_data):
 @callback(
     Output("id-conventional-table", "data"),
     Input("id-conventional-graph", "clickData"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def handle_click_on_conventional_graph(click_data):
     if not click_data:
         return [dict(date=datetime.now(), message="No data at thsi time")]
-    date_label = click_data["points"][0]['label']
+    date_label = click_data["points"][0]["label"]
 
     start = datetime.strptime(date_label, "%Y-%m-%d").astimezone()
     end = start + timedelta(hours=23, minutes=59, seconds=59)
     result_data = [
         dict(
-            date=commit.committed_datetime.strftime('%b %d %H:%M'),
-            message=commit.message
+            date=commit.committed_datetime.strftime("%b %d %H:%M"),
+            message=commit.message,
         )
         for commit in data.commits_in_period(start, end)
     ]
     return result_data
-
-
 
 
 def make_figure(df: DataFrame):
@@ -115,5 +111,5 @@ def make_figure(df: DataFrame):
         x="date",
         y="count",
         color="reason",
-        color_discrete_map=color_choices
+        color_discrete_map=color_choices,
     )

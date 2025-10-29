@@ -1,6 +1,6 @@
-
 # Import from tests package to set up path
 from tests import setup_path
+
 setup_path()  # This ensures we can import modules from the project root
 import sys
 
@@ -26,8 +26,8 @@ def test_repository_path_without_arg():
     print("\nTesting repository_path() without command-line argument...")
 
     # Reset modules to ensure clean import
-    if 'data' in sys.modules:
-        del sys.modules['data']
+    if "data" in sys.modules:
+        del sys.modules["data"]
 
     # Set sys.argv without a repository path
     sys.argv = ["app.py"]

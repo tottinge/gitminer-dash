@@ -41,3 +41,8 @@ ignore = [
 # Allow assert in tests
 "tests/**/*.py" = ["S101", "E402", "F841", "F541"]
 
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+]
+

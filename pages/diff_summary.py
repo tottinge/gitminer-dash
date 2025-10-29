@@ -24,15 +24,17 @@ layout = html.Div(
                     id="loading-diff-summary-graph",
                     type="circle",
                     children=[
-                        dcc.Graph(id="diff-summary-graph", figure={"data": []}, style={"height": "500px"}),
-                    ]
+                        dcc.Graph(
+                            id="diff-summary-graph",
+                            figure={"data": []},
+                            style={"height": "500px"},
+                        ),
+                    ],
                 ),
-            ]
-        )
+            ],
+        ),
     ]
 )
-
-
 
 
 @log
@@ -42,7 +44,7 @@ def make_figure(diffs_in_period):
         x="date",
         y="count",
         color="kind",
-        color_discrete_sequence=plotly.colors.qualitative.Pastel
+        color_discrete_sequence=plotly.colors.qualitative.Pastel,
     )
     return bar_chart
 
@@ -54,13 +56,14 @@ def make_figure(diffs_in_period):
 )
 def update_graph(_, store_data):
     if isinstance(store_data, dict):
-        period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+        period = store_data.get("period", date_utils.DEFAULT_PERIOD)
     else:
         period = date_utils.DEFAULT_PERIOD
-    if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
         from datetime import datetime as _dt
-        start = _dt.fromisoformat(store_data['begin'])
-        end = _dt.fromisoformat(store_data['end'])
+
+        start = _dt.fromisoformat(store_data["begin"])
+        end = _dt.fromisoformat(store_data["end"])
     else:
         start, end = date_utils.calculate_date_range(period)
     commits_data = data.commits_in_period(start, end)
@@ -68,7 +71,7 @@ def update_graph(_, store_data):
     return make_figure(diffs_in_period)
 
 
-
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()

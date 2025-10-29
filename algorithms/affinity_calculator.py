@@ -5,6 +5,7 @@ This module provides the fundamental algorithm for calculating file affinities
 based on commit history. Files that are modified together in the same commit
 have affinity for each other.
 """
+
 from collections import defaultdict
 from itertools import combinations
 from typing import Iterable, Dict, Tuple

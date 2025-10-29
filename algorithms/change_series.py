@@ -4,7 +4,7 @@ change_name = {
     "A": "Files Added",
     "D": "Files Deleted",
     "R": "Files Renamed",
-    "M": "Files Modified"
+    "M": "Files Modified",
 }
 
 
@@ -18,8 +18,8 @@ def change_series(start, commit_refs):
     for latter_commit in commit_refs:
         diffs = earlier_commit.commit.diff(latter_commit.commit)
         yield {
-            'Date': latter_commit.commit.committed_datetime.date(),
-            'Name': latter_commit.name,
-            **Counter(change_name[x.change_type] for x in diffs)
+            "Date": latter_commit.commit.committed_datetime.date(),
+            "Name": latter_commit.name,
+            **Counter(change_name[x.change_type] for x in diffs),
         }
         earlier_commit = latter_commit

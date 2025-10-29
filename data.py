@@ -14,15 +14,17 @@ from git import Repo, Commit
 def repository_path() -> str:
     """
     Get the repository path from command-line arguments.
-    
+
     Returns:
         The repository path as a string.
-        
+
     Raises:
         ValueError: If no repository path is provided as a command-line argument.
     """
     if len(sys.argv) < 2:
-        raise ValueError("No repository path provided. Please run the application with a repository path as a command-line argument.")
+        raise ValueError(
+            "No repository path provided. Please run the application with a repository path as a command-line argument."
+        )
     return sys.argv[1]
 
 
@@ -33,7 +35,9 @@ def get_repo() -> Repo:
 
 @cache
 def get_repo_name():
-    return re.sub(pattern=r'[_\.-]', repl=' ', string=os.path.split(repository_path())[-1]).title()
+    return re.sub(
+        pattern=r"[_\.-]", repl=" ", string=os.path.split(repository_path())[-1]
+    ).title()
 
 
 def _dt_key(dt: datetime) -> str:

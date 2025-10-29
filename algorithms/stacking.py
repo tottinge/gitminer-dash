@@ -11,7 +11,7 @@ class SequenceStacker:
 
     def height_for(self, sequence):
         assignment = 1
-        for (level, neighbors) in sorted(self.level_assignments.items()):
+        for level, neighbors in sorted(self.level_assignments.items()):
             neighbors = self.level_assignments[level]
             if all(is_disjoint(sequence, existing) for existing in neighbors):
                 assignment = level

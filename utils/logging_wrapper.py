@@ -9,7 +9,9 @@ def log(func):
             return func(*args, **kwargs)
         except Exception as e:
             logger = logging.getLogger()
-            logger.exception(f"Exception raised in {func.__name__}. exception: {str(e)}")
+            logger.exception(
+                f"Exception raised in {func.__name__}. exception: {str(e)}"
+            )
             raise
 
     return wrapper

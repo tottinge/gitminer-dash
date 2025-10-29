@@ -1,6 +1,6 @@
-
 # Import from tests package to set up path
 from tests import setup_path
+
 setup_path()  # This ensures we can import modules from the project root
 import networkx as nx
 import plotly.graph_objects as go
@@ -30,7 +30,7 @@ def test_edge_width_fix():
         x1, y1 = pos[edge[1]]
         edge_x.extend([x0, x1, None])
         edge_y.extend([y0, y1, None])
-        edge_weights.append(G.edges[edge]['weight'])
+        edge_weights.append(G.edges[edge]["weight"])
 
     # Normalize edge weights for width
     max_weight = max(edge_weights) if edge_weights else 1
@@ -48,12 +48,12 @@ def test_edge_width_fix():
 
             # Create a trace for this single edge
             edge_trace = go.Scatter(
-                x=edge_x[i:i + 3],  # Just this edge's x coordinates
-                y=edge_y[i:i + 3],  # Just this edge's y coordinates
-                line=dict(width=width, color='#888'),
-                hoverinfo='none',
-                mode='lines',
-                showlegend=False
+                x=edge_x[i : i + 3],  # Just this edge's x coordinates
+                y=edge_y[i : i + 3],  # Just this edge's y coordinates
+                line=dict(width=width, color="#888"),
+                hoverinfo="none",
+                mode="lines",
+                showlegend=False,
             )
             edge_traces.append(edge_trace)
 
@@ -61,10 +61,10 @@ def test_edge_width_fix():
     node_trace = go.Scatter(
         x=[pos[node][0] for node in G.nodes()],
         y=[pos[node][1] for node in G.nodes()],
-        mode='markers',
-        marker=dict(size=10, color='blue'),
+        mode="markers",
+        marker=dict(size=10, color="blue"),
         text=list(G.nodes()),
-        hoverinfo='text'
+        hoverinfo="text",
     )
 
     # Create figure

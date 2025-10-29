@@ -22,22 +22,19 @@ layout = html.Div(
 # makes startup time very slow.
 def prepare_dataframe(start_date, end_date):
     recent_merges = [
-        commit for commit in data.commits_in_period(start_date, end_date)
+        commit
+        for commit in data.commits_in_period(start_date, end_date)
         if len(commit.parents) > 1
     ]
-    columns = [
-        "hash",
-        "date",
-        "comment",
-        "lines",
-        "files"
-    ]
+    columns = ["hash", "date", "comment", "lines", "files"]
     source = (
-        (commit.hexsha,
-         commit.committed_datetime.date(),
-         commit.message,
-         commit.stats.total["lines"],
-         commit.stats.total["files"])
+        (
+            commit.hexsha,
+            commit.committed_datetime.date(),
+            commit.message,
+            commit.stats.total["lines"],
+            commit.stats.total["files"],
+        )
         for commit in recent_merges
     )
     result = pd.DataFrame(source, columns=columns).sort_values(by="date")
@@ -52,13 +49,14 @@ def prepare_dataframe(start_date, end_date):
 )
 def update_merge_graph(n_clicks: int, store_data):
     if isinstance(store_data, dict):
-        period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+        period = store_data.get("period", date_utils.DEFAULT_PERIOD)
     else:
         period = date_utils.DEFAULT_PERIOD
-    if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
         from datetime import datetime as _dt
-        start_date = _dt.fromisoformat(store_data['begin'])
-        end_date = _dt.fromisoformat(store_data['end'])
+
+        start_date = _dt.fromisoformat(store_data["begin"])
+        end_date = _dt.fromisoformat(store_data["end"])
     else:
         start_date, end_date = date_utils.calculate_date_range(period)
     data_frame = prepare_dataframe(start_date, end_date)
@@ -70,16 +68,12 @@ def update_merge_graph(n_clicks: int, store_data):
         y="lines",
         color="files",
         hover_name="date",
-        hover_data=["files", "lines", "comment"]
+        hover_data=["files", "lines", "comment"],
     )
     return [
         dcc.Loading(
             id="loading-merge-graph",
             type="circle",
-            children=[
-                dcc.Graph(figure=bar_chart_figure, style={"height": "500px"})
-            ]
+            children=[dcc.Graph(figure=bar_chart_figure, style={"height": "500px"})],
         )
     ]
-
-

@@ -25,24 +25,26 @@ def _create_node_tooltip(node: str, commit_count: int, degree: int) -> str:
     return f"File: {node}<br>Commits: {commit_count}<br>Connections: {degree}"
 
 
-def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=50, min_edge_count=1):
+def create_improved_file_affinity_network(
+    commits, min_affinity=0.2, max_nodes=50, min_edge_count=1
+):
     """
     Create an improved network graph of file affinities based on commit history.
-    
+
     This function is an enhanced version of the original create_file_affinity_network
     function with the following improvements:
-    
+
     1. Lower default min_affinity threshold (0.2 instead of 0.5)
     2. Added min_edge_count parameter to filter out files with too few connections
     3. Better handling of isolated nodes
     4. More detailed logging of network statistics
-    
+
     Args:
         commits: Iterable of commit objects
         min_affinity: Minimum affinity threshold for including edges (default: 0.2)
         max_nodes: Maximum number of nodes to include in the graph (default: 50)
         min_edge_count: Minimum number of edges a node must have to be included (default: 1)
-        
+
     Returns:
         A tuple of (networkx graph, communities, stats)
     """
@@ -65,7 +67,7 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
         "communities": 0,
         "avg_node_degree": 0,
         "avg_edge_weight": 0,
-        "avg_community_size": 0
+        "avg_community_size": 0,
     }
 
     affinities = calculate_affinities(commits)
@@ -94,7 +96,9 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
+        :max_nodes
+    ]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files
@@ -112,7 +116,9 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
 
     # Remove nodes with too few connections
     if min_edge_count > 0:
-        nodes_to_remove = [node for node, degree in G.degree() if degree < min_edge_count]
+        nodes_to_remove = [
+            node for node, degree in G.degree() if degree < min_edge_count
+        ]
         G.remove_nodes_from(nodes_to_remove)
         stats["isolated_nodes"] = len(nodes_to_remove)
 
@@ -132,7 +138,7 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
         # Assign community ID to each node
         for i, community in enumerate(communities):
             for node in community:
-                G.nodes[node]['community'] = i
+                G.nodes[node]["community"] = i
     else:
         communities = []
 
@@ -143,30 +149,32 @@ def create_improved_file_affinity_network(commits, min_affinity=0.2, max_nodes=5
 
     # Calculate average edge weight
     if len(G.edges()) > 0:
-        weights = [data['weight'] for _, _, data in G.edges(data=True)]
+        weights = [data["weight"] for _, _, data in G.edges(data=True)]
         stats["avg_edge_weight"] = sum(weights) / len(G.edges())
 
     return G, communities, stats
 
 
-def create_improved_network_visualization(G, communities, title="Improved File Affinity Network"):
+def create_improved_network_visualization(
+    G, communities, title="Improved File Affinity Network"
+):
     """
     Create an improved Plotly figure for visualizing the file affinity network.
-    
+
     This function is an enhanced version of the original create_network_visualization
     function with the following improvements:
-    
+
     1. Better handling of empty graphs
     2. Improved node sizing based on commit count
     3. More informative tooltips
     4. Fixed Plotly property names
     5. Better color scheme for communities
-    
+
     Args:
         G: NetworkX graph of file affinities
         communities: List of communities detected in the graph
         title: Title for the visualization (default: "Improved File Affinity Network")
-        
+
     Returns:
         A Plotly figure object
     """
@@ -175,15 +183,17 @@ def create_improved_network_visualization(G, communities, title="Improved File A
         fig = go.Figure()
         fig.add_annotation(
             text="No data available for the selected time period",
-            xref="paper", yref="paper",
-            x=0.5, y=0.5,
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
             showarrow=False,
-            font=dict(size=20)
+            font=dict(size=20),
         )
         fig.update_layout(
-            title=title + ' - No Data',
+            title=title + " - No Data",
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         )
         return fig
 
@@ -204,7 +214,7 @@ def create_improved_network_visualization(G, communities, title="Improved File A
             edge_x.extend([x0, x1, None])
             edge_y.extend([y0, y1, None])
 
-            weight = G.edges[edge]['weight']
+            weight = G.edges[edge]["weight"]
             edge_weights.append(weight)
 
             # Create informative tooltip text
@@ -228,32 +238,31 @@ def create_improved_network_visualization(G, communities, title="Improved File A
 
                 # Create a trace for this single edge
                 edge_trace = go.Scatter(
-                    x=edge_x[i:i + 3],  # Just this edge's x coordinates
-                    y=edge_y[i:i + 3],  # Just this edge's y coordinates
-                    line=dict(width=width, color='#888'),
-                    hoverinfo='text',
+                    x=edge_x[i : i + 3],  # Just this edge's x coordinates
+                    y=edge_y[i : i + 3],  # Just this edge's y coordinates
+                    line=dict(width=width, color="#888"),
+                    hoverinfo="text",
                     text=text,
-                    mode='lines',
-                    showlegend=False
+                    mode="lines",
+                    showlegend=False,
                 )
                 edge_traces.append(edge_trace)
 
         # If no edges were created, create an empty edge trace
         if not edge_traces:
             edge_trace = go.Scatter(
-                x=[], y=[],
-                line=dict(width=0, color='#888'),
-                hoverinfo='none',
-                mode='lines'
+                x=[],
+                y=[],
+                line=dict(width=0, color="#888"),
+                hoverinfo="none",
+                mode="lines",
             )
             edge_traces = [edge_trace]
     else:
         # Create an empty edge trace if there are no edges
         edge_trace = go.Scatter(
-            x=[], y=[],
-            line=dict(width=0, color='#888'),
-            hoverinfo='none',
-            mode='lines')
+            x=[], y=[], line=dict(width=0, color="#888"), hoverinfo="none", mode="lines"
+        )
         edge_traces = [edge_trace]
 
     # Create node traces (one per community for different colors)
@@ -263,7 +272,7 @@ def create_improved_network_visualization(G, communities, title="Improved File A
     community_colors = px.colors.qualitative.D3
 
     # Get community IDs from node attributes, handle case where there are no communities
-    community_ids = set(nx.get_node_attributes(G, 'community').values())
+    community_ids = set(nx.get_node_attributes(G, "community").values())
 
     # If there are no communities but there are nodes, create a single community with all nodes
     if not community_ids and len(G.nodes()) > 0:
@@ -278,30 +287,34 @@ def create_improved_network_visualization(G, communities, title="Improved File A
             node_x.append(x)
             node_y.append(y)
 
-            commit_count = G.nodes[node].get('commit_count', 0)
+            commit_count = G.nodes[node].get("commit_count", 0)
             degree = G.degree(node)
             node_text.append(_create_node_tooltip(node, commit_count, degree))
             node_size.append(_calculate_node_size(commit_count, degree))
 
         node_trace = go.Scatter(
-            x=node_x, y=node_y,
-            mode='markers',
-            hoverinfo='text',
+            x=node_x,
+            y=node_y,
+            mode="markers",
+            hoverinfo="text",
             text=node_text,
             marker=dict(
                 color=community_colors[0],
                 size=node_size,
-                line=dict(width=1, color='#333')
+                line=dict(width=1, color="#333"),
             ),
-            name='All Files'
+            name="All Files",
         )
 
         node_traces.append(node_trace)
     else:
         # Process each community
         for community_id in community_ids:
-            community_nodes = [node for node, data in G.nodes(data=True)
-                               if data.get('community') == community_id]
+            community_nodes = [
+                node
+                for node, data in G.nodes(data=True)
+                if data.get("community") == community_id
+            ]
 
             node_x = []
             node_y = []
@@ -313,7 +326,7 @@ def create_improved_network_visualization(G, communities, title="Improved File A
                 node_x.append(x)
                 node_y.append(y)
 
-                commit_count = G.nodes[node].get('commit_count', 0)
+                commit_count = G.nodes[node].get("commit_count", 0)
                 degree = G.degree(node)
                 node_text.append(_create_node_tooltip(node, commit_count, degree))
                 node_size.append(_calculate_node_size(commit_count, degree))
@@ -321,30 +334,31 @@ def create_improved_network_visualization(G, communities, title="Improved File A
             color = community_colors[community_id % len(community_colors)]
 
             node_trace = go.Scatter(
-                x=node_x, y=node_y,
-                mode='markers',
-                hoverinfo='text',
+                x=node_x,
+                y=node_y,
+                mode="markers",
+                hoverinfo="text",
                 text=node_text,
                 marker=dict(
-                    color=color,
-                    size=node_size,
-                    line=dict(width=1, color='#333')
+                    color=color, size=node_size, line=dict(width=1, color="#333")
                 ),
-                name=f'Group {community_id + 1}'
+                name=f"Group {community_id + 1}",
             )
 
             node_traces.append(node_trace)
 
     # Create figure
-    fig = go.Figure(data=[*edge_traces, *node_traces],
-                    layout=go.Layout(
-                        title=title,
-                        title_font=dict(size=16),  # Use title_font instead of titlefont
-                        showlegend=True,
-                        hovermode='closest',
-                        margin=dict(b=20, l=5, r=5, t=40),
-                        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
-                    ))
+    fig = go.Figure(
+        data=[*edge_traces, *node_traces],
+        layout=go.Layout(
+            title=title,
+            title_font=dict(size=16),  # Use title_font instead of titlefont
+            showlegend=True,
+            hovermode="closest",
+            margin=dict(b=20, l=5, r=5, t=40),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        ),
+    )
 
     return fig

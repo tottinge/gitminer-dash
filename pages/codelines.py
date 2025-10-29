@@ -23,37 +23,38 @@ layout = html.Div(
                     id="loading-code-lines-graph",
                     type="circle",
                     children=[
-                        dcc.Graph(id="code-lines-graph", figure={"data": []}, style={"height": "500px"}),
-                    ]
+                        dcc.Graph(
+                            id="code-lines-graph",
+                            figure={"data": []},
+                            style={"height": "500px"},
+                        ),
+                    ],
                 ),
-            ]
-        )
+            ],
+        ),
     ]
 )
 
 
 @callback(
-    [
-        Output("code-lines-graph", "figure"),
-        Output("id-code-lines-container", "style")
-    ],
+    [Output("code-lines-graph", "figure"), Output("id-code-lines-container", "style")],
     Input("code-lines-refresh-button", "n_clicks"),
     Input("global-date-range", "data"),
-    running=[(Output('code-lines-refresh-button', 'disabled'), True, False)]
-
+    running=[(Output("code-lines-refresh-button", "disabled"), True, False)],
 )
 def update_code_lines_graph(_: int, store_data):
     show = {"display": "block"}
 
     # Determine range from global store
     if isinstance(store_data, dict):
-        period = store_data.get('period', date_utils.DEFAULT_PERIOD)
+        period = store_data.get("period", date_utils.DEFAULT_PERIOD)
     else:
         period = date_utils.DEFAULT_PERIOD
-    if isinstance(store_data, dict) and 'begin' in store_data and 'end' in store_data:
+    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
         from datetime import datetime as _dt
-        start_date = _dt.fromisoformat(store_data['begin'])
-        end_date = _dt.fromisoformat(store_data['end'])
+
+        start_date = _dt.fromisoformat(store_data["begin"])
+        end_date = _dt.fromisoformat(store_data["end"])
     else:
         start_date, end_date = date_utils.calculate_date_range(period)
 
@@ -64,20 +65,12 @@ def update_code_lines_graph(_: int, store_data):
             continue
         for parent in commit.parents:
             graph.add_node(
-                parent.hexsha,
-                committed=parent.
-                committed_datetime,
-                sha=parent.hexsha
+                parent.hexsha, committed=parent.committed_datetime, sha=parent.hexsha
             )
             graph.add_node(
-                commit.hexsha,
-                committed=commit.committed_datetime,
-                sha=commit.hexsha
+                commit.hexsha, committed=commit.committed_datetime, sha=commit.hexsha
             )
-            graph.add_edge(
-                parent.hexsha,
-                commit.hexsha
-            )
+            graph.add_edge(parent.hexsha, commit.hexsha)
 
     # Convert connected chains to begin/end pairs of dates
     rows = []
@@ -86,20 +79,29 @@ def update_code_lines_graph(_: int, store_data):
     chain_summary = []
     for chain in nx.connected_components(graph):
         nodelist = [graph.nodes[key] for key in chain]
-        ordered = sorted(nodelist, key=lambda x: x['committed'])
+        ordered = sorted(nodelist, key=lambda x: x["committed"])
         earliest, latest = ordered[0], ordered[-1]
 
-        early_timestamp = earliest['committed']
-        late_timestamp = latest['committed']
+        early_timestamp = earliest["committed"]
+        late_timestamp = latest["committed"]
 
         duration = late_timestamp - early_timestamp
         commit_counts = len(chain)
-        record = (early_timestamp, late_timestamp, commit_counts, duration, earliest, latest)
+        record = (
+            early_timestamp,
+            late_timestamp,
+            commit_counts,
+            duration,
+            earliest,
+            latest,
+        )
 
         chain_summary.append(record)
 
     for data in sorted(chain_summary):
-        early_timestamp, late_timestamp, commit_counts, duration, earliest, latest = data
+        early_timestamp, late_timestamp, commit_counts, duration, earliest, latest = (
+            data
+        )
         # Clamp chain span to the selected period
         clamped_first = max(early_timestamp, start_date)
         clamped_last = min(late_timestamp, end_date)
@@ -107,28 +109,31 @@ def update_code_lines_graph(_: int, store_data):
             continue
         clamped_duration = clamped_last - clamped_first
         height = stacker.height_for([clamped_first, clamped_last])
-        rows.append(dict(
-            first=clamped_first.isoformat(),
-            last=clamped_last.isoformat(),
-            elevation=height,
-            commit_counts=commit_counts,
-            head=earliest['sha'],
-            tail=latest['sha'],
-            duration=clamped_duration.days,
-            density=(clamped_duration.days / commit_counts) if commit_counts else 0
-        ))
+        rows.append(
+            dict(
+                first=clamped_first.isoformat(),
+                last=clamped_last.isoformat(),
+                elevation=height,
+                commit_counts=commit_counts,
+                head=earliest["sha"],
+                tail=latest["sha"],
+                duration=clamped_duration.days,
+                density=(clamped_duration.days / commit_counts) if commit_counts else 0,
+            )
+        )
 
     df = DataFrame(
         rows,
         columns=[
-            'first',
-            'last',
-            'elevation',
-            'commit_counts',
-            'head',
-            'tail',
-            'duration',
-            'density']
+            "first",
+            "last",
+            "elevation",
+            "commit_counts",
+            "head",
+            "tail",
+            "duration",
+            "density",
+        ],
     )
     figure = px.timeline(
         data_frame=df,
@@ -142,19 +147,17 @@ def update_code_lines_graph(_: int, store_data):
             "density": "Commit Sparsity",
             "first": "Begun",
             "last": "Ended",
-            "duration": "Days"
+            "duration": "Days",
         },
         hover_data={
-            'first': True,
-            'head': True,
-            'last': True,
-            'tail': True,
-            'commit_counts': True,
-            'duration': True,
-            'elevation': False,
-            'density': True
-        }
+            "first": True,
+            "head": True,
+            "last": True,
+            "tail": True,
+            "commit_counts": True,
+            "duration": True,
+            "elevation": False,
+            "density": True,
+        },
     )
     return figure, show
-
-

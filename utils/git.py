@@ -6,12 +6,15 @@ from git import Repo
 # We intentionally delegate repository resolution to the data module
 # to preserve single-source-of-truth for CLI arg handling.
 
+
 def get_repo() -> Repo:
     from data import get_repo as _get_repo  # local import to avoid cycles
+
     return _get_repo()
 
 
 T = TypeVar("T")
+
 
 def ensure_list(items: Iterable[T] | Sequence[T] | None) -> List[T]:
     """Return a list from any iterable/sequence, handling None.

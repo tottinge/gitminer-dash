@@ -6,6 +6,7 @@ This module contains tests for the date_utils module using pytest.
 
 # Import from tests package to set up path
 from tests import setup_path
+
 setup_path()  # This ensures we can import modules from the project root
 from datetime import datetime
 
@@ -33,7 +34,7 @@ def mock_datetime(monkeypatch):
             return dt
 
     # Apply the monkeypatch to replace datetime in date_utils
-    monkeypatch.setattr(date_utils, 'datetime', MockDatetime)
+    monkeypatch.setattr(date_utils, "datetime", MockDatetime)
 
     # For the 'Ever' test case, we need to handle datetime constructor
     original_datetime = datetime
@@ -51,7 +52,7 @@ def mock_datetime(monkeypatch):
 def test_calculate_date_range_7_days(mock_datetime):
     """Test calculate_date_range with 'Last 7 days'."""
     # Call function under test
-    begin, end = date_utils.calculate_date_range('Last 7 days')
+    begin, end = date_utils.calculate_date_range("Last 7 days")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -62,7 +63,7 @@ def test_calculate_date_range_7_days(mock_datetime):
 def test_calculate_date_range_30_days(mock_datetime):
     """Test calculate_date_range with 'Last 30 days'."""
     # Call function under test
-    begin, end = date_utils.calculate_date_range('Last 30 days')
+    begin, end = date_utils.calculate_date_range("Last 30 days")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -73,7 +74,7 @@ def test_calculate_date_range_30_days(mock_datetime):
 def test_calculate_date_range_60_days(mock_datetime):
     """Test calculate_date_range with 'Last 60 days'."""
     # Call function under test
-    begin, end = date_utils.calculate_date_range('Last 60 days')
+    begin, end = date_utils.calculate_date_range("Last 60 days")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -84,7 +85,7 @@ def test_calculate_date_range_60_days(mock_datetime):
 def test_calculate_date_range_90_days(mock_datetime):
     """Test calculate_date_range with 'Last 90 days'."""
     # Call function under test
-    begin, end = date_utils.calculate_date_range('Last 90 days')
+    begin, end = date_utils.calculate_date_range("Last 90 days")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -95,7 +96,7 @@ def test_calculate_date_range_90_days(mock_datetime):
 def test_calculate_date_range_6_months(mock_datetime):
     """Test calculate_date_range with 'Last 6 Months'."""
     # Call function under test
-    begin, end = date_utils.calculate_date_range('Last 6 Months')
+    begin, end = date_utils.calculate_date_range("Last 6 Months")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -105,7 +106,7 @@ def test_calculate_date_range_6_months(mock_datetime):
 def test_calculate_date_range_1_year(mock_datetime):
     """Test calculate_date_range with 'Last 1 Year'."""
     # Call function under test
-    begin, end = date_utils.calculate_date_range('Last 1 Year')
+    begin, end = date_utils.calculate_date_range("Last 1 Year")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -118,7 +119,7 @@ def test_calculate_date_range_1_year(mock_datetime):
 def test_calculate_date_range_5_years(mock_datetime):
     """Test calculate_date_range with 'Last 5 Years'."""
     # Call function under test
-    begin, end = date_utils.calculate_date_range('Last 5 Years')
+    begin, end = date_utils.calculate_date_range("Last 5 Years")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -145,10 +146,10 @@ def test_calculate_date_range_ever(monkeypatch):
             return datetime(*args, **kwargs)
 
     mock_dt = MockDatetime()
-    monkeypatch.setattr(date_utils, 'datetime', mock_dt)
+    monkeypatch.setattr(date_utils, "datetime", mock_dt)
 
     # Call function under test
-    begin, end = date_utils.calculate_date_range('Ever')
+    begin, end = date_utils.calculate_date_range("Ever")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -169,7 +170,7 @@ def test_calculate_date_range_default_none(mock_datetime):
 def test_calculate_date_range_default_empty(mock_datetime):
     """Test calculate_date_range with empty string (default)."""
     # Call function under test
-    begin, end = date_utils.calculate_date_range('')
+    begin, end = date_utils.calculate_date_range("")
 
     # Assertions
     assert end.date() == MOCK_DATE.date()
@@ -178,14 +179,16 @@ def test_calculate_date_range_default_empty(mock_datetime):
 
 
 # Run doctests when file is executed directly
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
 
     doctest_results = doctest.testmod(date_utils)
     if doctest_results.failed == 0:
         print(f"All {doctest_results.attempted} doctests passed!")
     else:
-        print(f"Failed {doctest_results.failed} out of {doctest_results.attempted} doctests.")
+        print(
+            f"Failed {doctest_results.failed} out of {doctest_results.attempted} doctests."
+        )
         exit(1)
 
     # Run pytest

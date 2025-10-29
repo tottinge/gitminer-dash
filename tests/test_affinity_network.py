@@ -10,6 +10,7 @@ the resulting graph.
 
 # Import from tests package to set up path
 from tests import setup_path
+
 setup_path()  # This ensures we can import modules from the project root
 import os
 import sys
@@ -33,12 +34,12 @@ from utils import date_utils
 def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
     """
     Create a network graph of file affinities based on commit history.
-    
+
     Args:
         commits: Iterable of commit objects
         min_affinity: Minimum affinity threshold for including edges
         max_nodes: Maximum number of nodes to include in the graph
-        
+
     Returns:
         A tuple of (networkx graph, communities)
     """
@@ -69,7 +70,9 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
 
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[:max_nodes]
+    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
+        :max_nodes
+    ]
     top_file_set = {file for file, _ in top_files}
 
     # Add nodes for top files
@@ -89,7 +92,7 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
         # Assign community ID to each node
         for i, community in enumerate(communities):
             for node in community:
-                G.nodes[node]['community'] = i
+                G.nodes[node]["community"] = i
     else:
         # Return empty communities list if graph is empty
         communities = []
@@ -100,11 +103,11 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
 def create_network_visualization(G, communities):
     """
     Create a Plotly figure for visualizing the file affinity network.
-    
+
     Args:
         G: NetworkX graph of file affinities
         communities: List of communities detected in the graph
-        
+
     Returns:
         A Plotly figure object
     """
@@ -113,15 +116,17 @@ def create_network_visualization(G, communities):
         fig = go.Figure()
         fig.add_annotation(
             text="No data available for the selected time period",
-            xref="paper", yref="paper",
-            x=0.5, y=0.5,
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
             showarrow=False,
-            font=dict(size=20)
+            font=dict(size=20),
         )
         fig.update_layout(
-            title='File Affinity Network - No Data',
+            title="File Affinity Network - No Data",
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         )
         return fig
 
@@ -140,7 +145,7 @@ def create_network_visualization(G, communities):
             x1, y1 = pos[edge[1]]
             edge_x.extend([x0, x1, None])
             edge_y.extend([y0, y1, None])
-            edge_weights.append(G.edges[edge]['weight'])
+            edge_weights.append(G.edges[edge]["weight"])
 
         # Normalize edge weights for width
         max_weight = max(edge_weights) if edge_weights else 1
@@ -158,31 +163,30 @@ def create_network_visualization(G, communities):
 
                 # Create a trace for this single edge
                 edge_trace = go.Scatter(
-                    x=edge_x[i:i + 3],  # Just this edge's x coordinates
-                    y=edge_y[i:i + 3],  # Just this edge's y coordinates
-                    line=dict(width=width, color='#888'),
-                    hoverinfo='none',
-                    mode='lines',
-                    showlegend=False
+                    x=edge_x[i : i + 3],  # Just this edge's x coordinates
+                    y=edge_y[i : i + 3],  # Just this edge's y coordinates
+                    line=dict(width=width, color="#888"),
+                    hoverinfo="none",
+                    mode="lines",
+                    showlegend=False,
                 )
                 edge_traces.append(edge_trace)
 
         # If no edges were created, create an empty edge trace
         if not edge_traces:
             edge_trace = go.Scatter(
-                x=[], y=[],
-                line=dict(width=0, color='#888'),
-                hoverinfo='none',
-                mode='lines'
+                x=[],
+                y=[],
+                line=dict(width=0, color="#888"),
+                hoverinfo="none",
+                mode="lines",
             )
             edge_traces = [edge_trace]
     else:
         # Create an empty edge trace if there are no edges
         edge_trace = go.Scatter(
-            x=[], y=[],
-            line=dict(width=0, color='#888'),
-            hoverinfo='none',
-            mode='lines')
+            x=[], y=[], line=dict(width=0, color="#888"), hoverinfo="none", mode="lines"
+        )
         edge_traces = [edge_trace]
 
     # Create node traces (one per community for different colors)
@@ -192,7 +196,7 @@ def create_network_visualization(G, communities):
     community_colors = px.colors.qualitative.Plotly
 
     # Get community IDs from node attributes, handle case where there are no communities
-    community_ids = set(nx.get_node_attributes(G, 'community').values())
+    community_ids = set(nx.get_node_attributes(G, "community").values())
 
     # If there are no communities but there are nodes, create a single community with all nodes
     if not community_ids and len(G.nodes()) > 0:
@@ -211,24 +215,28 @@ def create_network_visualization(G, communities):
             node_size.append(10 + G.degree(node) * 2)
 
         node_trace = go.Scatter(
-            x=node_x, y=node_y,
-            mode='markers',
-            hoverinfo='text',
+            x=node_x,
+            y=node_y,
+            mode="markers",
+            hoverinfo="text",
             text=node_text,
             marker=dict(
                 color=community_colors[0],
                 size=node_size,
-                line=dict(width=1, color='#333')
+                line=dict(width=1, color="#333"),
             ),
-            name='All Files'
+            name="All Files",
         )
 
         node_traces.append(node_trace)
     else:
         # Process each community
         for community_id in community_ids:
-            community_nodes = [node for node, data in G.nodes(data=True)
-                               if data.get('community') == community_id]
+            community_nodes = [
+                node
+                for node, data in G.nodes(data=True)
+                if data.get("community") == community_id
+            ]
 
             node_x = []
             node_y = []
@@ -246,42 +254,39 @@ def create_network_visualization(G, communities):
             color = community_colors[community_id % len(community_colors)]
 
             node_trace = go.Scatter(
-                x=node_x, y=node_y,
-                mode='markers',
-                hoverinfo='text',
+                x=node_x,
+                y=node_y,
+                mode="markers",
+                hoverinfo="text",
                 text=node_text,
                 marker=dict(
-                    color=color,
-                    size=node_size,
-                    line=dict(width=1, color='#333')
+                    color=color, size=node_size, line=dict(width=1, color="#333")
                 ),
-                name=f'Group {community_id + 1}'
+                name=f"Group {community_id + 1}",
             )
 
             node_traces.append(node_trace)
 
     # Create figure
-    fig = go.Figure(data=[*edge_traces, *node_traces],
-                    layout=go.Layout(
-                        title='File Affinity Network',
-                        title_font=dict(size=16),  # Changed from titlefont to title_font
-                        showlegend=True,
-                        hovermode='closest',
-                        margin=dict(b=20, l=5, r=5, t=40),
-                        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
-                    ))
+    fig = go.Figure(
+        data=[*edge_traces, *node_traces],
+        layout=go.Layout(
+            title="File Affinity Network",
+            title_font=dict(size=16),  # Changed from titlefont to title_font
+            showlegend=True,
+            hovermode="closest",
+            margin=dict(b=20, l=5, r=5, t=40),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        ),
+    )
 
     return fig
 
 
 # Constants
 TEST_DATA_DIR = Path(os.path.join(os.path.dirname(__file__), "test_data"))
-TEST_PERIODS = [
-    "Last 6 Months",
-    "Last 1 Year",
-    "Last 5 Years"
-]
+TEST_PERIODS = ["Last 6 Months", "Last 1 Year", "Last 5 Years"]
 
 
 def ensure_test_data_dir():
@@ -299,11 +304,11 @@ def get_repository_path():
 def get_commits_for_period(repo_path, period):
     """
     Get commits for the specified time period.
-    
+
     Args:
         repo_path: Path to the git repository
         period: Time period string (e.g., "Last 6 Months")
-        
+
     Returns:
         List of commit objects
     """
@@ -328,11 +333,11 @@ def get_commits_for_period(repo_path, period):
 def save_commits_data(commits, period):
     """
     Save commit data to a file for later use.
-    
+
     Args:
         commits: List of commit objects
         period: Time period string
-        
+
     Returns:
         Path to the saved file
     """
@@ -341,18 +346,18 @@ def save_commits_data(commits, period):
     for commit in commits:
         files_changed = list(commit.stats.files.keys())
         simplified_commit = {
-            'hash': commit.hexsha,
-            'author': str(commit.author),
-            'date': datetime.fromtimestamp(commit.committed_date).isoformat(),
-            'message': commit.message,
-            'files': files_changed
+            "hash": commit.hexsha,
+            "author": str(commit.author),
+            "date": datetime.fromtimestamp(commit.committed_date).isoformat(),
+            "message": commit.message,
+            "files": files_changed,
         }
         simplified_commits.append(simplified_commit)
 
     # Save to file
     filename = f"commits_{period.replace(' ', '_').lower()}.json"
     filepath = TEST_DATA_DIR / filename
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         json.dump(simplified_commits, f, indent=2)
 
     print(f"Saved {len(simplified_commits)} commits to {filepath}")
@@ -362,10 +367,10 @@ def save_commits_data(commits, period):
 def load_commits_data(period):
     """
     Load commit data from a file.
-    
+
     Args:
         period: Time period string
-        
+
     Returns:
         List of simplified commit objects
     """
@@ -376,7 +381,7 @@ def load_commits_data(period):
         print(f"No saved data found for {period}")
         return None
 
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         commits = json.load(f)
 
     print(f"Loaded {len(commits)} commits from {filepath}")
@@ -386,26 +391,28 @@ def load_commits_data(period):
 def create_mock_commit(commit_data):
     """
     Create a mock commit object from simplified commit data.
-    
+
     Args:
         commit_data: Dictionary with commit data
-        
+
     Returns:
         A mock commit object with the necessary attributes
     """
 
     class MockCommit:
         def __init__(self, data):
-            self.hexsha = data['hash']
-            self.message = data['message']
-            self.committed_date = datetime.fromisoformat(data['date']).timestamp()
-            self.committed_datetime = datetime.fromisoformat(data['date'])
+            self.hexsha = data["hash"]
+            self.message = data["message"]
+            self.committed_date = datetime.fromisoformat(data["date"]).timestamp()
+            self.committed_datetime = datetime.fromisoformat(data["date"])
 
             class MockStats:
                 def __init__(self, files):
-                    self.files = {file: {'insertions': 1, 'deletions': 1} for file in files}
+                    self.files = {
+                        file: {"insertions": 1, "deletions": 1} for file in files
+                    }
 
-            self.stats = MockStats(data['files'])
+            self.stats = MockStats(data["files"])
 
     return MockCommit(commit_data)
 
@@ -413,13 +420,13 @@ def create_mock_commit(commit_data):
 def analyze_affinity_network(commits, period, min_affinity=0.5, max_nodes=50):
     """
     Analyze the affinity network created from the commits.
-    
+
     Args:
         commits: List of commit objects (real or mock)
         period: Time period string
         min_affinity: Minimum affinity threshold
         max_nodes: Maximum number of nodes
-        
+
     Returns:
         Dictionary with analysis results
     """
@@ -441,7 +448,9 @@ def analyze_affinity_network(commits, period, min_affinity=0.5, max_nodes=50):
 
     # Create the affinity network
     start_time = datetime.now()
-    G, communities = create_file_affinity_network(commits, min_affinity=min_affinity, max_nodes=max_nodes)
+    G, communities = create_file_affinity_network(
+        commits, min_affinity=min_affinity, max_nodes=max_nodes
+    )
     end_time = datetime.now()
 
     # Analyze the graph
@@ -465,15 +474,19 @@ def analyze_affinity_network(commits, period, min_affinity=0.5, max_nodes=50):
         avg_degree = sum(degrees) / len(degrees) if degrees else 0
         max_degree = max(degrees) if degrees else 0
         min_degree = min(degrees) if degrees else 0
-        print(f"Node degree stats: min={min_degree}, avg={avg_degree:.2f}, max={max_degree}")
+        print(
+            f"Node degree stats: min={min_degree}, avg={avg_degree:.2f}, max={max_degree}"
+        )
 
     # Get edge weights
     if num_edges > 0:
-        weights = [data['weight'] for _, _, data in G.edges(data=True)]
+        weights = [data["weight"] for _, _, data in G.edges(data=True)]
         avg_weight = sum(weights) / len(weights) if weights else 0
         max_weight = max(weights) if weights else 0
         min_weight = min(weights) if weights else 0
-        print(f"Edge weight stats: min={min_weight:.2f}, avg={avg_weight:.2f}, max={max_weight:.2f}")
+        print(
+            f"Edge weight stats: min={min_weight:.2f}, avg={avg_weight:.2f}, max={max_weight:.2f}"
+        )
 
     # Analyze communities
     if num_communities > 0:
@@ -481,48 +494,50 @@ def analyze_affinity_network(commits, period, min_affinity=0.5, max_nodes=50):
         avg_community_size = sum(community_sizes) / len(community_sizes)
         max_community_size = max(community_sizes)
         min_community_size = min(community_sizes)
-        print(f"Community size stats: min={min_community_size}, avg={avg_community_size:.2f}, max={max_community_size}")
+        print(
+            f"Community size stats: min={min_community_size}, avg={avg_community_size:.2f}, max={max_community_size}"
+        )
 
     # Return analysis results
     return {
-        'period': period,
-        'min_affinity': min_affinity,
-        'max_nodes': max_nodes,
-        'num_commits': len(commits),
-        'num_unique_files': len(files_in_commits),
-        'num_nodes': num_nodes,
-        'num_edges': num_edges,
-        'num_communities': num_communities,
-        'is_valid': is_valid,
-        'node_degree_stats': {
-            'min': min_degree if num_nodes > 0 else None,
-            'avg': avg_degree if num_nodes > 0 else None,
-            'max': max_degree if num_nodes > 0 else None
+        "period": period,
+        "min_affinity": min_affinity,
+        "max_nodes": max_nodes,
+        "num_commits": len(commits),
+        "num_unique_files": len(files_in_commits),
+        "num_nodes": num_nodes,
+        "num_edges": num_edges,
+        "num_communities": num_communities,
+        "is_valid": is_valid,
+        "node_degree_stats": {
+            "min": min_degree if num_nodes > 0 else None,
+            "avg": avg_degree if num_nodes > 0 else None,
+            "max": max_degree if num_nodes > 0 else None,
         },
-        'edge_weight_stats': {
-            'min': min_weight if num_edges > 0 else None,
-            'avg': avg_weight if num_edges > 0 else None,
-            'max': max_weight if num_edges > 0 else None
+        "edge_weight_stats": {
+            "min": min_weight if num_edges > 0 else None,
+            "avg": avg_weight if num_edges > 0 else None,
+            "max": max_weight if num_edges > 0 else None,
         },
-        'community_size_stats': {
-            'min': min_community_size if num_communities > 0 else None,
-            'avg': avg_community_size if num_communities > 0 else None,
-            'max': max_community_size if num_communities > 0 else None
-        }
+        "community_size_stats": {
+            "min": min_community_size if num_communities > 0 else None,
+            "avg": avg_community_size if num_communities > 0 else None,
+            "max": max_community_size if num_communities > 0 else None,
+        },
     }
 
 
 def save_visualization(G, communities, period, min_affinity, max_nodes):
     """
     Save the network visualization to an HTML file.
-    
+
     Args:
         G: NetworkX graph
         communities: List of communities
         period: Time period string
         min_affinity: Minimum affinity threshold
         max_nodes: Maximum number of nodes
-        
+
     Returns:
         Path to the saved file
     """
@@ -530,7 +545,9 @@ def save_visualization(G, communities, period, min_affinity, max_nodes):
     fig = create_network_visualization(G, communities)
 
     # Save to file
-    filename = f"network_{period.replace(' ', '_').lower()}_{min_affinity}_{max_nodes}.html"
+    filename = (
+        f"network_{period.replace(' ', '_').lower()}_{min_affinity}_{max_nodes}.html"
+    )
     filepath = TEST_DATA_DIR / filename
     fig.write_html(str(filepath))
 
@@ -541,11 +558,11 @@ def save_visualization(G, communities, period, min_affinity, max_nodes):
 def try_affinity_network_with_different_parameters(commits, period):
     """
     Test the affinity network with different parameter combinations.
-    
+
     Args:
         commits: List of commit objects or dictionaries
         period: Time period string
-        
+
     Returns:
         List of analysis results
     """
@@ -572,13 +589,19 @@ def try_affinity_network_with_different_parameters(commits, period):
                     save_visualization(G, communities, period, min_affinity, max_nodes)
 
                 # Analyze the network
-                result = analyze_affinity_network(mock_commits, period, min_affinity, max_nodes)
+                result = analyze_affinity_network(
+                    mock_commits, period, min_affinity, max_nodes
+                )
                 results.append(result)
 
-                print(f"Tested with min_affinity={min_affinity}, max_nodes={max_nodes}: " +
-                      f"{len(G.nodes())} nodes, {len(G.edges())} edges")
+                print(
+                    f"Tested with min_affinity={min_affinity}, max_nodes={max_nodes}: "
+                    + f"{len(G.nodes())} nodes, {len(G.edges())} edges"
+                )
             except Exception as e:
-                print(f"Error testing with min_affinity={min_affinity}, max_nodes={max_nodes}: {str(e)}")
+                print(
+                    f"Error testing with min_affinity={min_affinity}, max_nodes={max_nodes}: {str(e)}"
+                )
 
     return results
 
@@ -624,14 +647,16 @@ def main():
                 save_visualization(G, communities, period, 0.5, 50)
 
             # Test with different parameters
-            param_results = try_affinity_network_with_different_parameters(commits, period)
+            param_results = try_affinity_network_with_different_parameters(
+                commits, period
+            )
             all_results.extend(param_results)
         except Exception as e:
             print(f"Error analyzing network for {period}: {str(e)}")
 
     # Save all results
     results_file = TEST_DATA_DIR / "affinity_network_results.json"
-    with open(results_file, 'w') as f:
+    with open(results_file, "w") as f:
         json.dump(all_results, f, indent=2)
 
     print(f"\nAll results saved to {results_file}")
@@ -639,9 +664,11 @@ def main():
     # Print summary
     print("\nSummary of Results:")
     for result in all_results:
-        valid_str = "VALID" if result['is_valid'] else "INVALID"
-        print(f"{result['period']} (min_affinity={result['min_affinity']}, max_nodes={result['max_nodes']}): " +
-              f"{result['num_nodes']} nodes, {result['num_edges']} edges - {valid_str}")
+        valid_str = "VALID" if result["is_valid"] else "INVALID"
+        print(
+            f"{result['period']} (min_affinity={result['min_affinity']}, max_nodes={result['max_nodes']}): "
+            + f"{result['num_nodes']} nodes, {result['num_edges']} edges - {valid_str}"
+        )
 
 
 if __name__ == "__main__":

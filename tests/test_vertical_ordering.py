@@ -35,7 +35,7 @@ class MyTestCase(unittest.TestCase):
             ([13, 15], 1),
             ([18, 20], 1),
             ([1, 20], 3),
-            ([2, 10], 4)
+            ([2, 10], 4),
         ]
         stacked_graph = SequenceStacker()
         for sequence, expected in test_cases:
@@ -50,11 +50,11 @@ class MyTestCase(unittest.TestCase):
             ([13, 15], 1),
             ([1, 20], 3),
             ([1, 5], 1),
-            ([2, 10], 4)
+            ([2, 10], 4),
         ]
         for sequence, expected in disorderly:
             self.assertEqual(expected, stacked_graph.height_for(sequence))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

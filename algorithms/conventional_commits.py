@@ -4,6 +4,7 @@ Conventional Commits Analysis Module
 This module provides functions for analyzing conventional commit messages
 and categorizing them by intent/type.
 """
+
 import re
 from collections import Counter
 from datetime import datetime, timedelta
@@ -11,19 +12,32 @@ import pandas as pd
 
 
 # Pattern to match conventional commit format
-conventional_commit_match_pattern = re.compile(r'^(\w+)[!(:]')
+conventional_commit_match_pattern = re.compile(r"^(\w+)[!(:]")
 
 # Standard conventional commit categories
-categories = {"build", "chore", "ci", "docs", "feat", "fix", "merge", "perf", "refactor", "revert", "style", "test"}
+categories = {
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "merge",
+    "perf",
+    "refactor",
+    "revert",
+    "style",
+    "test",
+}
 
 
 def normalize_intent(intent: str):
     """
     Normalize a commit intent/type string to a standard category.
-    
+
     Args:
         intent: The raw intent string from a commit message
-        
+
     Returns:
         A normalized intent string from the standard categories,
         or "unknown" if no match is found
@@ -40,11 +54,11 @@ def normalize_intent(intent: str):
 def prepare_changes_by_date(commits_data, weeks=12) -> pd.DataFrame:
     """
     Prepare a DataFrame of changes grouped by date and conventional commit type.
-    
+
     Args:
         commits_data: Iterable of commit objects to analyze
         weeks: Number of weeks to look back (default: 12)
-        
+
     Returns:
         A pandas DataFrame with columns: date, reason, count
     """

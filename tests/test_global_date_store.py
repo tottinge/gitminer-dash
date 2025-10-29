@@ -4,6 +4,7 @@ Tests for global date store helper utilities.
 
 # Ensure project imports work
 from tests import setup_path
+
 setup_path()
 
 from datetime import datetime
@@ -39,7 +40,7 @@ def mock_datetime(monkeypatch):
         def astimezone(dt):
             return dt
 
-    monkeypatch.setattr(date_utils, 'datetime', MockDatetime)
+    monkeypatch.setattr(date_utils, "datetime", MockDatetime)
 
 
 def test_to_iso_range_and_default_period(mock_datetime):
