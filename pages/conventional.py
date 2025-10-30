@@ -103,9 +103,9 @@ def make_figure(df: DataFrame, start_date=None, end_date=None):
         color="reason",
         color_discrete_map=color_choices,
     )
-    
+
     # Set x-axis range to span the full requested period
     if start_date and end_date:
         fig.update_xaxes(range=[start_date.date(), end_date.date()])
-    
+
     return fig

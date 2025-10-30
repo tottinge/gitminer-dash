@@ -46,11 +46,11 @@ def make_figure(diffs_in_period, start_date=None, end_date=None):
         color="kind",
         color_discrete_sequence=plotly.colors.qualitative.Pastel,
     )
-    
+
     # Set x-axis range to span the full requested period
     if start_date and end_date:
         bar_chart.update_xaxes(range=[start_date.date(), end_date.date()])
-    
+
     return bar_chart
 
 

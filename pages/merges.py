@@ -60,10 +60,10 @@ def update_merge_graph(n_clicks: int, store_data):
         hover_name="date",
         hover_data=["files", "lines", "comment"],
     )
-    
+
     # Set x-axis range to span the full requested period
     bar_chart_figure.update_xaxes(range=[start_date.date(), end_date.date()])
-    
+
     return [
         dcc.Loading(
             id="loading-merge-graph",
