@@ -6,6 +6,7 @@ from dash.dash_table import DataTable
 
 import data
 from utils import date_utils
+from utils.plotly_utils import create_empty_figure
 from algorithms.affinity_analysis import calculate_ideal_affinity
 from visualization.network_graph import (
     create_file_affinity_network,
@@ -107,21 +108,7 @@ layout = html.Div(
 )
 def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
     try:
-        if isinstance(store_data, dict):
-            period = store_data.get("period", date_utils.DEFAULT_PERIOD)
-        else:
-            period = store_data or date_utils.DEFAULT_PERIOD
-        if (
-            isinstance(store_data, dict)
-            and "begin" in store_data
-            and "end" in store_data
-        ):
-            from datetime import datetime as _dt
-
-            starting = _dt.fromisoformat(store_data["begin"])
-            ending = _dt.fromisoformat(store_data["end"])
-        else:
-            starting, ending = date_utils.calculate_date_range(period)
+        starting, ending = date_utils.parse_date_range_from_store(store_data)
         # Convert commits_data to a list to prevent the iterator from being consumed
         commits_data = ensure_list(data.commits_in_period(starting, ending))
 
@@ -166,65 +153,23 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
         # Check if this is the specific error about missing repository path
         if "No repository path provided" in str(e):
             # Create a figure with a helpful message about repository path
-            fig = go.Figure()
-            fig.add_annotation(
-                text="No repository path provided. Please run the application with a repository path as a command-line argument.",
-                xref="paper",
-                yref="paper",
-                x=0.5,
-                y=0.5,
-                showarrow=False,
-                font=dict(size=16, color="red"),
-            )
-            fig.add_annotation(
-                text="Example: python app.py /path/to/your/git/repository",
-                xref="paper",
-                yref="paper",
-                x=0.5,
-                y=0.6,
-                showarrow=False,
-                font=dict(size=14),
-            )
-            fig.update_layout(
+            fig = create_empty_figure(
+                "No repository path provided. Please run the application with a repository path as a command-line argument.\n\nExample: python app.py /path/to/your/git/repository",
                 title="File Affinity Network - Repository Path Required",
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             )
             return fig, {}
         else:
             # Handle other ValueError exceptions
-            fig = go.Figure()
-            fig.add_annotation(
-                text=f"Error with input values: {str(e)}",
-                xref="paper",
-                yref="paper",
-                x=0.5,
-                y=0.5,
-                showarrow=False,
-                font=dict(size=16, color="red"),
-            )
-            fig.update_layout(
+            fig = create_empty_figure(
+                f"Error with input values: {str(e)}",
                 title="File Affinity Network - Input Error",
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             )
             return fig, {}
     except Exception as e:
         # Create a figure with a general error message
-        fig = go.Figure()
-        fig.add_annotation(
-            text=f"Error generating affinity graph: {str(e)}",
-            xref="paper",
-            yref="paper",
-            x=0.5,
-            y=0.5,
-            showarrow=False,
-            font=dict(size=16, color="red"),
-        )
-        fig.update_layout(
+        fig = create_empty_figure(
+            f"Error generating affinity graph: {str(e)}",
             title="File Affinity Network - Error",
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         )
         return fig, {}
 

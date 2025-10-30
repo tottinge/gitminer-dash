@@ -62,17 +62,7 @@ layout = html.Div(
     Input("global-date-range", "data"),
 )
 def update_conventional_table(_, store_data):
-    if isinstance(store_data, dict):
-        period = store_data.get("period", date_utils.DEFAULT_PERIOD)
-    else:
-        period = date_utils.DEFAULT_PERIOD
-    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
-        from datetime import datetime as _dt
-
-        start = _dt.fromisoformat(store_data["begin"])
-        today = _dt.fromisoformat(store_data["end"])
-    else:
-        start, today = date_utils.calculate_date_range(period)
+    start, today = date_utils.parse_date_range_from_store(store_data)
     commits_data = data.commits_in_period(start, today)
     dataframe = prepare_changes_by_date(commits_data)
     return make_figure(dataframe)  # , make_summary_figure(dataframe))

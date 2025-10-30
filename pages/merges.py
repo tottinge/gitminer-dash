@@ -48,17 +48,7 @@ def prepare_dataframe(start_date, end_date):
     running=[(Output("merge-refresh-button", "disabled"), True, False)],
 )
 def update_merge_graph(n_clicks: int, store_data):
-    if isinstance(store_data, dict):
-        period = store_data.get("period", date_utils.DEFAULT_PERIOD)
-    else:
-        period = date_utils.DEFAULT_PERIOD
-    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
-        from datetime import datetime as _dt
-
-        start_date = _dt.fromisoformat(store_data["begin"])
-        end_date = _dt.fromisoformat(store_data["end"])
-    else:
-        start_date, end_date = date_utils.calculate_date_range(period)
+    start_date, end_date = date_utils.parse_date_range_from_store(store_data)
     data_frame = prepare_dataframe(start_date, end_date)
     if data_frame.empty:
         return html.H3("no merges found in the selected period")

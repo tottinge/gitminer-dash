@@ -6,6 +6,7 @@ from pandas import DataFrame
 
 import data
 from utils import date_utils
+from utils.plotly_utils import create_empty_figure
 from algorithms.commit_frequency import calculate_file_commit_frequency
 
 register_page(
@@ -74,14 +75,7 @@ def populate_graph(store_data):
         raise PreventUpdate
 
     # Get file usage data with additional metrics
-    period_input = store_data["period"]
-    if "begin" in store_data and "end" in store_data:
-        from datetime import datetime as _dt
-
-        begin = _dt.fromisoformat(store_data["begin"])
-        end = _dt.fromisoformat(store_data["end"])
-    else:
-        begin, end = date_utils.calculate_date_range(period_input)
+    begin, end = date_utils.parse_date_range_from_store(store_data)
     commits_data = data.commits_in_period(begin, end)
     repo = data.get_repo()
     usages = calculate_file_commit_frequency(commits_data, repo, begin, end, top_n=20)
@@ -93,17 +87,7 @@ def populate_graph(store_data):
     # Create bar chart using just filename and count
     figure = px.bar(data_frame=frame, x="filename", y="count")
     if frame.empty:
-        import plotly.graph_objects as go
-
-        figure = go.Figure()
-        figure.add_annotation(
-            text="No data in selected period",
-            xref="paper",
-            yref="paper",
-            x=0.5,
-            y=0.5,
-            showarrow=False,
-        )
+        figure = create_empty_figure("No data in selected period")
 
     # Convert DataFrame to dict for table display
     table_data = frame.to_dict("records")

@@ -12,6 +12,7 @@ from dash.exceptions import PreventUpdate
 
 import data
 from utils import date_utils
+from utils.plotly_utils import create_empty_figure
 from algorithms.weekly_commits import calculate_weekly_commits, extract_commit_details
 
 register_page(
@@ -93,31 +94,17 @@ def populate_graph(store_data):
     if not store_data or "period" not in store_data:
         raise PreventUpdate
 
-    period_input = store_data["period"]
-    if "begin" in store_data and "end" in store_data:
-        from datetime import datetime as _dt
-
-        begin = _dt.fromisoformat(store_data["begin"])
-        end = _dt.fromisoformat(store_data["end"])
-    else:
-        begin, end = date_utils.calculate_date_range(period_input)
+    begin, end = date_utils.parse_date_range_from_store(store_data)
 
     commits_data = data.commits_in_period(begin, end)
     weekly_data = calculate_weekly_commits(commits_data, begin, end)
 
-    fig = go.Figure()
-
     if not weekly_data["weeks"]:
-        fig.add_annotation(
-            text="No data in selected period",
-            xref="paper",
-            yref="paper",
-            x=0.5,
-            y=0.5,
-            showarrow=False,
-        )
+        fig = create_empty_figure("No data in selected period")
         stats_text = "No commits in selected period"
         return fig, stats_text, {"display": "block"}, {"weeks": []}
+
+    fig = go.Figure()
 
     x_labels = []
     week_data_for_store = []

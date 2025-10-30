@@ -43,7 +43,9 @@ ignore = [
 
 [dependency-groups]
 dev = [
+    "bandit>=1.8.6",
     "black>=25.9.0",
+    "pylint>=4.0.2",
     "pyupgrade>=3.21.0",
 ]
 

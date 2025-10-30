@@ -46,17 +46,7 @@ def update_code_lines_graph(_: int, store_data):
     show = {"display": "block"}
 
     # Determine range from global store
-    if isinstance(store_data, dict):
-        period = store_data.get("period", date_utils.DEFAULT_PERIOD)
-    else:
-        period = date_utils.DEFAULT_PERIOD
-    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
-        from datetime import datetime as _dt
-
-        start_date = _dt.fromisoformat(store_data["begin"])
-        end_date = _dt.fromisoformat(store_data["end"])
-    else:
-        start_date, end_date = date_utils.calculate_date_range(period)
+    start_date, end_date = date_utils.parse_date_range_from_store(store_data)
 
     # Make all the connections
     graph = nx.Graph()

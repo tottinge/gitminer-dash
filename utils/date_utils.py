@@ -132,3 +132,41 @@ def parse_period_from_query(search: str | None) -> str | None:
 def to_iso_range(begin: datetime, end: datetime) -> dict[str, str]:
     """Return JSON-serializable ISO strings for date range."""
     return {"begin": begin.isoformat(), "end": end.isoformat()}
+
+
+def parse_date_range_from_store(store_data) -> tuple[datetime, datetime]:
+    """
+    Extract date range from global store data.
+
+    Handles both period-based ranges (e.g., "Last 30 days") and explicit
+    begin/end dates stored in the global-date-range store.
+
+    Args:
+        store_data: Dictionary from global-date-range store, or None
+
+    Returns:
+        A tuple of (start_date, end_date) as timezone-aware datetime objects
+
+    Examples:
+        >>> store = {"period": "Last 30 days"}
+        >>> start, end = parse_date_range_from_store(store)
+        >>> isinstance(start, datetime)
+        True
+
+        >>> store = {"begin": "2024-01-01T00:00:00+00:00", "end": "2024-01-31T23:59:59+00:00"}
+        >>> start, end = parse_date_range_from_store(store)
+        >>> start.day
+        1
+    """
+    if isinstance(store_data, dict):
+        period = store_data.get("period", DEFAULT_PERIOD)
+    else:
+        period = DEFAULT_PERIOD
+
+    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
+        start = datetime.fromisoformat(store_data["begin"])
+        end = datetime.fromisoformat(store_data["end"])
+    else:
+        start, end = calculate_date_range(period)
+
+    return start, end

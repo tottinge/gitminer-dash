@@ -12,6 +12,28 @@ from algorithms.affinity_calculator import calculate_affinities
 from utils.git import ensure_list
 
 
+def get_file_total_affinities(affinities: dict) -> dict[str, float]:
+    """Calculate total affinity for each file across all pairs.
+
+    Args:
+        affinities: Dictionary of file pair affinities {(file1, file2): affinity}
+
+    Returns:
+        Dictionary mapping file names to their total affinity scores
+
+    Example:
+        >>> affinities = {('a.py', 'b.py'): 0.5, ('b.py', 'c.py'): 0.3}
+        >>> totals = get_file_total_affinities(affinities)
+        >>> totals['b.py']
+        0.8
+    """
+    file_total_affinity = defaultdict(float)
+    for (file1, file2), affinity in affinities.items():
+        file_total_affinity[file1] += affinity
+        file_total_affinity[file2] += affinity
+    return dict(file_total_affinity)
+
+
 def get_top_files_and_affinities(commits, affinities, max_nodes):
     """Get top files by affinity and their relevant affinity values.
 
@@ -23,10 +45,7 @@ def get_top_files_and_affinities(commits, affinities, max_nodes):
     Returns:
         A tuple of (top_file_set, relevant_affinities)
     """
-    file_total_affinity = defaultdict(float)
-    for (file1, file2), affinity in affinities.items():
-        file_total_affinity[file1] += affinity
-        file_total_affinity[file2] += affinity
+    file_total_affinity = get_file_total_affinities(affinities)
 
     top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
         :max_nodes
