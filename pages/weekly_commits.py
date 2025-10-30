@@ -121,19 +121,21 @@ def populate_graph(store_data):
 
     x_labels = []
     week_data_for_store = []
-    
+
     for week_info in weekly_data["weeks"]:
         week_ending = week_info["week_ending"]
         x_label = week_ending.strftime("%y-%m-%d")
         x_labels.append(x_label)
-        
+
         # Store week info for click handling
-        week_data_for_store.append({
-            "week_ending": week_ending.isoformat(),
-            "x_label": x_label,
-            "commits": [c.hexsha for c in week_info["commits"]],
-        })
-    
+        week_data_for_store.append(
+            {
+                "week_ending": week_ending.isoformat(),
+                "x_label": x_label,
+                "commits": [c.hexsha for c in week_info["commits"]],
+            }
+        )
+
     # Add an invisible base trace with all weeks to ensure they all appear on x-axis
     # This trace has y=0 and is not visible, but ensures Plotly shows all x categories
     fig.add_trace(
@@ -146,22 +148,22 @@ def populate_graph(store_data):
             opacity=0,
         )
     )
-    
+
     # Find the maximum number of commits in any week to determine how many traces we need
     max_commits_in_week = max(len(w["commits"]) for w in weekly_data["weeks"])
-    
+
     # Create one trace per "commit position" (1st commit, 2nd commit, etc.)
     # Each trace spans all weeks but only has data where that position exists
     for commit_index in range(max_commits_in_week):
         x_data = []
         y_data = []
         hover_text = []
-        
+
         for week_info in weekly_data["weeks"]:
             week_ending = week_info["week_ending"]
             x_label = week_ending.strftime("%y-%m-%d")
             commits = week_info["commits"]
-            
+
             # If this week has a commit at this index, add it
             if commit_index < len(commits):
                 commit = commits[commit_index]
@@ -172,7 +174,7 @@ def populate_graph(store_data):
                     f"{commit.committer.name}<br>"
                     f"{commit.committed_datetime.strftime('%Y-%m-%d %H:%M')}"
                 )
-        
+
         # Only add the trace if there's data for this commit position
         if x_data:
             fig.add_trace(
@@ -201,8 +203,14 @@ def populate_graph(store_data):
 
     stats_text = html.Div(
         [
-            html.Span(f"Minimum: {weekly_data['min_commits']} commits/week", style={"marginRight": "20px"}),
-            html.Span(f"Average: {weekly_data['avg_commits']:.1f} commits/week", style={"marginRight": "20px"}),
+            html.Span(
+                f"Minimum: {weekly_data['min_commits']} commits/week",
+                style={"marginRight": "20px"},
+            ),
+            html.Span(
+                f"Average: {weekly_data['avg_commits']:.1f} commits/week",
+                style={"marginRight": "20px"},
+            ),
             html.Span(f"Maximum: {weekly_data['max_commits']} commits/week"),
         ]
     )
