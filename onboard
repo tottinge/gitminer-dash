@@ -62,20 +62,8 @@ else
     fi
 fi
 
-# Check for git
-echo -e "${YELLOW}Checking for git...${NC}"
-if command -v git &> /dev/null; then
-    echo -e "${GREEN}✓ git detected.${NC}"
-else
-    echo -e "${RED}✗ git not found.${NC}"
-    echo "git is required for this application to work."
-    echo "Please install git and try again."
-    echo "You can download it from https://git-scm.com/downloads"
-    exit 1
-fi
-
 echo ""
-echo -e "${GREEN}All required global utilities are installed!${NC}"
+echo -e "${GREEN}All required utilities are installed!${NC}"
 echo ""
 
 # Create virtual environment
@@ -98,7 +86,7 @@ fi
 # Create virtual environment if it doesn't exist
 if [ ! -d ".venv" ]; then
     echo "Creating virtual environment..."
-    python3 -m venv .venv
+    uv venv
     if [ $? -ne 0 ]; then
         echo -e "${RED}✗ Failed to create virtual environment.${NC}"
         exit 1
