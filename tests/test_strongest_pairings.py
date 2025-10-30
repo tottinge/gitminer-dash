@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import patch
-
 from box import Box
 
 
@@ -11,10 +10,11 @@ def commit_with(*files):
 def parse_record(result):
     affinity_calculated = float(result["Affinity"])
     files = result["Pairing"].split()
-    return affinity_calculated, files
+    return (affinity_calculated, files)
 
 
 class MyTestCase(unittest.TestCase):
+
     def setUp(self):
         with patch("dash.register_page"):
             from pages.strongest_pairings import create_affinity_list
@@ -27,7 +27,7 @@ class MyTestCase(unittest.TestCase):
     def test_single_pairing(self):
         result = self.create_affinity_list([commit_with("a", "b")])
         self.assertEqual(1, len(result))
-        affinity_calculated, files = parse_record(result[0])
+        (affinity_calculated, files) = parse_record(result[0])
         self.assertEqual(0.5, affinity_calculated)
         self.assertSequenceEqual(files, ["a", "b"])
 
@@ -38,7 +38,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(2, len(result))
         for record in result:
             with self.subTest(record):
-                affinity_calculated, files = parse_record(record)
+                (affinity_calculated, files) = parse_record(record)
                 self.assertEqual(affinity_calculated, 0.5)
                 self.assertIn("a", files)
 

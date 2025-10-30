@@ -1,9 +1,9 @@
 import unittest
-
 from algorithms.stacking import SequenceStacker
 
 
 class MyTestCase(unittest.TestCase):
+
     def test_first_sequence_returns_1(self):
         stacker = SequenceStacker()
         x = stacker.height_for([1, 2])

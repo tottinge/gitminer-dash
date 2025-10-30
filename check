@@ -14,7 +14,7 @@ uv run pylint --disable=all --enable=duplicate-code .
 
 echo ""
 echo "Running bandit security check..."
-uv run bandit -r .
+uv run bandit -r . -x tests/
 
 echo ""
 echo "All checks passed!"

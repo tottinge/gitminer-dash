@@ -1,15 +1,10 @@
-# Contract tests to ensure pages use the global store's begin/end when querying commits
-
-# Ensure project imports work
 from tests import setup_path
 
 setup_path()
-
 from datetime import datetime
 import types
 import pytest
 
-# Build a fixed store payload
 STORE = {
     "period": "Last 60 days",
     "begin": "2025-09-01T00:00:00+00:00",
@@ -29,7 +24,6 @@ def capture_commits_call(monkeypatch):
         return []
 
     monkeypatch.setattr(data, "commits_in_period", _capture)
-    # Some pages access repo; stub safely
     monkeypatch.setattr(data, "get_repo", lambda: types.SimpleNamespace())
     return called
 
@@ -48,12 +42,9 @@ def capture_commits_call(monkeypatch):
 def test_page_uses_store_begin_end(
     target, build_args, capture_commits_call, monkeypatch
 ):
-    # Import target function dynamically
-    module_name, func_name = target.rsplit(".", 1)
+    (module_name, func_name) = target.rsplit(".", 1)
     mod = __import__(module_name, fromlist=[func_name])
     fn = getattr(mod, func_name)
-
-    # Extra stubs per page where needed
     if module_name == "pages.most_committed":
         monkeypatch.setattr(
             mod,
@@ -68,18 +59,13 @@ def test_page_uses_store_begin_end(
                 }
             ],
         )
-
-    # Call function
     args = build_args()
     fn(*args)
-
-    # Assert captured begin/end match store exactly
     assert capture_commits_call["begin"].isoformat() == STORE["begin"]
     assert capture_commits_call["end"].isoformat() == STORE["end"]
 
 
 def test_affinity_groups_uses_store_begin_end(capture_commits_call, monkeypatch):
-    # Patch heavy functions to no-op figure
     from pages import affinity_groups as ag
 
     monkeypatch.setattr(
@@ -93,10 +79,6 @@ def test_affinity_groups_uses_store_begin_end(capture_commits_call, monkeypatch)
     monkeypatch.setattr(
         ag, "create_network_visualization", lambda G, communities: go.Figure()
     )
-
-    # Call
     ag.update_file_affinity_graph(STORE, 50, 0.2)
-
-    # Assert store begin/end were used
     assert capture_commits_call["begin"].isoformat() == STORE["begin"]
     assert capture_commits_call["end"].isoformat() == STORE["end"]
