@@ -64,7 +64,7 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
     best_node_count = 0
     best_edge_count = 0
     for threshold in thresholds:
-        edge_count = sum((1 for a in relevant_affinities if a >= threshold))
+        edge_count = sum(1 for a in relevant_affinities if a >= threshold)
         connected_nodes = set()
         for (file1, file2), affinity in affinities.items():
             if (
