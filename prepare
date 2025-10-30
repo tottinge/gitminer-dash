@@ -1,6 +1,5 @@
-set -ex
+set -e
 
-# update sources
 git pull --rebase
 
 # update environment
@@ -14,10 +13,8 @@ uv sync
 uv run pytest -q
 
 # Sync the precommit hook
-if [ -f utils/pre-commit ]; then
-  if [ ! -f .git/hooks/pre-commit ] || [ utils/pre-commit -nt .git/hooks/pre-commit ]; then
-    cp utils/pre-commit .git/hooks/pre-commit
-    chmod +x .git/hooks/pre-commit
-    echo "prepare: installed/updated .git/hooks/pre-commit from utils/pre-commit"
-  fi
+if [ ! -f .git/hooks/pre-commit ] || [ utils/pre-commit -nt .git/hooks/pre-commit ]; then
+  cp utils/pre-commit .git/hooks/pre-commit
+  chmod +x .git/hooks/pre-commit
+  echo "prepare: installed/updated .git/hooks/pre-commit from utils/pre-commit"
 fi
