@@ -65,7 +65,7 @@ def update_conventional_table(_, store_data):
     start, today = date_utils.parse_date_range_from_store(store_data)
     commits_data = data.commits_in_period(start, today)
     dataframe = prepare_changes_by_date(commits_data)
-    return make_figure(dataframe)  # , make_summary_figure(dataframe))
+    return make_figure(dataframe, start, today)
 
 
 @callback(
@@ -90,12 +90,12 @@ def handle_click_on_conventional_graph(click_data):
     return result_data
 
 
-def make_figure(df: DataFrame):
+def make_figure(df: DataFrame, start_date=None, end_date=None):
     """
-    we're not using this yet, but will when we have the data working
-    as we want it.
+    Create a bar chart for conventional commit data.
+    If start_date and end_date are provided, the x-axis will span the full range.
     """
-    return px.bar(
+    fig = px.bar(
         df,
         height=500,
         x="date",
@@ -103,3 +103,9 @@ def make_figure(df: DataFrame):
         color="reason",
         color_discrete_map=color_choices,
     )
+    
+    # Set x-axis range to span the full requested period
+    if start_date and end_date:
+        fig.update_xaxes(range=[start_date.date(), end_date.date()])
+    
+    return fig

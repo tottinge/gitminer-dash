@@ -13,8 +13,8 @@ app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
 
 app.layout = html.Div(
     [
-        # Session-scoped date range store
-        dcc.Store(id="global-date-range", storage_type="session"),
+        # Memory-scoped date range store (cleared on page refresh)
+        dcc.Store(id="global-date-range", storage_type="memory"),
         html.H1(
             f"The Git Miner: {data.get_repo_name()}",
             style={"text-align": "center", "margin": "10px 0"},

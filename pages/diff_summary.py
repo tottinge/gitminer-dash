@@ -38,7 +38,7 @@ layout = html.Div(
 
 
 @log
-def make_figure(diffs_in_period):
+def make_figure(diffs_in_period, start_date=None, end_date=None):
     bar_chart = px.bar(
         data_frame=diffs_in_period,
         x="date",
@@ -46,6 +46,11 @@ def make_figure(diffs_in_period):
         color="kind",
         color_discrete_sequence=plotly.colors.qualitative.Pastel,
     )
+    
+    # Set x-axis range to span the full requested period
+    if start_date and end_date:
+        bar_chart.update_xaxes(range=[start_date.date(), end_date.date()])
+    
     return bar_chart
 
 
@@ -58,7 +63,7 @@ def update_graph(_, store_data):
     start, end = date_utils.parse_date_range_from_store(store_data)
     commits_data = data.commits_in_period(start, end)
     diffs_in_period = get_diffs_in_period(commits_data, start, end)
-    return make_figure(diffs_in_period)
+    return make_figure(diffs_in_period, start, end)
 
 
 if __name__ == "__main__":
