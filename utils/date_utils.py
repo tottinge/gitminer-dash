@@ -13,19 +13,18 @@ from dateutil.relativedelta import relativedelta
 
 # Common period options for dropdowns
 PERIOD_OPTIONS: list[str] = [
-    "Last 7 days",
-    "Last 30 days",
-    "Last 60 days",
-    "Last 90 days",
-    "Last 6 Months",
-    "Last 1 Year",
-    "Last 5 Years",
-    "Ever",
+    'Last 7 days',
+    'Last 30 days',
+    'Last 60 days',
+    'Last 90 days',
+    'Last 6 Months',
+    'Last 1 Year',
+    'Last 5 Years',
+    'Ever'
 ]
 
 # Default period used across the app when none is provided
 DEFAULT_PERIOD: str = "Last 30 days"
-
 
 def calculate_date_range(period: str) -> tuple[datetime, datetime]:
     """

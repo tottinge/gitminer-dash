@@ -16,7 +16,6 @@ def get_repo() -> Repo:
 
 T = TypeVar("T")
 
-
 def ensure_list(items: Iterable[T] | Sequence[T] | None) -> list[T]:
     """Return a list from any iterable/sequence, handling None.
     - If items is already a list, it is returned as-is.

@@ -30,7 +30,7 @@ def file_changes_over_period(
     target_file: str,
     start: datetime | None = None,
     end: datetime | None = None,
-    repo: git.Repo | None = None,
+    repo: git.Repo | None = None
 ) -> tuple[int, float, int, float]:
     """
     Calculate statistics about changes to a file over a period of time.
@@ -78,7 +78,7 @@ def files_changes_over_period(
     target_files: list[str],
     start: datetime | None = None,
     end: datetime | None = None,
-    repo: git.Repo | None = None,
+    repo: git.Repo | None = None
 ) -> dict[str, FileChangeStats]:
     """
     Calculate statistics about changes to multiple files over a period of time.

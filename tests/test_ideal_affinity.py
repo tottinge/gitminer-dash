@@ -19,7 +19,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pages.affinity_groups import calculate_ideal_affinity
 from visualization.network_graph import create_file_affinity_network
 
-
 def test_calculate_ideal_affinity_with_real_data():
     """Test the calculate_ideal_affinity function with real commit data."""
     test_periods = ["Last 6 Months", "Last 1 Year", "Last 5 Years"]

@@ -31,7 +31,10 @@ def create_node_tooltip(node: str, commit_count: int, degree: int) -> str:
 
 
 def create_file_affinity_network(
-    commits, min_affinity: float = 0.2, max_nodes: int = 50, min_edge_count: int = 1
+    commits,
+    min_affinity: float = 0.2,
+    max_nodes: int = 50,
+    min_edge_count: int = 1
 ) -> tuple[nx.Graph, list, dict[str, Any]]:
     """
     Create a network graph of file affinities based on commit history.
@@ -193,7 +196,9 @@ def create_no_data_figure(
 
 
 def create_network_visualization(
-    G: nx.Graph, communities: list, title: str = "File Affinity Network"
+    G: nx.Graph,
+    communities: list,
+    title: str = "File Affinity Network"
 ) -> go.Figure:
     """
     Create a Plotly figure for visualizing the file affinity network.
@@ -402,7 +407,11 @@ def _create_single_community_trace(G: nx.Graph, pos: dict, color: str) -> go.Sca
 
 
 def _create_community_trace(
-    G: nx.Graph, pos: dict, community_nodes: list, color: str, community_id: int
+    G: nx.Graph,
+    pos: dict,
+    community_nodes: list,
+    color: str,
+    community_id: int
 ) -> go.Scatter:
     """Create a trace for a specific community."""
     node_x = []
