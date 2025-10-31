@@ -10,18 +10,6 @@ import pytest
 from utils import date_utils
 
 
-def test_parse_period_from_query_with_period_label():
-    assert date_utils.parse_period_from_query("?period=Last+60+days") == "Last 60 days"
-    assert date_utils.parse_period_from_query("period=Last+7+days") == "Last 7 days"
-
-
-def test_parse_period_from_query_with_from_to_returns_none():
-    assert date_utils.parse_period_from_query("?from=2024-01-01&to=2024-02-01") is None
-
-
-def test_parse_period_from_query_with_unknown_label_returns_candidate():
-    assert date_utils.parse_period_from_query("?period=Custom+Range") == "Custom Range"
-
 
 @pytest.fixture
 def mock_datetime(monkeypatch):

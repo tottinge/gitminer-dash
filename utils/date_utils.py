@@ -93,39 +93,6 @@ def calculate_date_range(period: str) -> tuple[datetime, datetime]:
     return begin, end
 
 
-def parse_period_from_query(search: str | None) -> str | None:
-    """
-    Parse a URL search string (e.g. "?period=Last+60+days") and return a period label
-    matching PERIOD_OPTIONS when possible.
-
-    Supports either:
-      - period=Last+60+days (string label)
-      - from=YYYY-MM-DD&to=YYYY-MM-DD (falls back to best-fitting label; if not exact, returns None)
-
-    Returns a period string if detected, otherwise None.
-    """
-    if not search:
-        return None
-    s = search.lstrip("?")
-    qs = parse_qs(s)
-    period_vals = qs.get("period")
-    if period_vals:
-        # normalize spacing and case to match one of the PERIOD_OPTIONS
-        candidate = period_vals[0].replace("+", " ").strip()
-        # Attempt loose matching by lowercase compare
-        for option in PERIOD_OPTIONS:
-            if option.lower() == candidate.lower():
-                return option
-        # If not an exact known option, return the original candidate
-        return candidate
-
-    frm = qs.get("from")
-    to = qs.get("to")
-    if frm and to:
-        # If explicit range supplied, do not infer a label aggressively
-        # Let caller decide default label; we just signal that custom range exists
-        return None
-    return None
 
 
 def to_iso_range(begin: datetime, end: datetime) -> dict[str, str]:

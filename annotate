@@ -6,11 +6,11 @@ source .venv/bin/activate
 
 # Collect type information by running tests
 echo "Collecting type information from tests..."
-python -m pyannotate_runtime.collect pytest
+python -c "from pyannotate_runtime import collect_types; collect_types.init_types_collection(); import pytest; pytest.main(); collect_types.dump_stats('type_info.json')"
 
 # Apply annotations to source files
 echo "Applying type annotations to source files..."
-pyannotate -w type_info.json
+pyannotate -w --py3 type_info.json
 
 echo "Type annotations applied successfully!"
 echo "Review the changes and commit when ready."

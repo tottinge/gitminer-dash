@@ -64,8 +64,3 @@ def commits_in_period(beginning: datetime, ending: datetime) -> Iterable[Commit]
     begin_key = _dt_key(beginning)
     end_key = _dt_key(ending)
     yield from _cached_commits(repo_path, begin_key, end_key)
-
-
-def clear_commit_cache() -> None:
-    """Clear the cached commits (useful after switching repos)."""
-    _cached_commits.cache_clear()

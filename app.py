@@ -64,4 +64,7 @@ def compute_store(period_label: str):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    # Disable debug mode when running under coverage to avoid reloader issues
+    debug_mode = os.environ.get("COVERAGE_RUN") != "true"
+    app.run(debug=debug_mode)
