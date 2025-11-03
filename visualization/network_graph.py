@@ -13,7 +13,7 @@ from collections import defaultdict
 from typing import Tuple, Dict, List, Any
 
 from algorithms.affinity_calculator import calculate_affinities
-from algorithms.affinity_analysis import get_file_total_affinities
+from algorithms.affinity_analysis import get_file_total_affinities, get_top_files_by_affinity
 from utils.git import ensure_list
 
 
@@ -102,14 +102,8 @@ def create_file_affinity_network(
     # Create network graph
     G = nx.Graph()
 
-    # Calculate total affinity for each file
-    file_total_affinity = get_file_total_affinities(affinities)
-
     # Get top files by total affinity
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
-    top_file_set = {file for file, _ in top_files}
+    top_file_set = get_top_files_by_affinity(affinities, max_nodes)
 
     # Add nodes for top files with commit count attribute
     for file in top_file_set:
