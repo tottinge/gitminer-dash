@@ -5,23 +5,23 @@ This module provides functions for analyzing which files are committed most freq
 and calculating statistics about those commits.
 """
 
-from collections import Counter
-from typing import List, Dict
 import logging
+from collections import Counter
+from collections.abc import Iterable
+from datetime import datetime
+
+from git import Repo, Commit
 
 
 def calculate_file_commit_frequency(
-    commits_data, repo, begin, end, top_n=20
+        commits_data: Iterable[Commit],
+        repo: Repo,
+        begin: datetime,
+        end: datetime,
+        top_n: int=20
 ) -> list[dict]:
     """
     Calculate commit frequency and change statistics for the most committed files.
-
-    Args:
-        commits_data: Iterable of commit objects
-        repo: Git repository object
-        begin: Start datetime for the analysis
-        end: End datetime for the analysis
-        top_n: Number of most committed files to return (default: 20)
 
     Returns:
         A list of dictionaries containing file statistics:
@@ -33,7 +33,6 @@ def calculate_file_commit_frequency(
     """
     from algorithms.file_changes import files_changes_over_period
 
-    # Count file occurrences using Counter
     counter = Counter()
     for commit in commits_data:
         try:
@@ -42,8 +41,6 @@ def calculate_file_commit_frequency(
         except ValueError:
             logging.getLogger(__name__).exception("Error processing commit")
             raise
-
-    # Get the most common files
     most_common_files = counter.most_common(top_n)
 
     # Extract just the filenames
