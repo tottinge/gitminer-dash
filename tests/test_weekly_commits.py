@@ -275,6 +275,202 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
                 # Verify message is updated
                 assert "2 commits" in message or "25-11-02" in message
 
+    def test_none_click_data_returns_empty_table(self):
+        """Test that None click_data returns empty table and default message."""
+        from unittest.mock import patch
+
+        with patch("dash.register_page"):
+            from pages.weekly_commits import update_commit_details_table
+
+            store_data = {"weeks": []}
+            table_data, message = update_commit_details_table(None, store_data)
+
+            assert table_data == []
+            assert message == "Click on a week's bar to see commit details."
+
+    def test_invalid_store_data_returns_empty_table(self):
+        """Test that invalid store_data returns empty table and default message."""
+        from unittest.mock import patch
+
+        with patch("dash.register_page"):
+            from pages.weekly_commits import update_commit_details_table
+
+            click_data = {"points": [{"x": "25-11-02"}]}
+
+            # Test with None store_data
+            table_data, message = update_commit_details_table(click_data, None)
+            assert table_data == []
+            assert message == "Click on a week's bar to see commit details."
+
+            # Test with store_data missing 'weeks'
+            table_data, message = update_commit_details_table(click_data, {})
+            assert table_data == []
+            assert message == "Click on a week's bar to see commit details."
+
+    def test_no_matching_week_returns_empty_table(self):
+        """Test that click_data not matching any week returns empty table and message."""
+        from unittest.mock import patch
+
+        with patch("dash.register_page"):
+            from pages.weekly_commits import update_commit_details_table
+
+            click_data = {"points": [{"x": "25-12-31"}]}
+            store_data = {
+                "weeks": [
+                    {
+                        "week_ending": "2025-11-02T23:59:59",
+                        "x_label": "25-11-02",
+                        "commits": ["abc123"],
+                    }
+                ]
+            }
+
+            table_data, message = update_commit_details_table(click_data, store_data)
+
+            assert table_data == []
+            assert message == "No commits found for week ending 25-12-31"
+
+    def test_valid_week_with_multiple_commits(self):
+        """Test that valid week with multiple commits populates table correctly."""
+        from unittest.mock import patch, Mock
+
+        # Create mock commits
+        commit1 = Mock()
+        commit1.hexsha = "sha1"
+        commit1.committed_datetime = datetime(2025, 10, 27, 9, 0, 0)
+        commit1.committer.name = "Developer 1"
+        commit1.summary = "First commit"
+        commit1.stats.total = {"insertions": 15, "deletions": 3, "lines": 18}
+
+        commit2 = Mock()
+        commit2.hexsha = "sha2"
+        commit2.committed_datetime = datetime(2025, 10, 28, 10, 0, 0)
+        commit2.committer.name = "Developer 2"
+        commit2.summary = "Second commit"
+        commit2.stats.total = {"insertions": 8, "deletions": 2, "lines": 10}
+
+        commit3 = Mock()
+        commit3.hexsha = "sha3"
+        commit3.committed_datetime = datetime(2025, 10, 29, 11, 0, 0)
+        commit3.committer.name = "Developer 3"
+        commit3.summary = "Third commit"
+        commit3.stats.total = {"insertions": 20, "deletions": 5, "lines": 25}
+
+        click_data = {"points": [{"x": "25-11-02"}]}
+        store_data = {
+            "weeks": [
+                {
+                    "week_ending": "2025-11-02T23:59:59",
+                    "x_label": "25-11-02",
+                    "commits": ["sha1", "sha2", "sha3"],
+                }
+            ]
+        }
+
+        with patch("dash.register_page"):
+            with patch("pages.weekly_commits.data.get_repo") as mock_repo:
+                mock_repo_obj = Mock()
+                mock_repo_obj.commit.side_effect = lambda sha: {
+                    "sha1": commit1,
+                    "sha2": commit2,
+                    "sha3": commit3,
+                }[sha]
+                mock_repo.return_value = mock_repo_obj
+
+                from pages.weekly_commits import update_commit_details_table
+
+                table_data, message = update_commit_details_table(
+                    click_data, store_data
+                )
+
+                # Verify all three commits are in the table
+                assert len(table_data) == 3
+                assert table_data[0]["committer"] == "Developer 1"
+                assert table_data[0]["description"] == "First commit"
+                assert table_data[0]["lines_added"] == 15
+                assert table_data[0]["lines_removed"] == 3
+                assert table_data[0]["lines_modified"] == 18
+
+                assert table_data[1]["committer"] == "Developer 2"
+                assert table_data[1]["description"] == "Second commit"
+                assert table_data[1]["lines_added"] == 8
+
+                assert table_data[2]["committer"] == "Developer 3"
+                assert table_data[2]["description"] == "Third commit"
+                assert table_data[2]["lines_added"] == 20
+
+    def test_message_reflects_commit_count_and_week(self):
+        """Test that message accurately reflects number of commits and week ending date."""
+        from unittest.mock import patch, Mock
+
+        commit1 = Mock()
+        commit1.hexsha = "sha1"
+        commit1.committed_datetime = datetime(2025, 10, 27, 10, 0, 0)
+        commit1.committer.name = "Dev"
+        commit1.summary = "Commit"
+        commit1.stats.total = {"insertions": 1, "deletions": 1, "lines": 2}
+
+        commit2 = Mock()
+        commit2.hexsha = "sha2"
+        commit2.committed_datetime = datetime(2025, 10, 28, 10, 0, 0)
+        commit2.committer.name = "Dev"
+        commit2.summary = "Commit"
+        commit2.stats.total = {"insertions": 1, "deletions": 1, "lines": 2}
+
+        commit3 = Mock()
+        commit3.hexsha = "sha3"
+        commit3.committed_datetime = datetime(2025, 10, 29, 10, 0, 0)
+        commit3.committer.name = "Dev"
+        commit3.summary = "Commit"
+        commit3.stats.total = {"insertions": 1, "deletions": 1, "lines": 2}
+
+        commit4 = Mock()
+        commit4.hexsha = "sha4"
+        commit4.committed_datetime = datetime(2025, 10, 30, 10, 0, 0)
+        commit4.committer.name = "Dev"
+        commit4.summary = "Commit"
+        commit4.stats.total = {"insertions": 1, "deletions": 1, "lines": 2}
+
+        commit5 = Mock()
+        commit5.hexsha = "sha5"
+        commit5.committed_datetime = datetime(2025, 10, 31, 10, 0, 0)
+        commit5.committer.name = "Dev"
+        commit5.summary = "Commit"
+        commit5.stats.total = {"insertions": 1, "deletions": 1, "lines": 2}
+
+        click_data = {"points": [{"x": "25-11-02"}]}
+        store_data = {
+            "weeks": [
+                {
+                    "week_ending": "2025-11-02T23:59:59",
+                    "x_label": "25-11-02",
+                    "commits": ["sha1", "sha2", "sha3", "sha4", "sha5"],
+                }
+            ]
+        }
+
+        with patch("dash.register_page"):
+            with patch("pages.weekly_commits.data.get_repo") as mock_repo:
+                mock_repo_obj = Mock()
+                mock_repo_obj.commit.side_effect = lambda sha: {
+                    "sha1": commit1,
+                    "sha2": commit2,
+                    "sha3": commit3,
+                    "sha4": commit4,
+                    "sha5": commit5,
+                }[sha]
+                mock_repo.return_value = mock_repo_obj
+
+                from pages.weekly_commits import update_commit_details_table
+
+                table_data, message = update_commit_details_table(
+                    click_data, store_data
+                )
+
+                # Verify message contains correct count and week
+                assert "5 commits" in message
+                assert "25-11-02" in message
+
 
 if __name__ == "__main__":
     unittest.main()
