@@ -189,5 +189,92 @@ class TestExtractCommitDetails(unittest.TestCase):
         assert result["lines_modified"] == 0
 
 
+class TestWeeklyCommitsCallback(unittest.TestCase):
+    """Test suite for the weekly commits page callback."""
+
+    def test_click_event_triggers_callback(self):
+        """Test that clicking on a bar triggers the callback."""
+        from unittest.mock import patch
+
+        with patch("dash.register_page"):
+            from pages.weekly_commits import layout
+
+            # Verify the callback exists by attempting to import it
+            try:
+                from pages.weekly_commits import update_commit_details_table
+                callback_exists = True
+            except ImportError:
+                callback_exists = False
+
+            assert callback_exists, "Callback update_commit_details_table should exist"
+
+    def test_callback_produces_table_from_fake_week_data(self):
+        """Test that given fake data of a week's commits, the callback produces the correct table."""
+        from unittest.mock import patch, Mock
+
+        # Create fake commits for a week
+        commit1 = Mock()
+        commit1.hexsha = "abc123"
+        commit1.committed_datetime = datetime(2025, 10, 27, 10, 0, 0)
+        commit1.committer.name = "Alice"
+        commit1.summary = "Add feature X"
+        commit1.stats.total = {"insertions": 10, "deletions": 2, "lines": 12}
+
+        commit2 = Mock()
+        commit2.hexsha = "def456"
+        commit2.committed_datetime = datetime(2025, 10, 28, 14, 30, 0)
+        commit2.committer.name = "Bob"
+        commit2.summary = "Fix bug Y"
+        commit2.stats.total = {"insertions": 5, "deletions": 3, "lines": 8}
+
+        # Create fake click data (Plotly clickData format)
+        click_data = {
+            "points": [
+                {
+                    "x": "25-11-02",  # Week ending date
+                }
+            ]
+        }
+
+        # Create fake store data
+        store_data = {
+            "weeks": [
+                {
+                    "week_ending": "2025-11-02T23:59:59",
+                    "x_label": "25-11-02",
+                    "commits": ["abc123", "def456"],
+                }
+            ]
+        }
+
+        with patch("dash.register_page"):
+            # Mock the data.get_repo to return our fake commits
+            with patch("pages.weekly_commits.data.get_repo") as mock_repo:
+                mock_repo_obj = Mock()
+                mock_repo_obj.commit.side_effect = lambda sha: {
+                    "abc123": commit1,
+                    "def456": commit2,
+                }[sha]
+                mock_repo.return_value = mock_repo_obj
+
+                from pages.weekly_commits import update_commit_details_table
+
+                table_data, message = update_commit_details_table(
+                    click_data, store_data
+                )
+
+                # Verify table has correct structure and data
+                assert len(table_data) == 2
+                assert table_data[0]["committer"] == "Alice"
+                assert table_data[0]["description"] == "Add feature X"
+                assert table_data[0]["lines_added"] == 10
+                assert table_data[0]["lines_removed"] == 2
+                assert table_data[1]["committer"] == "Bob"
+                assert table_data[1]["description"] == "Fix bug Y"
+                
+                # Verify message is updated
+                assert "2 commits" in message or "25-11-02" in message
+
+
 if __name__ == "__main__":
     unittest.main()

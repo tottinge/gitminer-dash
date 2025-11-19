@@ -203,3 +203,41 @@ def populate_graph(store_data):
     )
 
     return fig, stats_text, {"display": "block"}, {"weeks": week_data_for_store}
+
+
+@callback(
+    [
+        Output("id-weekly-commits-table", "data"),
+        Output("id-week-selection-message", "children"),
+    ],
+    Input("id-weekly-commits-graph", "clickData"),
+    State("id-weekly-data-store", "data"),
+)
+def update_commit_details_table(click_data, store_data):
+    """Update the commit details table when a week is clicked."""
+    if not click_data or not store_data or "weeks" not in store_data:
+        return [], "Click on a week's bar to see commit details."
+
+    # Extract the clicked week's x-axis label
+    clicked_x = click_data["points"][0]["x"]
+
+    # Find the matching week in store_data
+    week_info = None
+    for week in store_data["weeks"]:
+        if week["x_label"] == clicked_x:
+            week_info = week
+            break
+
+    if not week_info or not week_info["commits"]:
+        return [], f"No commits found for week ending {clicked_x}"
+
+    # Get the repository and extract commit details
+    repo = data.get_repo()
+    table_data = []
+    for commit_sha in week_info["commits"]:
+        commit = repo.commit(commit_sha)
+        commit_details = extract_commit_details(commit)
+        table_data.append(commit_details)
+
+    message = f"Showing {len(table_data)} commits for week ending {clicked_x}"
+    return table_data, message
