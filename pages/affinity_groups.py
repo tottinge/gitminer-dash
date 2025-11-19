@@ -64,7 +64,7 @@ layout = html.Div(
                 dcc.Graph(id="id-file-affinity-graph", style={"height": "600px"})
             ],
         ),
-        html.H3("Group Details"),
+        html.H3("Group Commits"),
         dcc.Loading(
             id="loading-node-details-table",
             type="circle",
@@ -72,21 +72,19 @@ layout = html.Div(
                 DataTable(
                     id="id-node-details-table",
                     columns=[
-                        {"name": "Node Name", "id": "node_name"},
-                        {"name": "Total Commits", "id": "commit_count"},
-                        {"name": "Connections", "id": "degree"},
-                        {"name": "Group", "id": "group"},
-                        {"name": "Connected Groups", "id": "connected_groups"},
+                        {"name": "Hash", "id": "hash"},
+                        {"name": "Timestamp", "id": "timestamp"},
+                        {"name": "Message", "id": "message"},
+                        {"name": "Group Files", "id": "group_files"},
                     ],
                     style_cell={"textAlign": "left"},
-                    style_table={"maxHeight": "300px", "overflowY": "auto"},
-                    style_data_conditional=[
-                        {
-                            "if": {"filter_query": '{connected_groups} ne ""'},
-                            "backgroundColor": "#ffe6e6",
-                            "color": "#cc0000",
-                        }
+                    style_cell_conditional=[
+                        {"if": {"column_id": "hash"}, "width": "10%"},
+                        {"if": {"column_id": "timestamp"}, "width": "15%"},
+                        {"if": {"column_id": "message"}, "width": "35%"},
+                        {"if": {"column_id": "group_files"}, "width": "40%"},
                     ],
+                    style_table={"maxHeight": "400px", "overflowY": "auto"},
                     data=[],
                 )
             ],
@@ -174,21 +172,67 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
         return fig, {}
 
 
+def get_commits_for_group_files(group_files: list[str], starting, ending) -> list[dict]:
+    """
+    Get commits that contain at least two files from the group.
+
+    Args:
+        group_files: List of file paths in the group
+        starting: Start date for commit filtering
+        ending: End date for commit filtering
+
+    Returns:
+        List of dicts with keys: hash, timestamp, message, group_files
+    """
+    commits_data = []
+    group_files_set = set(group_files)
+
+    for commit in data.commits_in_period(starting, ending):
+        # Get modified files in this commit
+        modified_files = set()
+        if commit.parents:
+            for item in commit.diff(commit.parents[0]):
+                if hasattr(item, "a_path") and item.a_path:
+                    modified_files.add(item.a_path)
+                if hasattr(item, "b_path") and item.b_path:
+                    modified_files.add(item.b_path)
+
+        # Find which group files were modified
+        group_files_in_commit = list(group_files_set & modified_files)
+
+        # Only include commits with at least 2 group files
+        if len(group_files_in_commit) >= 2:
+            commits_data.append(
+                {
+                    "hash": commit.hexsha[:7],
+                    "timestamp": commit.committed_datetime.strftime("%Y-%m-%d %H:%M"),
+                    "message": commit.message.split("\n")[0][:100],  # First line, truncated
+                    "group_files": ", ".join(sorted(group_files_in_commit)),
+                }
+            )
+
+    # Sort by timestamp (most recent first)
+    commits_data.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    return commits_data
+
+
 @callback(
     Output("id-node-details-table", "data"),
     [Input("id-file-affinity-graph", "clickData")],
-    [State("id-graph-data-store", "data")],
+    [State("id-graph-data-store", "data"), State("global-date-range", "data")],
 )
-def update_node_details_table(click_data, graph_data):
+def update_node_details_table(click_data, graph_data, date_range_data):
     """
-    Handle node clicks and populate the details table with all nodes in the same group.
+    Handle node clicks and populate the table with commits containing multiple files from the group.
 
     Args:
         click_data: Click event data from the graph
         graph_data: Stored graph structure data
+        date_range_data: Date range from global store
 
     Returns:
-        List of dicts for the DataTable containing all nodes in the selected node's group
+        List of dicts for the DataTable containing commits with group files
     """
     if not click_data or not graph_data or "nodes" not in graph_data:
         return []
@@ -209,33 +253,15 @@ def update_node_details_table(click_data, graph_data):
     clicked_node_data = graph_data["nodes"][node_name]
     node_community = clicked_node_data.get("community", 0)
 
-    # Find all nodes in the same community
-    table_rows = []
-    for node, node_info in graph_data["nodes"].items():
-        if node_info.get("community", -1) == node_community:
-            # Determine if this is a bridge node
-            connected_communities = node_info.get("connected_communities", [])
-            is_bridge = len(connected_communities) > 1
+    # Find all files in the same community
+    group_files = [
+        node
+        for node, node_info in graph_data["nodes"].items()
+        if node_info.get("community", -1) == node_community
+    ]
 
-            # Format connected groups (only show for bridge nodes)
-            if is_bridge:
-                connected_groups_str = ", ".join(
-                    [f"Group {c + 1}" for c in connected_communities]
-                )
-            else:
-                connected_groups_str = ""
+    # Get date range
+    starting, ending = date_utils.parse_date_range_from_store(date_range_data)
 
-            table_rows.append(
-                {
-                    "node_name": node,
-                    "commit_count": node_info.get("commit_count", 0),
-                    "degree": node_info.get("degree", 0),
-                    "group": f"Group {node_community + 1}",
-                    "connected_groups": connected_groups_str,
-                }
-            )
-
-    # Sort by commit count (descending) for better readability
-    table_rows.sort(key=lambda x: x["commit_count"], reverse=True)
-
-    return table_rows
+    # Get commits for these files
+    return get_commits_for_group_files(group_files, starting, ending)
