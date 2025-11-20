@@ -35,8 +35,10 @@ def get_repo() -> Repo:
 
 @cache
 def get_repo_name():
+    reverse_split_path = reversed(repository_path().split(os.sep))
+    rightmost_word = next(x for x in reverse_split_path if x)
     return re.sub(
-        pattern=r"[_\.-]", repl=" ", string=os.path.split(repository_path())[-1]
+        pattern=r"[_\.-]", repl=" ", string=rightmost_word
     ).title()
 
 
