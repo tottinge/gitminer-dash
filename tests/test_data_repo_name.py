@@ -14,6 +14,15 @@ import data
     ("/path/to/my-project", "My Project"),
     ("/path/to/my.project/", "My Project"),
     ("/path/to/my.project", "My Project"),
+    # Multiple separators and empty components
+    ("/path//to///my_repo//", "My Repo"),
+    ("/path/to//empty//components/test-repo", "Test Repo"),
+    # No separators (single directory name)
+    ("single-repo", "Single Repo"),
+    ("standalone_project", "Standalone Project"),
+    # Path ending with separator
+    ("/usr/local/projects/cool-app/", "Cool App"),
+    ("/home/user/repos/data.analysis/", "Data Analysis"),
 ])
 def test_get_repo_name(input_path, expected_name):
     data.get_repo_name.cache_clear()
