@@ -52,11 +52,9 @@ class TestBuildCommitGraph(unittest.TestCase):
 
         # Check parent node attributes
         assert graph.nodes["abc123"]["committed"] == parent.committed_datetime
-        assert graph.nodes["abc123"]["sha"] == "abc123"
 
         # Check commit node attributes
         assert graph.nodes["def456"]["committed"] == commit.committed_datetime
-        assert graph.nodes["def456"]["sha"] == "def456"
 
     def test_merge_commits_skipped(self):
         """Test that merge commits (multiple parents) are skipped."""

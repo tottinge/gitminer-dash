@@ -31,18 +31,18 @@ def analyze_commit_chains(graph: nx.Graph) -> List[ChainData]:
     chains = []
     
     for chain in nx.connected_components(graph):
-        # Get all nodes in this connected component
-        nodelist = [graph.nodes[key] for key in chain]
+        # Collect (node_id, attrs) pairs for this connected component
+        node_items = [(node_id, graph.nodes[node_id]) for node_id in chain]
         
         # Sort by commit timestamp
-        ordered = sorted(nodelist, key=lambda x: x["committed"])
+        ordered = sorted(node_items, key=lambda item: item[1]["committed"])
         
-        # Get earliest and latest commits
-        earliest = ordered[0]
-        latest = ordered[-1]
+        # Get earliest and latest commits (by timestamp) and their SHAs (node IDs)
+        earliest_id, earliest_attrs = ordered[0]
+        latest_id, latest_attrs = ordered[-1]
         
-        early_timestamp = earliest["committed"]
-        late_timestamp = latest["committed"]
+        early_timestamp = earliest_attrs["committed"]
+        late_timestamp = latest_attrs["committed"]
         duration = late_timestamp - early_timestamp
         commit_count = len(chain)
         
@@ -51,8 +51,8 @@ def analyze_commit_chains(graph: nx.Graph) -> List[ChainData]:
             late_timestamp=late_timestamp,
             commit_count=commit_count,
             duration=duration,
-            earliest_sha=earliest["sha"],
-            latest_sha=latest["sha"]
+            earliest_sha=earliest_id,
+            latest_sha=latest_id,
         )
         
         chains.append(chain_data)

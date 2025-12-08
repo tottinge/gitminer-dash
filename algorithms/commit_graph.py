@@ -36,15 +36,14 @@ def build_commit_graph(commits: List[Any]) -> nx.Graph:
             continue
             
         for parent in commit.parents:
+            # Store only the committed datetime; the node key itself is the SHA.
             graph.add_node(
                 parent.hexsha,
                 committed=parent.committed_datetime,
-                sha=parent.hexsha
             )
             graph.add_node(
                 commit.hexsha,
                 committed=commit.committed_datetime,
-                sha=commit.hexsha
             )
             graph.add_edge(parent.hexsha, commit.hexsha)
     
