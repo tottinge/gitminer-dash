@@ -37,7 +37,7 @@ class LinearChainTraversalError(Exception):
     """Raised when the requested commits do not form a linear chain."""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ChainTableRow:
     """Row of data for the chain commits table."""
 

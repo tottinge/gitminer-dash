@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ChainData:
     """
     Represents a connected chain of commits.
@@ -31,7 +31,7 @@ class ChainData:
         return self.early_timestamp < other.early_timestamp
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ClampedChain:
     """
     Represents a commit chain clamped to a specific time period.
@@ -52,7 +52,7 @@ class ClampedChain:
     latest_sha: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class TimelineRow:
     """
     Represents a row for timeline visualization.
