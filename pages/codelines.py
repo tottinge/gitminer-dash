@@ -6,10 +6,10 @@ from dash import html, register_page, callback, Output, Input, dcc
 from pandas import DataFrame
 
 from data import commits_in_period
-from algorithms.stacking import SequenceStacker
 from algorithms.commit_graph import build_commit_graph
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_clamper import clamp_chains_to_period
+from algorithms.chain_layout import calculate_chain_layout
 from utils import date_utils
 
 register_page(module=__name__, title="Concurrent Efforts")
@@ -61,24 +61,23 @@ def update_code_lines_graph(_: int, store_data):
     # Clamp chains to the selected period
     clamped_chains = clamp_chains_to_period(chains, start_date, end_date)
 
-    # Convert chains to timeline rows
-    rows = []
-    stacker = SequenceStacker()
+    # Calculate layout for timeline visualization
+    timeline_rows = calculate_chain_layout(clamped_chains)
 
-    for clamped in clamped_chains:
-        height = stacker.height_for([clamped.clamped_first, clamped.clamped_last])
-        rows.append(
-            dict(
-                first=clamped.clamped_first,
-                last=clamped.clamped_last,
-                elevation=height,
-                commit_counts=clamped.commit_count,
-                head=clamped.earliest_sha,
-                tail=clamped.latest_sha,
-                duration=clamped.clamped_duration.days,
-                density=(clamped.clamped_duration.days / clamped.commit_count) if clamped.commit_count else 0,
-            )
+    # Convert to dict format for DataFrame
+    rows = [
+        dict(
+            first=row.first,
+            last=row.last,
+            elevation=row.elevation,
+            commit_counts=row.commit_counts,
+            head=row.head,
+            tail=row.tail,
+            duration=row.duration,
+            density=row.density,
         )
+        for row in timeline_rows
+    ]
 
     df = DataFrame(
         rows,

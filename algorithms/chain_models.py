@@ -50,3 +50,28 @@ class ClampedChain:
     commit_count: int
     earliest_sha: str
     latest_sha: str
+
+
+@dataclass(frozen=True)
+class TimelineRow:
+    """
+    Represents a row for timeline visualization.
+    
+    Attributes:
+        first: Start timestamp
+        last: End timestamp
+        elevation: Vertical position in the timeline (stacking level)
+        commit_counts: Number of commits in the chain
+        head: SHA of the earliest commit
+        tail: SHA of the latest commit
+        duration: Duration in days
+        density: Commit sparsity metric (days per commit)
+    """
+    first: datetime
+    last: datetime
+    elevation: int
+    commit_counts: int
+    head: str
+    tail: str
+    duration: int
+    density: float
