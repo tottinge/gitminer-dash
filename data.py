@@ -47,7 +47,7 @@ def _dt_key(dt: datetime) -> str:
     return dt.astimezone().replace(microsecond=0).isoformat()
 
 
-@lru_cache(maxsize=64)
+@lru_cache(maxsize=2)
 def _cached_commits(repo_path: str, begin_key: str, end_key: str) -> list[Commit]:
     repo = Repo(repo_path)
     begin = datetime.fromisoformat(begin_key)
