@@ -36,6 +36,9 @@ def create_timeline_figure(df: DataFrame):
         x_end="last",
         y="elevation",
         color="density",
+        # Expose chain boundary SHAs so the codelines page can recover the
+        # full chain when a bar is selected.
+        custom_data=["head", "tail"],
         title="Code Lines (selected period)",
         labels={
             "elevation": "",
