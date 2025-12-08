@@ -10,6 +10,7 @@ from algorithms.commit_graph import build_commit_graph
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_clamper import clamp_chains_to_period
 from algorithms.chain_layout import calculate_chain_layout
+from algorithms.dataframe_builder import create_timeline_dataframe
 from utils import date_utils
 
 register_page(module=__name__, title="Concurrent Efforts")
@@ -64,37 +65,8 @@ def update_code_lines_graph(_: int, store_data):
     # Calculate layout for timeline visualization
     timeline_rows = calculate_chain_layout(clamped_chains)
 
-    # Convert to dict format for DataFrame
-    rows = [
-        dict(
-            first=row.first,
-            last=row.last,
-            elevation=row.elevation,
-            commit_counts=row.commit_counts,
-            head=row.head,
-            tail=row.tail,
-            duration=row.duration,
-            density=row.density,
-        )
-        for row in timeline_rows
-    ]
-
-    df = DataFrame(
-        rows,
-        columns=[
-            "first",
-            "last",
-            "elevation",
-            "commit_counts",
-            "head",
-            "tail",
-            "duration",
-            "density",
-        ],
-    )
-    # Convert datetime columns to pandas datetime type
-    df["first"] = df["first"].astype("datetime64[ns]")
-    df["last"] = df["last"].astype("datetime64[ns]")
+    # Create DataFrame with proper datetime types
+    df = create_timeline_dataframe(timeline_rows)
     
     figure = px.timeline(
         data_frame=df,
