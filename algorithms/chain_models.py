@@ -29,3 +29,24 @@ class ChainData:
     def __lt__(self, other):
         """Allow sorting by early_timestamp."""
         return self.early_timestamp < other.early_timestamp
+
+
+@dataclass(frozen=True)
+class ClampedChain:
+    """
+    Represents a commit chain clamped to a specific time period.
+    
+    Attributes:
+        clamped_first: Start of chain, clamped to period bounds
+        clamped_last: End of chain, clamped to period bounds
+        clamped_duration: Duration of the clamped time span
+        commit_count: Number of commits in the original chain
+        earliest_sha: SHA hash of the earliest commit in the chain
+        latest_sha: SHA hash of the latest commit in the chain
+    """
+    clamped_first: datetime
+    clamped_last: datetime
+    clamped_duration: timedelta
+    commit_count: int
+    earliest_sha: str
+    latest_sha: str

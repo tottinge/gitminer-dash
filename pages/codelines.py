@@ -9,6 +9,7 @@ from data import commits_in_period
 from algorithms.stacking import SequenceStacker
 from algorithms.commit_graph import build_commit_graph
 from algorithms.chain_analyzer import analyze_commit_chains
+from algorithms.chain_clamper import clamp_chains_to_period
 from utils import date_utils
 
 register_page(module=__name__, title="Concurrent Efforts")
@@ -57,28 +58,25 @@ def update_code_lines_graph(_: int, store_data):
     # Analyze chains
     chains = analyze_commit_chains(graph)
 
+    # Clamp chains to the selected period
+    clamped_chains = clamp_chains_to_period(chains, start_date, end_date)
+
     # Convert chains to timeline rows
     rows = []
     stacker = SequenceStacker()
 
-    for chain_data in sorted(chains):
-        # Clamp chain span to the selected period
-        clamped_first = max(chain_data.early_timestamp, start_date)
-        clamped_last = min(chain_data.late_timestamp, end_date)
-        if clamped_first > clamped_last:
-            continue
-        clamped_duration = clamped_last - clamped_first
-        height = stacker.height_for([clamped_first, clamped_last])
+    for clamped in clamped_chains:
+        height = stacker.height_for([clamped.clamped_first, clamped.clamped_last])
         rows.append(
             dict(
-                first=clamped_first,
-                last=clamped_last,
+                first=clamped.clamped_first,
+                last=clamped.clamped_last,
                 elevation=height,
-                commit_counts=chain_data.commit_count,
-                head=chain_data.earliest_sha,
-                tail=chain_data.latest_sha,
-                duration=clamped_duration.days,
-                density=(clamped_duration.days / chain_data.commit_count) if chain_data.commit_count else 0,
+                commit_counts=clamped.commit_count,
+                head=clamped.earliest_sha,
+                tail=clamped.latest_sha,
+                duration=clamped.clamped_duration.days,
+                density=(clamped.clamped_duration.days / clamped.commit_count) if clamped.commit_count else 0,
             )
         )
 
