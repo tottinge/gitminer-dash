@@ -2,7 +2,6 @@ from dash import html, register_page, callback, Output, Input, dcc
 from dash.dash_table import DataTable
 
 import data
-from data import commits_in_period
 from algorithms.commit_graph import build_commit_graph
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_clamper import clamp_chains_to_period
@@ -76,7 +75,7 @@ def update_code_lines_graph(_: int, store_data):
     start_date, end_date = date_utils.parse_date_range_from_store(store_data)
 
     # Build commit graph
-    commits = commits_in_period(start_date, end_date)
+    commits = data.commits_in_period(start_date, end_date)
     graph = build_commit_graph(commits)
 
     # Analyze chains
