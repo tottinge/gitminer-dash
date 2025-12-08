@@ -7,6 +7,7 @@ from pandas import DataFrame
 
 from data import commits_in_period
 from algorithms.stacking import SequenceStacker
+from algorithms.commit_graph import build_commit_graph
 from utils import date_utils
 
 register_page(module=__name__, title="Concurrent Efforts")
@@ -48,19 +49,9 @@ def update_code_lines_graph(_: int, store_data):
     # Determine range from global store
     start_date, end_date = date_utils.parse_date_range_from_store(store_data)
 
-    # Make all the connections
-    graph = nx.Graph()
-    for commit in commits_in_period(start_date, end_date):
-        if len(commit.parents) > 1:
-            continue
-        for parent in commit.parents:
-            graph.add_node(
-                parent.hexsha, committed=parent.committed_datetime, sha=parent.hexsha
-            )
-            graph.add_node(
-                commit.hexsha, committed=commit.committed_datetime, sha=commit.hexsha
-            )
-            graph.add_edge(parent.hexsha, commit.hexsha)
+    # Build commit graph
+    commits = commits_in_period(start_date, end_date)
+    graph = build_commit_graph(commits)
 
     # Convert connected chains to begin/end pairs of dates
     rows = []
@@ -101,8 +92,8 @@ def update_code_lines_graph(_: int, store_data):
         height = stacker.height_for([clamped_first, clamped_last])
         rows.append(
             dict(
-                first=clamped_first.isoformat(),
-                last=clamped_last.isoformat(),
+                first=clamped_first,
+                last=clamped_last,
                 elevation=height,
                 commit_counts=commit_counts,
                 head=earliest["sha"],
@@ -125,6 +116,10 @@ def update_code_lines_graph(_: int, store_data):
             "density",
         ],
     )
+    # Convert datetime columns to pandas datetime type
+    df["first"] = df["first"].astype("datetime64[ns]")
+    df["last"] = df["last"].astype("datetime64[ns]")
+    
     figure = px.timeline(
         data_frame=df,
         x_start="first",

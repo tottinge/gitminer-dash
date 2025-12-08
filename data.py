@@ -52,7 +52,7 @@ def _cached_commits(repo_path: str, begin_key: str, end_key: str) -> list[Commit
     repo = Repo(repo_path)
     begin = datetime.fromisoformat(begin_key)
     end = datetime.fromisoformat(end_key)
-    return list(repo.iter_commits(since=begin, until=end))
+    return list(repo.iter_commits('--all', since=begin, until=end))
 
 
 def commits_in_period(beginning: datetime, ending: datetime) -> Iterable[Commit]:
