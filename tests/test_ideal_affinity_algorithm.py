@@ -113,7 +113,7 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
             affinities[ordered_key] += 1 / files_in_commit
     G = nx.Graph()
     all_files = set()
-    for file_pair in affinities.keys():
+    for file_pair in affinities:
         all_files.update(file_pair)
     file_total_affinity = defaultdict(float)
     for (file1, file2), affinity in affinities.items():

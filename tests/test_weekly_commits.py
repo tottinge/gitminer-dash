@@ -247,33 +247,33 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
             ]
         }
 
-        with patch("dash.register_page"):
-            # Mock the data.get_repo to return our fake commits
-            with patch("pages.weekly_commits.data.get_repo") as mock_repo:
-                mock_repo_obj = Mock()
-                mock_repo_obj.commit.side_effect = lambda sha: {
-                    "abc123": commit1,
-                    "def456": commit2,
-                }[sha]
-                mock_repo.return_value = mock_repo_obj
+        with patch("dash.register_page"), patch(
+            "pages.weekly_commits.data.get_repo"
+        ) as mock_repo:
+            mock_repo_obj = Mock()
+            mock_repo_obj.commit.side_effect = lambda sha: {
+                "abc123": commit1,
+                "def456": commit2,
+            }[sha]
+            mock_repo.return_value = mock_repo_obj
 
-                from pages.weekly_commits import update_commit_details_table
+            from pages.weekly_commits import update_commit_details_table
 
-                table_data, message = update_commit_details_table(
-                    click_data, store_data
-                )
+            table_data, message = update_commit_details_table(
+                click_data, store_data
+            )
 
-                # Verify table has correct structure and data
-                assert len(table_data) == 2
-                assert table_data[0]["committer"] == "Alice"
-                assert table_data[0]["description"] == "Add feature X"
-                assert table_data[0]["lines_added"] == 10
-                assert table_data[0]["lines_removed"] == 2
-                assert table_data[1]["committer"] == "Bob"
-                assert table_data[1]["description"] == "Fix bug Y"
-                
-                # Verify message is updated
-                assert "2 commits" in message or "25-11-02" in message
+            # Verify table has correct structure and data
+            assert len(table_data) == 2
+            assert table_data[0]["committer"] == "Alice"
+            assert table_data[0]["description"] == "Add feature X"
+            assert table_data[0]["lines_added"] == 10
+            assert table_data[0]["lines_removed"] == 2
+            assert table_data[1]["committer"] == "Bob"
+            assert table_data[1]["description"] == "Fix bug Y"
+
+            # Verify message is updated
+            assert "2 commits" in message or "25-11-02" in message
 
     def test_none_click_data_returns_empty_table(self):
         """Test that None click_data returns empty table and default message."""
@@ -367,37 +367,38 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
             ]
         }
 
-        with patch("dash.register_page"):
-            with patch("pages.weekly_commits.data.get_repo") as mock_repo:
-                mock_repo_obj = Mock()
-                mock_repo_obj.commit.side_effect = lambda sha: {
-                    "sha1": commit1,
-                    "sha2": commit2,
-                    "sha3": commit3,
-                }[sha]
-                mock_repo.return_value = mock_repo_obj
+        with patch("dash.register_page"), patch(
+            "pages.weekly_commits.data.get_repo"
+        ) as mock_repo:
+            mock_repo_obj = Mock()
+            mock_repo_obj.commit.side_effect = lambda sha: {
+                "sha1": commit1,
+                "sha2": commit2,
+                "sha3": commit3,
+            }[sha]
+            mock_repo.return_value = mock_repo_obj
 
-                from pages.weekly_commits import update_commit_details_table
+            from pages.weekly_commits import update_commit_details_table
 
-                table_data, message = update_commit_details_table(
-                    click_data, store_data
-                )
+            table_data, message = update_commit_details_table(
+                click_data, store_data
+            )
 
-                # Verify all three commits are in the table
-                assert len(table_data) == 3
-                assert table_data[0]["committer"] == "Developer 1"
-                assert table_data[0]["description"] == "First commit"
-                assert table_data[0]["lines_added"] == 15
-                assert table_data[0]["lines_removed"] == 3
-                assert table_data[0]["lines_modified"] == 18
+            # Verify all three commits are in the table
+            assert len(table_data) == 3
+            assert table_data[0]["committer"] == "Developer 1"
+            assert table_data[0]["description"] == "First commit"
+            assert table_data[0]["lines_added"] == 15
+            assert table_data[0]["lines_removed"] == 3
+            assert table_data[0]["lines_modified"] == 18
 
-                assert table_data[1]["committer"] == "Developer 2"
-                assert table_data[1]["description"] == "Second commit"
-                assert table_data[1]["lines_added"] == 8
+            assert table_data[1]["committer"] == "Developer 2"
+            assert table_data[1]["description"] == "Second commit"
+            assert table_data[1]["lines_added"] == 8
 
-                assert table_data[2]["committer"] == "Developer 3"
-                assert table_data[2]["description"] == "Third commit"
-                assert table_data[2]["lines_added"] == 20
+            assert table_data[2]["committer"] == "Developer 3"
+            assert table_data[2]["description"] == "Third commit"
+            assert table_data[2]["lines_added"] == 20
 
     def test_message_reflects_commit_count_and_week(self):
         """Test that message accurately reflects number of commits and week ending date."""
@@ -449,27 +450,28 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
             ]
         }
 
-        with patch("dash.register_page"):
-            with patch("pages.weekly_commits.data.get_repo") as mock_repo:
-                mock_repo_obj = Mock()
-                mock_repo_obj.commit.side_effect = lambda sha: {
-                    "sha1": commit1,
-                    "sha2": commit2,
-                    "sha3": commit3,
-                    "sha4": commit4,
-                    "sha5": commit5,
-                }[sha]
-                mock_repo.return_value = mock_repo_obj
+        with patch("dash.register_page"), patch(
+            "pages.weekly_commits.data.get_repo"
+        ) as mock_repo:
+            mock_repo_obj = Mock()
+            mock_repo_obj.commit.side_effect = lambda sha: {
+                "sha1": commit1,
+                "sha2": commit2,
+                "sha3": commit3,
+                "sha4": commit4,
+                "sha5": commit5,
+            }[sha]
+            mock_repo.return_value = mock_repo_obj
 
-                from pages.weekly_commits import update_commit_details_table
+            from pages.weekly_commits import update_commit_details_table
 
-                table_data, message = update_commit_details_table(
-                    click_data, store_data
-                )
+            table_data, message = update_commit_details_table(
+                click_data, store_data
+            )
 
-                # Verify message contains correct count and week
-                assert "5 commits" in message
-                assert "25-11-02" in message
+            # Verify message contains correct count and week
+            assert "5 commits" in message
+            assert "25-11-02" in message
 
 
 if __name__ == "__main__":

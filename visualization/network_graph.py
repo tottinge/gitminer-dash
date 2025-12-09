@@ -98,7 +98,7 @@ def create_file_affinity_network(
 
     # Get unique files
     all_files = set()
-    for file_pair in affinities.keys():
+    for file_pair in affinities:
         all_files.update(file_pair)
 
     stats["unique_files"] = len(all_files)

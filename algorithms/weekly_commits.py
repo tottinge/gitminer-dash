@@ -24,10 +24,7 @@ def get_week_ending(dt: datetime) -> datetime:
         A datetime representing the Sunday ending that week (23:59:59)
     """
     days_until_sunday = (6 - dt.weekday()) % 7
-    if days_until_sunday == 0:
-        sunday = dt
-    else:
-        sunday = dt + timedelta(days=days_until_sunday)
+    sunday = dt if days_until_sunday == 0 else dt + timedelta(days=days_until_sunday)
 
     return sunday.replace(hour=23, minute=59, second=59, microsecond=0)
 
