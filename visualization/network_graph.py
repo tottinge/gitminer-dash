@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from collections import defaultdict
 from functools import lru_cache
-from typing import Tuple, Dict, List, Any
+from typing import Any
 
 from algorithms.affinity_calculator import calculate_affinities
 from algorithms.affinity_analysis import get_file_total_affinities, get_top_files_by_affinity

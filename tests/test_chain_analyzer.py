@@ -4,6 +4,7 @@ Unit tests for chain analyzer.
 
 import unittest
 import networkx as nx
+from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta, timezone
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_models import ChainData
@@ -159,8 +160,8 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         chains = analyze_commit_chains(graph)
         chain = chains[0]
         
-        # Should raise error when trying to modify
-        with self.assertRaises(Exception):  # FrozenInstanceError
+        # Should raise error when trying to modify the frozen dataclass
+        with self.assertRaises(FrozenInstanceError):
             chain.commit_count = 999
 
     def test_chain_data_sortable(self):

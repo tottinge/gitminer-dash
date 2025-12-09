@@ -6,10 +6,9 @@ that can be tested independently of git repositories.
 """
 
 import networkx as nx
-from typing import List, Any
+from typing import Any
 
-
-def build_commit_graph(commits: List[Any]) -> nx.Graph:
+def build_commit_graph(commits: list[Any]) -> nx.Graph:
     """
     Build a NetworkX graph from a list of commits.
     

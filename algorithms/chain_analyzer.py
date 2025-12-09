@@ -6,11 +6,10 @@ in commit graphs and extracting chain metadata.
 """
 
 import networkx as nx
-from typing import List
 from algorithms.chain_models import ChainData
 
 
-def analyze_commit_chains(graph: nx.Graph) -> List[ChainData]:
+def analyze_commit_chains(graph: nx.Graph) -> list[ChainData]:
     """
     Analyze connected components in a commit graph.
     

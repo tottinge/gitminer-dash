@@ -5,12 +5,11 @@ This module provides pure functions for converting clamped chains
 into timeline rows with vertical stacking to prevent overlaps.
 """
 
-from typing import List
 from algorithms.chain_models import ClampedChain, TimelineRow
 from algorithms.stacking import SequenceStacker
 
 
-def calculate_chain_layout(clamped_chains: List[ClampedChain]) -> List[TimelineRow]:
+def calculate_chain_layout(clamped_chains: list[ClampedChain]) -> list[TimelineRow]:
     """
     Calculate layout for timeline visualization.
     

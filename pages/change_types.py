@@ -1,5 +1,4 @@
 from functools import cache
-from typing import Tuple, Dict, Protocol
 
 import pandas as pd
 import plotly.express as px

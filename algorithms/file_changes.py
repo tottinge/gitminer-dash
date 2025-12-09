@@ -1,4 +1,4 @@
-from typing import List, NamedTuple, Optional, Dict, Tuple
+from typing import NamedTuple
 from datetime import datetime, timedelta
 from statistics import mean
 import logging

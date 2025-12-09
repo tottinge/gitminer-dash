@@ -4,7 +4,6 @@ import sys
 from collections.abc import Iterable
 from datetime import datetime
 from functools import cache, lru_cache
-from typing import List
 
 from git import Repo, Commit
 

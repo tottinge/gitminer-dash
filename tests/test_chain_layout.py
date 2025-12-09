@@ -3,6 +3,7 @@ Unit tests for chain layout calculator.
 """
 
 import unittest
+from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta, timezone
 from algorithms.chain_layout import calculate_chain_layout
 from algorithms.chain_models import ClampedChain, TimelineRow
@@ -241,8 +242,8 @@ class TestCalculateChainLayout(unittest.TestCase):
         rows = calculate_chain_layout([chain])
         row = rows[0]
         
-        # Should raise error when trying to modify
-        with self.assertRaises(Exception):  # FrozenInstanceError
+        # Should raise error when trying to modify the frozen dataclass
+        with self.assertRaises(FrozenInstanceError):
             row.elevation = 999
 
     def test_order_independence(self):

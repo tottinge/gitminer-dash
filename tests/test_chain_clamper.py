@@ -4,6 +4,7 @@ Unit and property-based tests for chain clamping.
 
 import unittest
 from datetime import datetime, timedelta, timezone
+from dataclasses import FrozenInstanceError
 from algorithms.chain_clamper import clamp_chains_to_period
 from algorithms.chain_models import ChainData, ClampedChain
 
@@ -259,8 +260,8 @@ class TestClampChainsToPeriod(unittest.TestCase):
         result = clamp_chains_to_period([chain], start, end)
         clamped = result[0]
         
-        # Should raise error when trying to modify
-        with self.assertRaises(Exception):  # FrozenInstanceError
+        # Should raise error when trying to modify the frozen dataclass
+        with self.assertRaises(FrozenInstanceError):
             clamped.commit_count = 999
 
 

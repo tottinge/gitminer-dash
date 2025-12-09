@@ -28,7 +28,7 @@ def mock_repo():
     """Create a mock Git repository for testing."""
     mock_repo = MagicMock()
     mock_commits = []
-    for i in range(5):
+    for _ in range(5):
         mock_commit = MagicMock()
         mock_commit.stats.files = {
             "file1.py": {"lines": 10},

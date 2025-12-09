@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, TypeVar
+from typing import TypeVar
 from collections.abc import Iterable, Sequence
 
 from git import Repo

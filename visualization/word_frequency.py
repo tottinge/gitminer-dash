@@ -5,11 +5,9 @@ Provides visualization functions for word frequency data from commit messages.
 """
 
 import plotly.graph_objects as go
-from typing import Dict
-
 
 def create_word_frequency_treemap(
-    word_counts: Dict[str, int],
+    word_counts: dict[str, int],
     title: str = "Commit Message Word Frequency",
     top_n: int = 50
 ) -> go.Figure:

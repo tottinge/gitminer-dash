@@ -5,12 +5,11 @@ This module provides pure functions for converting timeline rows
 into properly-typed pandas DataFrames for visualization.
 """
 
-from typing import List
 from pandas import DataFrame
 from algorithms.chain_models import TimelineRow
 
 
-def create_timeline_dataframe(timeline_rows: List[TimelineRow]) -> DataFrame:
+def create_timeline_dataframe(timeline_rows: list[TimelineRow]) -> DataFrame:
     """
     Create a pandas DataFrame from timeline rows.
     

@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable, List, Protocol, runtime_checkable, Callable
+from typing import Protocol, runtime_checkable
+from collections.abc import Iterable, Callable
 
 
 @runtime_checkable
@@ -25,7 +26,7 @@ class HasCommitFields(Protocol):
     message: str
 
     @property
-    def parents(self) -> Iterable["HasCommitFields"]:  # pragma: no cover - attribute
+    def parents(self) -> Iterable[HasCommitFields]:  # pragma: no cover - attribute
         ...
 
     @property
@@ -53,7 +54,7 @@ def traverse_linear_chain(
     earliest_sha: str,
     *,
     max_steps: int = 10_000,
-) -> List[HasCommitFields]:
+) -> list[HasCommitFields]:
     """Walk a linear chain from ``latest_commit`` back to ``earliest_sha``.
 
     The chain is expected to be linear: every intermediate commit must have

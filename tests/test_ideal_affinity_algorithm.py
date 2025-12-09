@@ -32,7 +32,7 @@ def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):
     """
     if not commits:
         return (0.2, 0, 0)
-    if hasattr(commits, "seek") and callable(getattr(commits, "seek")):
+    if hasattr(commits, "seek") and callable(commits.seek):
         commits.seek(0)
     elif not hasattr(commits, "__len__"):
         commits = list(commits)

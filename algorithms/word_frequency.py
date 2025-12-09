@@ -1,5 +1,4 @@
 from collections import Counter
-from typing import List, Dict
 import re
 
 
@@ -16,10 +15,10 @@ STOP_WORDS = {
 
 
 def calculate_word_frequency(
-    messages: List[str],
+    messages: list[str],
     min_word_length: int = 3,
     exclude_stop_words: bool = True
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Calculate word frequency from commit messages.
 
     Args:

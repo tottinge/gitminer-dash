@@ -8,7 +8,6 @@ have affinity for each other.
 
 from collections import defaultdict
 from itertools import combinations
-from typing import Dict, Tuple
 from collections.abc import Iterable
 from utils.git import ensure_list
 

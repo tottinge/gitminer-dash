@@ -6,15 +6,14 @@ chain time spans to fit within specified date ranges.
 """
 
 from datetime import datetime
-from typing import List
 from algorithms.chain_models import ChainData, ClampedChain
 
 
 def clamp_chains_to_period(
-    chains: List[ChainData],
+    chains: list[ChainData],
     start_date: datetime,
     end_date: datetime
-) -> List[ClampedChain]:
+) -> list[ClampedChain]:
     """
     Clamp commit chains to a specific time period.
     
