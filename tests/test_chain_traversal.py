@@ -6,9 +6,9 @@ from unittest.mock import Mock
 import pytest
 
 from algorithms.chain_traversal import (
-    traverse_linear_chain,
-    commits_to_chain_rows,
     LinearChainTraversalError,
+    commits_to_chain_rows,
+    traverse_linear_chain,
 )
 
 

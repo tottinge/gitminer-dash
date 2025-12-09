@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import plotly.express as px
-from dash import register_page, html, dcc, callback, Output, Input
+from dash import Input, Output, callback, dcc, html, register_page
 
 import data
 from utils import date_utils

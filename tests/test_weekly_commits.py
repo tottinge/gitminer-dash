@@ -3,12 +3,13 @@ Unit tests for the weekly commits module.
 """
 
 import unittest
-from unittest.mock import Mock
 from datetime import datetime, timedelta
+from unittest.mock import Mock
+
 from algorithms.weekly_commits import (
-    get_week_ending,
     calculate_weekly_commits,
     extract_commit_details,
+    get_week_ending,
 )
 
 
@@ -210,7 +211,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
     def test_callback_produces_table_from_fake_week_data(self):
         """Test that given fake data of a week's commits, the callback produces the correct table."""
-        from unittest.mock import patch, Mock
+        from unittest.mock import Mock, patch
 
         # Create fake commits for a week
         commit1 = Mock()
@@ -332,7 +333,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
     def test_valid_week_with_multiple_commits(self):
         """Test that valid week with multiple commits populates table correctly."""
-        from unittest.mock import patch, Mock
+        from unittest.mock import Mock, patch
 
         # Create mock commits
         commit1 = Mock()
@@ -402,7 +403,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
     def test_message_reflects_commit_count_and_week(self):
         """Test that message accurately reflects number of commits and week ending date."""
-        from unittest.mock import patch, Mock
+        from unittest.mock import Mock, patch
 
         commit1 = Mock()
         commit1.hexsha = "sha1"

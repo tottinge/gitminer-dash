@@ -1,5 +1,6 @@
 import unittest
-from algorithms.word_frequency import calculate_word_frequency, STOP_WORDS
+
+from algorithms.word_frequency import STOP_WORDS, calculate_word_frequency
 
 
 class TestWordFrequency(unittest.TestCase):

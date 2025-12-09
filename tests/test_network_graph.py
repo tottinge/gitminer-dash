@@ -4,7 +4,9 @@ Unit tests for the network graph visualization module.
 
 import unittest
 from unittest.mock import Mock
+
 import networkx as nx
+
 from visualization.network_graph import (
     create_file_affinity_network,
     create_network_visualization,

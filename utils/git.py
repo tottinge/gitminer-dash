@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import TypeVar
+
 from collections.abc import Iterable, Sequence
+from typing import TypeVar
 
 from git import Repo
 

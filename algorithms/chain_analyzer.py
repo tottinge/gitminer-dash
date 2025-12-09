@@ -6,6 +6,7 @@ in commit graphs and extracting chain metadata.
 """
 
 import networkx as nx
+
 from algorithms.chain_models import ChainData
 
 

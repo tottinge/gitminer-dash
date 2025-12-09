@@ -7,6 +7,7 @@ including finding optimal affinity thresholds and analyzing affinity ranges.
 
 from collections import defaultdict
 from collections.abc import Iterable
+
 from algorithms.affinity_calculator import calculate_affinities
 from utils.git import ensure_list
 

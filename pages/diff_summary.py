@@ -2,12 +2,12 @@ from datetime import datetime, timedelta
 
 import plotly
 import plotly.express as px
-from dash import register_page, html, dcc, callback, Output, Input
+from dash import Input, Output, callback, dcc, html, register_page
 
 import data
 from algorithms.diff_analysis import get_diffs_in_period
-from utils.logging_wrapper import log
 from utils import date_utils
+from utils.logging_wrapper import log
 
 register_page(
     module=__name__,  # Where it's found

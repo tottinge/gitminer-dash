@@ -1,8 +1,9 @@
 from tests import setup_path
 
 setup_path()
-from datetime import datetime
 import types
+from datetime import datetime
+
 import pytest
 
 STORE = {

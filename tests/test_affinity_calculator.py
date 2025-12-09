@@ -4,6 +4,7 @@ Unit tests for the affinity calculator module.
 
 import unittest
 from unittest.mock import Mock
+
 from algorithms.affinity_calculator import calculate_affinities
 
 

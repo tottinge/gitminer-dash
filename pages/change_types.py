@@ -2,14 +2,14 @@ from functools import cache
 
 import pandas as pd
 import plotly.express as px
-from dash import html, dcc, register_page, callback, Output, Input
+import plotly.graph_objects as go
+from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from plotly.graph_objs import Figure
-import plotly.graph_objects as go
 
 # Note: PyCharm tags these as invalid imports, but we run
 # the app from the parent dir and these are okay.
-from algorithms.change_series import change_series, change_name
+from algorithms.change_series import change_name, change_series
 from algorithms.sorted_tags import get_most_recent_tags
 from data import get_repo
 

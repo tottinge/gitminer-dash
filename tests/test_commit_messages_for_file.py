@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import Mock
 from datetime import datetime
+from unittest.mock import Mock
+
 from utils.git import get_commit_messages_for_file
 
 

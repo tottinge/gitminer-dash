@@ -6,6 +6,7 @@ used across different pages.
 """
 
 import textwrap
+
 import plotly.graph_objects as go
 
 

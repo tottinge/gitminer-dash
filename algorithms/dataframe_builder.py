@@ -6,6 +6,7 @@ into properly-typed pandas DataFrames for visualization.
 """
 
 from pandas import DataFrame
+
 from algorithms.chain_models import TimelineRow
 
 

@@ -5,14 +5,14 @@ Displays a stacked bar chart showing commits per week, with interactive
 selection to view commit details for a specific week.
 """
 
-from dash import html, register_page, dcc, callback, Output, Input, State
+from dash import Input, Output, State, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 
 import data
+from algorithms.weekly_commits import calculate_weekly_commits, extract_commit_details
 from utils import date_utils
 from utils.plotly_utils import create_empty_figure
-from algorithms.weekly_commits import calculate_weekly_commits, extract_commit_details
 from visualization.weekly_commits import create_weekly_commits_figure
 
 register_page(

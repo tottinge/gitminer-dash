@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from functools import cache, lru_cache
 
-from git import Repo, Commit
+from git import Commit, Repo
 
 
 # Link this to any local repo, until we can make this

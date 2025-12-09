@@ -6,9 +6,10 @@ from tests import setup_path
 
 setup_path()
 from datetime import datetime
-import pytest
-from utils import date_utils
 
+import pytest
+
+from utils import date_utils
 
 
 @pytest.fixture

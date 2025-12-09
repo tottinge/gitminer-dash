@@ -1,10 +1,13 @@
-from typing import NamedTuple
+import logging
 from datetime import datetime, timedelta
 from statistics import mean
-import logging
+from typing import NamedTuple
+
 import git
 from git import Repo
-from utils.git import get_repo as get_repo_util, tree_entry_size
+
+from utils.git import get_repo as get_repo_util
+from utils.git import tree_entry_size
 
 
 class FileChangeStats(NamedTuple):

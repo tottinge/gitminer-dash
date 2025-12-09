@@ -1,14 +1,14 @@
 from collections.abc import Iterable
 
-from dash import register_page, html, callback, Output, Input, dcc, State
+from dash import Input, Output, State, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.dcc import Dropdown
 from git import Commit
 
 import data
+from algorithms.affinity_calculator import calculate_affinities
 from utils import date_utils
 from utils.git import get_commits_for_file_pair
-from algorithms.affinity_calculator import calculate_affinities
 
 register_page(__name__)
 

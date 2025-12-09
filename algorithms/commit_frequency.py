@@ -10,7 +10,7 @@ from collections import Counter
 from collections.abc import Iterable
 from datetime import datetime
 
-from git import Repo, Commit
+from git import Commit, Repo
 
 
 def calculate_file_commit_frequency(

@@ -29,7 +29,7 @@ target-version = "py310"
 
 [tool.ruff.lint]
 # Keep rule set focused but expanding over time
-select = ["E", "F", "S", "B", "UP", "PD", "SIM"]
+select = ["E", "F", "S", "B", "UP", "PD", "SIM", "I"]
 ignore = [
   # Black-compatible slicing
   "E203",

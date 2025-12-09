@@ -10,16 +10,17 @@ from tests import setup_path
 setup_path()
 import os
 import sys
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from algorithms.file_changes import (
+    FileChangeStats,
     file_changes_over_period,
     files_changes_over_period,
-    FileChangeStats,
 )
 
 

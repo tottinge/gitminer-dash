@@ -6,15 +6,16 @@ It consolidates the best features from the original implementations in affinity_
 and improved_affinity_network.py.
 """
 
-import networkx as nx
-import plotly.graph_objects as go
-import plotly.express as px
 from collections import defaultdict
 from functools import lru_cache
 from typing import Any
 
-from algorithms.affinity_calculator import calculate_affinities
+import networkx as nx
+import plotly.express as px
+import plotly.graph_objects as go
+
 from algorithms.affinity_analysis import get_file_total_affinities, get_top_files_by_affinity
+from algorithms.affinity_calculator import calculate_affinities
 from utils.git import ensure_list
 
 

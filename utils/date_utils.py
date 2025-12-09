@@ -7,8 +7,8 @@ used by various visualization pages.
 
 from datetime import datetime, timedelta
 from urllib.parse import parse_qs
-from dateutil.relativedelta import relativedelta
 
+from dateutil.relativedelta import relativedelta
 
 # Common period options for dropdowns
 PERIOD_OPTIONS: list[str] = [

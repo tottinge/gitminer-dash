@@ -6,9 +6,10 @@ populates the commits table correctly with commits containing
 multiple files from the selected group.
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
+
+import pytest
 from dash import Dash
 
 app = Dash(__name__, suppress_callback_exceptions=True)

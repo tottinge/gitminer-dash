@@ -5,6 +5,7 @@ Unit tests for chain layout calculator.
 import unittest
 from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta, timezone
+
 from algorithms.chain_layout import calculate_chain_layout
 from algorithms.chain_models import ClampedChain, TimelineRow
 

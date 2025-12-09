@@ -14,6 +14,7 @@ from tests import setup_path
 setup_path()
 import sys
 from unittest.mock import patch
+
 import plotly.graph_objects as go
 import pytest
 from dash import Dash

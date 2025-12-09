@@ -4,9 +4,11 @@ Unit and regression tests for DataFrame builder.
 
 import unittest
 from datetime import datetime, timedelta, timezone
+
 from pandas import DataFrame
-from algorithms.dataframe_builder import create_timeline_dataframe
+
 from algorithms.chain_models import TimelineRow
+from algorithms.dataframe_builder import create_timeline_dataframe
 
 
 class TestCreateTimelineDataFrame(unittest.TestCase):

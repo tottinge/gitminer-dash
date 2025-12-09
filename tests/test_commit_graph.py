@@ -3,8 +3,9 @@ Unit tests for commit graph building.
 """
 
 import unittest
-from unittest.mock import Mock
 from datetime import datetime, timezone
+from unittest.mock import Mock
+
 from algorithms.commit_graph import build_commit_graph
 
 

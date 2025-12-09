@@ -6,8 +6,9 @@ weekly commit statistics.
 """
 
 from collections import defaultdict
-from datetime import datetime, timedelta
 from collections.abc import Iterable
+from datetime import datetime, timedelta
+
 from git import Commit
 
 

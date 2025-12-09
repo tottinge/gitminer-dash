@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import plotly.express as px
-from dash import html, register_page, callback, Output, Input, dcc
+from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.dcc import Graph
 from pandas import DataFrame

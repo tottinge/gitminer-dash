@@ -1,14 +1,14 @@
-from dash import html, register_page, callback, Output, Input, dcc
+from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 
 import data
-from algorithms.commit_graph import build_commit_graph
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_clamper import clamp_chains_to_period
 from algorithms.chain_layout import calculate_chain_layout
+from algorithms.chain_traversal import commits_to_chain_rows, traverse_linear_chain
+from algorithms.commit_graph import build_commit_graph
 from algorithms.dataframe_builder import create_timeline_dataframe
 from algorithms.figure_builder import create_timeline_figure
-from algorithms.chain_traversal import traverse_linear_chain, commits_to_chain_rows
 from utils import date_utils
 
 register_page(module=__name__, title="Concurrent Efforts")

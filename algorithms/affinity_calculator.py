@@ -7,8 +7,9 @@ have affinity for each other.
 """
 
 from collections import defaultdict
-from itertools import combinations
 from collections.abc import Iterable
+from itertools import combinations
+
 from utils.git import ensure_list
 
 

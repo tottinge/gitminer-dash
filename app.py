@@ -1,6 +1,6 @@
 import sys
 
-from dash import html, dcc, Dash, page_container, page_registry, callback, Output, Input
+from dash import Dash, Input, Output, callback, dcc, html, page_container, page_registry
 
 import data
 from utils import date_utils

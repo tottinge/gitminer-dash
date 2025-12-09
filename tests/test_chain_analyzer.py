@@ -3,9 +3,11 @@ Unit tests for chain analyzer.
 """
 
 import unittest
-import networkx as nx
 from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta, timezone
+
+import networkx as nx
+
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_models import ChainData
 

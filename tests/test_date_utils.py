@@ -8,7 +8,9 @@ from tests import setup_path
 
 setup_path()
 from datetime import datetime
+
 import pytest
+
 from utils import date_utils
 
 MOCK_DATE = datetime(2025, 10, 22, 17, 59)

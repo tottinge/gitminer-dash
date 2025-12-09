@@ -10,11 +10,12 @@ from tests import setup_path
 setup_path()
 import os
 import sys
-import networkx as nx
 from collections import defaultdict
 from itertools import combinations
 
-from tests.conftest import create_mock_commit, load_commits_json, TEST_DATA_DIR
+import networkx as nx
+
+from tests.conftest import TEST_DATA_DIR, create_mock_commit, load_commits_json
 
 
 def calculate_ideal_affinity(commits, target_node_count=15, max_nodes=50):

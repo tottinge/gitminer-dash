@@ -4,7 +4,9 @@ Unit tests for figure builder.
 
 import unittest
 from datetime import datetime, timezone
+
 from pandas import DataFrame
+
 from algorithms.figure_builder import create_timeline_figure
 
 

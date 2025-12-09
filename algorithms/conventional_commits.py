@@ -8,8 +8,8 @@ and categorizing them by intent/type.
 import re
 from collections import Counter
 from datetime import datetime, timedelta
-import pandas as pd
 
+import pandas as pd
 
 # Pattern to match conventional commit format
 conventional_commit_match_pattern = re.compile(r"^(\w+)[!(:]")

@@ -5,8 +5,10 @@ This module provides pure functions for constructing commit graphs
 that can be tested independently of git repositories.
 """
 
-import networkx as nx
 from typing import Any
+
+import networkx as nx
+
 
 def build_commit_graph(commits: list[Any]) -> nx.Graph:
     """

@@ -6,6 +6,7 @@ chain time spans to fit within specified date ranges.
 """
 
 from datetime import datetime
+
 from algorithms.chain_models import ChainData, ClampedChain
 
 

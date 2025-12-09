@@ -1,18 +1,19 @@
-import plotly.graph_objects as go
 from collections import defaultdict
-from dash import register_page, html, callback, Output, Input, dcc, State, no_update
-from dash.dcc import Slider, Store
+
+import plotly.graph_objects as go
+from dash import Input, Output, State, callback, dcc, html, no_update, register_page
 from dash.dash_table import DataTable
+from dash.dcc import Slider, Store
 
 import data
+from algorithms.affinity_calculator import calculate_affinities
 from utils import date_utils
+from utils.git import ensure_list
 from utils.plotly_utils import create_empty_figure
 from visualization.network_graph import (
     create_file_affinity_network,
     create_network_visualization,
 )
-from algorithms.affinity_calculator import calculate_affinities
-from utils.git import ensure_list
 
 # Simple in-process cache of affinity maps keyed by date range.
 # This avoids recomputing file-pair affinities for the same period when

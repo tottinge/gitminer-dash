@@ -10,8 +10,10 @@ Tests cover:
 from tests import setup_path
 
 setup_path()
-import pytest
 from collections import defaultdict
+
+import pytest
+
 from visualization.network_graph import calculate_node_size, create_node_tooltip
 
 

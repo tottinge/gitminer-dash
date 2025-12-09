@@ -1,4 +1,5 @@
 import unittest
+
 from algorithms.stacking import SequenceStacker
 
 

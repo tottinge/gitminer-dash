@@ -9,22 +9,23 @@ the resulting graph.
 from tests import setup_path
 
 setup_path()
-import os
-import sys
 import json
+import os
 import pickle
-from datetime import datetime
-from pathlib import Path
-import networkx as nx
-import plotly.graph_objects as go
-import plotly.express as px
-from git import Repo, Commit
+import sys
 from collections import defaultdict
+from datetime import datetime
 from itertools import combinations
+from pathlib import Path
+
+import networkx as nx
+import plotly.express as px
+import plotly.graph_objects as go
+from git import Commit, Repo
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from tests.conftest import TEST_DATA_DIR, create_mock_commit, load_commits_json
 from utils import date_utils
-from tests.conftest import create_mock_commit, load_commits_json, TEST_DATA_DIR
 
 
 def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):

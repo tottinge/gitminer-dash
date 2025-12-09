@@ -1,15 +1,15 @@
 import plotly.express as px
-from dash import html, register_page, dcc, callback, Output, Input, State
+from dash import Input, Output, State, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 from pandas import DataFrame
 
 import data
-from utils import date_utils
-from utils.plotly_utils import create_empty_figure
-from utils.git import get_commit_messages_for_file
 from algorithms.commit_frequency import calculate_file_commit_frequency
 from algorithms.word_frequency import calculate_word_frequency
+from utils import date_utils
+from utils.git import get_commit_messages_for_file
+from utils.plotly_utils import create_empty_figure
 from visualization.word_frequency import create_word_frequency_treemap
 
 register_page(
