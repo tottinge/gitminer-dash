@@ -216,7 +216,9 @@ def get_commits_for_group_files(group_files: list[str], starting, ending) -> lis
                 {
                     "hash": commit.hexsha[:7],
                     "timestamp": commit.committed_datetime.strftime("%Y-%m-%d %H:%M"),
-                    "message": commit.message.split("\n")[0][:100],  # First line, truncated
+                    "message": commit.message.split("\n")[0][
+                        :100
+                    ],  # First line, truncated
                     "group_files": ", ".join(sorted(group_files_in_commit)),
                 }
             )

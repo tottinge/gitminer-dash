@@ -69,7 +69,9 @@ class TestBuildCommitGraph(unittest.TestCase):
 
         merge_commit = Mock()
         merge_commit.hexsha = "merge999"
-        merge_commit.committed_datetime = datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc)
+        merge_commit.committed_datetime = datetime(
+            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
+        )
         merge_commit.parents = [parent1, parent2]  # Multiple parents
 
         graph = build_commit_graph([merge_commit])
@@ -124,7 +126,9 @@ class TestBuildCommitGraph(unittest.TestCase):
 
         regular_commit = Mock()
         regular_commit.hexsha = "regular"
-        regular_commit.committed_datetime = datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc)
+        regular_commit.committed_datetime = datetime(
+            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
+        )
         regular_commit.parents = [parent]
 
         parent2 = Mock()
@@ -133,7 +137,9 @@ class TestBuildCommitGraph(unittest.TestCase):
 
         merge_commit = Mock()
         merge_commit.hexsha = "merge"
-        merge_commit.committed_datetime = datetime(2024, 1, 4, 12, 0, 0, tzinfo=timezone.utc)
+        merge_commit.committed_datetime = datetime(
+            2024, 1, 4, 12, 0, 0, tzinfo=timezone.utc
+        )
         merge_commit.parents = [parent, parent2]
 
         graph = build_commit_graph([regular_commit, merge_commit])

@@ -12,7 +12,9 @@ from algorithms.chain_traversal import (
 )
 
 
-def make_commit(sha: str, *, parent=None, when: datetime | None = None, author_name: str = "Alice"):
+def make_commit(
+    sha: str, *, parent=None, when: datetime | None = None, author_name: str = "Alice"
+):
     """Create a minimal mock commit object for testing."""
     commit = Mock()
     commit.hexsha = sha
@@ -30,8 +32,12 @@ def make_commit(sha: str, *, parent=None, when: datetime | None = None, author_n
 def test_traverse_linear_chain_simple_chain():
     """Walks from latest back to earliest and returns commits oldest->newest."""
     c1 = make_commit("c1", when=datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc))
-    c2 = make_commit("c2", parent=c1, when=datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc))
-    c3 = make_commit("c3", parent=c2, when=datetime(2024, 1, 3, 12, 0, tzinfo=timezone.utc))
+    c2 = make_commit(
+        "c2", parent=c1, when=datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc)
+    )
+    c3 = make_commit(
+        "c3", parent=c2, when=datetime(2024, 1, 3, 12, 0, tzinfo=timezone.utc)
+    )
 
     chain = traverse_linear_chain(c3, "c1")
 

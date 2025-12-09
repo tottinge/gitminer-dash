@@ -21,7 +21,7 @@ class TestWordFrequency(unittest.TestCase):
         messages = [
             "fix bug in parser",
             "refactor parser logic",
-            "test parser functionality"
+            "test parser functionality",
         ]
         result = calculate_word_frequency(messages)
         self.assertEqual(3, result["parser"])
@@ -34,11 +34,7 @@ class TestWordFrequency(unittest.TestCase):
 
     def test_case_insensitivity(self):
         """Test that word counting is case-insensitive."""
-        messages = [
-            "Fix the bug",
-            "fix the issue",
-            "FIX the problem"
-        ]
+        messages = ["Fix the bug", "fix the issue", "FIX the problem"]
         result = calculate_word_frequency(messages)
         self.assertEqual(3, result["fix"])
         self.assertEqual(1, result["bug"])
@@ -75,20 +71,18 @@ class TestWordFrequency(unittest.TestCase):
     def test_min_word_length_custom(self):
         """Test custom minimum word length."""
         messages = ["a big fix to do"]
-        result = calculate_word_frequency(messages, min_word_length=2, exclude_stop_words=False)
+        result = calculate_word_frequency(
+            messages, min_word_length=2, exclude_stop_words=False
+        )
         self.assertNotIn("a", result)  # length 1
-        self.assertIn("to", result)    # length 2
-        self.assertIn("do", result)    # length 2
-        self.assertIn("big", result)   # length 3
-        self.assertIn("fix", result)   # length 3
+        self.assertIn("to", result)  # length 2
+        self.assertIn("do", result)  # length 2
+        self.assertIn("big", result)  # length 3
+        self.assertIn("fix", result)  # length 3
 
     def test_special_characters_ignored(self):
         """Test that special characters and numbers are ignored."""
-        messages = [
-            "fix bug #123",
-            "update version 2.0",
-            "add feature (urgent)"
-        ]
+        messages = ["fix bug #123", "update version 2.0", "add feature (urgent)"]
         result = calculate_word_frequency(messages)
         self.assertNotIn("123", result)
         self.assertNotIn("#123", result)
@@ -108,7 +102,7 @@ class TestWordFrequency(unittest.TestCase):
         ]
         result = calculate_word_frequency(messages)
         self.assertEqual(2, result["feature"])  # appears twice
-        self.assertEqual(2, result["new"])      # appears twice
+        self.assertEqual(2, result["new"])  # appears twice
         self.assertEqual(1, result["feat"])
         self.assertEqual(1, result["add"])
         self.assertEqual(1, result["adds"])
@@ -120,7 +114,7 @@ class TestWordFrequency(unittest.TestCase):
         messages = [
             "feat: add user authentication",
             "fix: resolve login bug",
-            "refactor: improve code structure"
+            "refactor: improve code structure",
         ]
         result = calculate_word_frequency(messages)
         self.assertIn("feat", result)

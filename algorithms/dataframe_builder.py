@@ -13,18 +13,18 @@ from algorithms.chain_models import TimelineRow
 def create_timeline_dataframe(timeline_rows: list[TimelineRow]) -> DataFrame:
     """
     Create a pandas DataFrame from timeline rows.
-    
+
     Converts TimelineRow objects into a DataFrame with properly typed columns,
     especially ensuring datetime columns are correctly typed for Plotly.
-    
+
     This function includes a fix for timezone-aware datetime handling:
     DateTime objects from git commits are timezone-aware, but pandas/Plotly
     can have issues with them. We explicitly convert to pandas datetime64[ns]
     to ensure compatibility.
-    
+
     Args:
         timeline_rows: List of TimelineRow objects
-        
+
     Returns:
         DataFrame with columns:
         - first (datetime64[ns]): Start timestamp
@@ -50,7 +50,7 @@ def create_timeline_dataframe(timeline_rows: list[TimelineRow]) -> DataFrame:
         )
         for row in timeline_rows
     ]
-    
+
     # Create DataFrame
     df = DataFrame(
         rows,
@@ -65,7 +65,7 @@ def create_timeline_dataframe(timeline_rows: list[TimelineRow]) -> DataFrame:
             "density",
         ],
     )
-    
+
     # Convert datetime columns to pandas datetime type
     # This prevents "Can only use .dt accessor with datetimelike values" errors
     # and ensures compatibility with px.timeline()
@@ -73,7 +73,8 @@ def create_timeline_dataframe(timeline_rows: list[TimelineRow]) -> DataFrame:
         # Convert to pandas datetime, handling timezone-aware datetimes
         # We convert to UTC and then make timezone-naive for pandas datetime64[ns]
         import pandas as pd
+
         df["first"] = pd.to_datetime(df["first"], utc=True).dt.tz_localize(None)
         df["last"] = pd.to_datetime(df["last"], utc=True).dt.tz_localize(None)
-    
+
     return df

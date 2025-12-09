@@ -14,11 +14,11 @@ from git import Commit, Repo
 
 
 def calculate_file_commit_frequency(
-        commits_data: Iterable[Commit],
-        repo: Repo,
-        begin: datetime,
-        end: datetime,
-        top_n: int=20
+    commits_data: Iterable[Commit],
+    repo: Repo,
+    begin: datetime,
+    end: datetime,
+    top_n: int = 20,
 ) -> list[dict]:
     """
     Calculate commit frequency and change statistics for the most committed files.

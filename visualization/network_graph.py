@@ -14,7 +14,10 @@ import networkx as nx
 import plotly.express as px
 import plotly.graph_objects as go
 
-from algorithms.affinity_analysis import get_file_total_affinities, get_top_files_by_affinity
+from algorithms.affinity_analysis import (
+    get_file_total_affinities,
+    get_top_files_by_affinity,
+)
 from algorithms.affinity_calculator import calculate_affinities
 from utils.git import ensure_list
 
@@ -214,9 +217,7 @@ def _compute_layout(G: nx.Graph, iterations: int = 40) -> dict:
 
 
 def create_network_visualization(
-    G: nx.Graph,
-    communities: list,
-    title: str = "File Affinity Network"
+    G: nx.Graph, communities: list, title: str = "File Affinity Network"
 ) -> go.Figure:
     """
     Create a Plotly figure for visualizing the file affinity network.
@@ -429,11 +430,7 @@ def _create_single_community_trace(G: nx.Graph, pos: dict, color: str) -> go.Sca
 
 
 def _create_community_trace(
-    G: nx.Graph,
-    pos: dict,
-    community_nodes: list,
-    color: str,
-    community_id: int
+    G: nx.Graph, pos: dict, community_nodes: list, color: str, community_id: int
 ) -> go.Scatter:
     """Create a trace for a specific community."""
     node_x = []

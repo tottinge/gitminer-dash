@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 def create_word_frequency_treemap(
     word_counts: dict[str, int],
     title: str = "Commit Message Word Frequency",
-    top_n: int = 50
+    top_n: int = 50,
 ) -> go.Figure:
     """Create a treemap visualization of word frequencies.
 
@@ -48,17 +48,16 @@ def create_word_frequency_treemap(
     counts = [count for _, count in sorted_words]
 
     # Create treemap
-    fig = go.Figure(go.Treemap(
-        labels=words,
-        parents=[""] * len(words),  # All at root level
-        values=counts,
-        textposition="middle center",
-        marker=dict(
-            colorscale="Blues",
-            line=dict(width=2, color="white")
-        ),
-        hovertemplate="<b>%{label}</b><br>Count: %{value}<br><extra></extra>",
-    ))
+    fig = go.Figure(
+        go.Treemap(
+            labels=words,
+            parents=[""] * len(words),  # All at root level
+            values=counts,
+            textposition="middle center",
+            marker=dict(colorscale="Blues", line=dict(width=2, color="white")),
+            hovertemplate="<b>%{label}</b><br>Count: %{value}<br><extra></extra>",
+        )
+    )
 
     fig.update_layout(
         title=title,

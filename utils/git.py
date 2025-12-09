@@ -17,6 +17,7 @@ def get_repo() -> Repo:
 
 T = TypeVar("T")
 
+
 def ensure_list(items: Iterable[T] | Sequence[T] | None) -> list[T]:
     """Return a list from any iterable/sequence, handling None.
     - If items is already a list, it is returned as-is.
@@ -41,9 +42,7 @@ def tree_entry_size(repo: Repo, commitish, path: str) -> int:
         return 0
 
 
-def get_commit_messages_for_file(
-    repo: Repo, filepath: str, start_date, end_date
-):
+def get_commit_messages_for_file(repo: Repo, filepath: str, start_date, end_date):
     """Get all commit messages for a specific file during the specified period.
 
     Args:

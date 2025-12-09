@@ -34,7 +34,9 @@ class TestGetCommitMessagesForFile(unittest.TestCase):
         result = list(get_commit_messages_for_file(repo, "test.py", start, end))
         self.assertEqual([], result)
         # Verify iter_commits was called with correct parameters
-        repo.iter_commits.assert_called_once_with(paths="test.py", since=start, until=end)
+        repo.iter_commits.assert_called_once_with(
+            paths="test.py", since=start, until=end
+        )
 
     def test_commits_with_target_file(self):
         """Test finding commits that modified the target file."""
@@ -78,7 +80,9 @@ class TestGetCommitMessagesForFile(unittest.TestCase):
         """Test that full commit messages including multiple lines are preserved."""
         start = datetime(2025, 1, 1)
         end = datetime(2025, 12, 31)
-        multi_line_message = "feat: add feature\n\nThis is a detailed description\nwith multiple lines"
+        multi_line_message = (
+            "feat: add feature\n\nThis is a detailed description\nwith multiple lines"
+        )
         commit = self.create_mock_commit(
             multi_line_message,
             datetime(2025, 6, 15, 10, 30),

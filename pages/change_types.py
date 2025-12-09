@@ -65,8 +65,8 @@ style_show: StyleDict = {"display": "block"}
 style_hide: StyleDict = {"display": "none"}
 
 ChangeTypeCallbackResult = tuple[
-    Figure,     # Graphic to draw
-    list,       # same data as a list
+    Figure,  # Graphic to draw
+    list,  # same data as a list
     StyleDict,  # graphic container show/hide style
     StyleDict,  # no data show/hide style
 ]

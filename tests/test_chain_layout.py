@@ -26,11 +26,11 @@ class TestCalculateChainLayout(unittest.TestCase):
             clamped_duration=timedelta(days=9),
             commit_count=5,
             earliest_sha="abc",
-            latest_sha="def"
+            latest_sha="def",
         )
-        
+
         rows = calculate_chain_layout([chain])
-        
+
         assert len(rows) == 1
         row = rows[0]
         assert row.first == datetime(2024, 1, 1, tzinfo=timezone.utc)
@@ -51,7 +51,7 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=4),
                 commit_count=2,
                 earliest_sha="c1",
-                latest_sha="c2"
+                latest_sha="c2",
             ),
             ClampedChain(
                 clamped_first=datetime(2024, 1, 10, tzinfo=timezone.utc),
@@ -59,12 +59,12 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=5),
                 commit_count=3,
                 earliest_sha="c3",
-                latest_sha="c4"
+                latest_sha="c4",
             ),
         ]
-        
+
         rows = calculate_chain_layout(chains)
-        
+
         assert len(rows) == 2
         # Both should be at elevation 1 (no overlap)
         assert rows[0].elevation == 1
@@ -79,7 +79,7 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=9),
                 commit_count=2,
                 earliest_sha="c1",
-                latest_sha="c2"
+                latest_sha="c2",
             ),
             ClampedChain(
                 clamped_first=datetime(2024, 1, 5, tzinfo=timezone.utc),
@@ -87,12 +87,12 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=10),
                 commit_count=3,
                 earliest_sha="c3",
-                latest_sha="c4"
+                latest_sha="c4",
             ),
         ]
-        
+
         rows = calculate_chain_layout(chains)
-        
+
         assert len(rows) == 2
         # Should be at different elevations (overlap)
         assert rows[0].elevation == 1
@@ -106,11 +106,11 @@ class TestCalculateChainLayout(unittest.TestCase):
             clamped_duration=timedelta(0),
             commit_count=1,
             earliest_sha="single",
-            latest_sha="single"
+            latest_sha="single",
         )
-        
+
         rows = calculate_chain_layout([chain])
-        
+
         assert len(rows) == 1
         row = rows[0]
         assert row.duration == 0
@@ -124,11 +124,11 @@ class TestCalculateChainLayout(unittest.TestCase):
             clamped_duration=timedelta(days=9),
             commit_count=0,  # Edge case
             earliest_sha="abc",
-            latest_sha="def"
+            latest_sha="def",
         )
-        
+
         rows = calculate_chain_layout([chain])
-        
+
         assert len(rows) == 1
         row = rows[0]
         assert row.density == 0  # Should not raise division by zero
@@ -142,7 +142,7 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=10),
                 commit_count=5,
                 earliest_sha="c1",
-                latest_sha="c2"
+                latest_sha="c2",
             ),
             ClampedChain(
                 clamped_first=datetime(2024, 2, 1, tzinfo=timezone.utc),
@@ -150,12 +150,12 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=20),
                 commit_count=4,
                 earliest_sha="c3",
-                latest_sha="c4"
+                latest_sha="c4",
             ),
         ]
-        
+
         rows = calculate_chain_layout(chains)
-        
+
         assert rows[0].density == 10 / 5  # 2.0
         assert rows[1].density == 20 / 4  # 5.0
 
@@ -167,12 +167,12 @@ class TestCalculateChainLayout(unittest.TestCase):
             clamped_duration=timedelta(days=9),
             commit_count=42,
             earliest_sha="first_commit_sha",
-            latest_sha="last_commit_sha"
+            latest_sha="last_commit_sha",
         )
-        
+
         rows = calculate_chain_layout([chain])
         row = rows[0]
-        
+
         # Verify all metadata preserved
         assert row.commit_counts == 42
         assert row.head == "first_commit_sha"
@@ -190,7 +190,7 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=4),
                 commit_count=2,
                 earliest_sha="c1",
-                latest_sha="c2"
+                latest_sha="c2",
             ),
             # Level 2 (overlaps with c1)
             ClampedChain(
@@ -199,7 +199,7 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=4),
                 commit_count=2,
                 earliest_sha="c3",
-                latest_sha="c4"
+                latest_sha="c4",
             ),
             # Level 1 (doesn't overlap with c1)
             ClampedChain(
@@ -208,7 +208,7 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=5),
                 commit_count=3,
                 earliest_sha="c5",
-                latest_sha="c6"
+                latest_sha="c6",
             ),
             # Level 2 (overlaps with c5)
             ClampedChain(
@@ -217,12 +217,12 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=5),
                 commit_count=3,
                 earliest_sha="c7",
-                latest_sha="c8"
+                latest_sha="c8",
             ),
         ]
-        
+
         rows = calculate_chain_layout(chains)
-        
+
         assert len(rows) == 4
         assert rows[0].elevation == 1  # c1
         assert rows[1].elevation == 2  # c3 (overlaps c1)
@@ -237,12 +237,12 @@ class TestCalculateChainLayout(unittest.TestCase):
             clamped_duration=timedelta(days=9),
             commit_count=5,
             earliest_sha="abc",
-            latest_sha="def"
+            latest_sha="def",
         )
-        
+
         rows = calculate_chain_layout([chain])
         row = rows[0]
-        
+
         # Should raise error when trying to modify the frozen dataclass
         with self.assertRaises(FrozenInstanceError):
             row.elevation = 999
@@ -256,7 +256,7 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=5),
                 commit_count=2,
                 earliest_sha="second",
-                latest_sha="second_end"
+                latest_sha="second_end",
             ),
             ClampedChain(
                 clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
@@ -264,12 +264,12 @@ class TestCalculateChainLayout(unittest.TestCase):
                 clamped_duration=timedelta(days=4),
                 commit_count=2,
                 earliest_sha="first",
-                latest_sha="first_end"
+                latest_sha="first_end",
             ),
         ]
-        
+
         rows = calculate_chain_layout(chains)
-        
+
         # Output should be in same order as input
         assert rows[0].head == "second"
         assert rows[1].head == "first"

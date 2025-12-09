@@ -36,9 +36,7 @@ def get_repo() -> Repo:
 def get_repo_name():
     reverse_split_path = reversed(repository_path().split(os.sep))
     rightmost_word = next(x for x in reverse_split_path if x)
-    return re.sub(
-        pattern=r"[_\.-]", repl=" ", string=rightmost_word
-    ).title()
+    return re.sub(pattern=r"[_\.-]", repl=" ", string=rightmost_word).title()
 
 
 def _dt_key(dt: datetime) -> str:
@@ -51,7 +49,7 @@ def _cached_commits(repo_path: str, begin_key: str, end_key: str) -> list[Commit
     repo = Repo(repo_path)
     begin = datetime.fromisoformat(begin_key)
     end = datetime.fromisoformat(end_key)
-    return list(repo.iter_commits('--all', since=begin, until=end))
+    return list(repo.iter_commits("--all", since=begin, until=end))
 
 
 def commits_in_period(beginning: datetime, ending: datetime) -> Iterable[Commit]:

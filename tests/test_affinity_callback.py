@@ -24,6 +24,7 @@ from tests.conftest import load_commits_data
 
 app = Dash(__name__, suppress_callback_exceptions=True)
 
+
 @patch("data.commits_in_period")
 def test_callback_with_mock_data(mock_commits_in_period):
     mock_commits = load_commits_data("last_6_months")

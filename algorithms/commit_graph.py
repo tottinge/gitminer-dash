@@ -13,16 +13,16 @@ import networkx as nx
 def build_commit_graph(commits: list[Any]) -> nx.Graph:
     """
     Build a NetworkX graph from a list of commits.
-    
+
     Creates nodes for each commit and its parents, with edges connecting
     parents to children. Merge commits (commits with multiple parents) are skipped.
-    
+
     Args:
         commits: List of commit objects with attributes:
             - hexsha: commit hash
             - committed_datetime: timestamp of commit
             - parents: list of parent commit objects
-            
+
     Returns:
         NetworkX graph where:
             - Nodes have attributes: 'committed' (datetime), 'sha' (str)
@@ -30,12 +30,12 @@ def build_commit_graph(commits: list[Any]) -> nx.Graph:
             - Merge commits are excluded
     """
     graph = nx.Graph()
-    
+
     for commit in commits:
         # Skip merge commits (multiple parents)
         if len(commit.parents) > 1:
             continue
-            
+
         for parent in commit.parents:
             # Store only the committed datetime; the node key itself is the SHA.
             graph.add_node(
@@ -47,5 +47,5 @@ def build_commit_graph(commits: list[Any]) -> nx.Graph:
                 committed=commit.committed_datetime,
             )
             graph.add_edge(parent.hexsha, commit.hexsha)
-    
+
     return graph

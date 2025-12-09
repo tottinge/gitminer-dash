@@ -19,7 +19,9 @@ def _wrap_message(message: str, width: int = 36, max_lines: int = 4) -> str:
     if not message:
         return ""
 
-    lines = textwrap.wrap(message, width=width, break_long_words=False, break_on_hyphens=True)
+    lines = textwrap.wrap(
+        message, width=width, break_long_words=False, break_on_hyphens=True
+    )
     if not lines:
         return message
 

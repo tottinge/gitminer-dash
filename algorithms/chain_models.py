@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 class ChainData:
     """
     Represents a connected chain of commits.
-    
+
     Attributes:
         early_timestamp: Timestamp of the earliest commit in the chain
         late_timestamp: Timestamp of the latest commit in the chain
@@ -19,13 +19,14 @@ class ChainData:
         earliest_sha: SHA hash of the earliest commit
         latest_sha: SHA hash of the latest commit
     """
+
     early_timestamp: datetime
     late_timestamp: datetime
     commit_count: int
     duration: timedelta
     earliest_sha: str
     latest_sha: str
-    
+
     def __lt__(self, other):
         """Allow sorting by early_timestamp."""
         return self.early_timestamp < other.early_timestamp
@@ -35,7 +36,7 @@ class ChainData:
 class ClampedChain:
     """
     Represents a commit chain clamped to a specific time period.
-    
+
     Attributes:
         clamped_first: Start of chain, clamped to period bounds
         clamped_last: End of chain, clamped to period bounds
@@ -44,6 +45,7 @@ class ClampedChain:
         earliest_sha: SHA hash of the earliest commit in the chain
         latest_sha: SHA hash of the latest commit in the chain
     """
+
     clamped_first: datetime
     clamped_last: datetime
     clamped_duration: timedelta
@@ -56,7 +58,7 @@ class ClampedChain:
 class TimelineRow:
     """
     Represents a row for timeline visualization.
-    
+
     Attributes:
         first: Start timestamp
         last: End timestamp
@@ -67,6 +69,7 @@ class TimelineRow:
         duration: Duration in days
         density: Commit sparsity metric (days per commit)
     """
+
     first: datetime
     last: datetime
     elevation: int

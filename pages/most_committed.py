@@ -55,11 +55,23 @@ layout = html.Div(
                                     columns=[
                                         {"name": "File", "id": "filename"},
                                         {"name": "Commits", "id": "count"},
-                                        {"name": "Avg Lines/Commit", "id": "avg_changes"},
-                                        {"name": "Change (lines)", "id": "total_change"},
-                                        {"name": "Change (percent)", "id": "percent_change"},
+                                        {
+                                            "name": "Avg Lines/Commit",
+                                            "id": "avg_changes",
+                                        },
+                                        {
+                                            "name": "Change (lines)",
+                                            "id": "total_change",
+                                        },
+                                        {
+                                            "name": "Change (percent)",
+                                            "id": "percent_change",
+                                        },
                                     ],
-                                    style_table={"maxHeight": "600px", "overflowY": "auto"},
+                                    style_table={
+                                        "maxHeight": "600px",
+                                        "overflowY": "auto",
+                                    },
                                     style_cell_conditional=[
                                         {
                                             "if": {"column_id": "filename"},
@@ -78,14 +90,18 @@ layout = html.Div(
                 html.Div(
                     style={"flex": "0 0 400px", "minWidth": "400px"},
                     children=[
-                        html.H3("Commit Message Word Frequency", style={"margin": "10px 0"}),
+                        html.H3(
+                            "Commit Message Word Frequency", style={"margin": "10px 0"}
+                        ),
                         dcc.Loading(
                             id="loading-word-frequency",
                             type="circle",
                             children=[
                                 dcc.Graph(
                                     id="id-word-frequency-graph",
-                                    figure=create_empty_figure("Click on a file in the table to view word frequency"),
+                                    figure=create_empty_figure(
+                                        "Click on a file in the table to view word frequency"
+                                    ),
                                     style={"height": "600px"},
                                 ),
                             ],
@@ -143,7 +159,9 @@ def populate_graph(store_data):
 def update_word_frequency(active_cell, store_data, table_data):
     """Update word frequency visualization when a file is clicked."""
     if not active_cell or not table_data or not store_data:
-        return create_empty_figure("Click on a file in the table to view word frequency")
+        return create_empty_figure(
+            "Click on a file in the table to view word frequency"
+        )
 
     # Get selected filename
     row_index = active_cell["row"]
@@ -169,5 +187,5 @@ def update_word_frequency(active_cell, store_data, table_data):
     return create_word_frequency_treemap(
         word_counts,
         title=f"Word Frequency for {filename} ({len(messages)} commits)",
-        top_n=30
+        top_n=30,
     )

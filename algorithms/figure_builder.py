@@ -12,10 +12,10 @@ from pandas import DataFrame
 def create_timeline_figure(df: DataFrame):
     """
     Create a Plotly timeline figure from a DataFrame.
-    
+
     Configures a timeline visualization with appropriate labels,
     hover data, and styling for commit chain visualization.
-    
+
     Args:
         df: DataFrame with columns:
             - first: Start timestamps
@@ -26,7 +26,7 @@ def create_timeline_figure(df: DataFrame):
             - head: Earliest commit SHA
             - tail: Latest commit SHA
             - duration: Duration in days
-            
+
     Returns:
         Plotly Figure object configured for timeline display.
     """

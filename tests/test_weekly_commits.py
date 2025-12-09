@@ -203,6 +203,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
             # Verify the callback exists by attempting to import it
             try:
                 from pages.weekly_commits import update_commit_details_table
+
                 callback_exists = True
             except ImportError:
                 callback_exists = False
@@ -248,9 +249,10 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
             ]
         }
 
-        with patch("dash.register_page"), patch(
-            "pages.weekly_commits.data.get_repo"
-        ) as mock_repo:
+        with (
+            patch("dash.register_page"),
+            patch("pages.weekly_commits.data.get_repo") as mock_repo,
+        ):
             mock_repo_obj = Mock()
             mock_repo_obj.commit.side_effect = lambda sha: {
                 "abc123": commit1,
@@ -260,9 +262,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
             from pages.weekly_commits import update_commit_details_table
 
-            table_data, message = update_commit_details_table(
-                click_data, store_data
-            )
+            table_data, message = update_commit_details_table(click_data, store_data)
 
             # Verify table has correct structure and data
             assert len(table_data) == 2
@@ -368,9 +368,10 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
             ]
         }
 
-        with patch("dash.register_page"), patch(
-            "pages.weekly_commits.data.get_repo"
-        ) as mock_repo:
+        with (
+            patch("dash.register_page"),
+            patch("pages.weekly_commits.data.get_repo") as mock_repo,
+        ):
             mock_repo_obj = Mock()
             mock_repo_obj.commit.side_effect = lambda sha: {
                 "sha1": commit1,
@@ -381,9 +382,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
             from pages.weekly_commits import update_commit_details_table
 
-            table_data, message = update_commit_details_table(
-                click_data, store_data
-            )
+            table_data, message = update_commit_details_table(click_data, store_data)
 
             # Verify all three commits are in the table
             assert len(table_data) == 3
@@ -451,9 +450,10 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
             ]
         }
 
-        with patch("dash.register_page"), patch(
-            "pages.weekly_commits.data.get_repo"
-        ) as mock_repo:
+        with (
+            patch("dash.register_page"),
+            patch("pages.weekly_commits.data.get_repo") as mock_repo,
+        ):
             mock_repo_obj = Mock()
             mock_repo_obj.commit.side_effect = lambda sha: {
                 "sha1": commit1,
@@ -466,9 +466,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
             from pages.weekly_commits import update_commit_details_table
 
-            table_data, message = update_commit_details_table(
-                click_data, store_data
-            )
+            table_data, message = update_commit_details_table(click_data, store_data)
 
             # Verify message contains correct count and week
             assert "5 commits" in message

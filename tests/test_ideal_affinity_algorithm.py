@@ -141,17 +141,18 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
     else:
         communities = []
     return (G, communities)
-    
+
+
 #     return G, communities
-# 
-# 
+#
+#
 # def create_mock_commit(commit_data):
 #     """
 #     Create a mock commit object from simplified commit data.
-#     
+#
 #     Args:
 #         commit_data: Dictionary with commit data
-#         
+#
 #     Returns:
 #         A mock commit object with the necessary attributes
 #     """
@@ -161,40 +162,41 @@ def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
 #             self.message = data['message']
 #             self.committed_date = datetime.fromisoformat(data['date']).timestamp()
 #             self.committed_datetime = datetime.fromisoformat(data['date'])
-#             
+#
 #             class MockStats:
 #                 def __init__(self, files):
 #                     self.files = {file: {'insertions': 1, 'deletions': 1} for file in files}
-#             
+#
 #             self.stats = MockStats(data['files'])
-#     
+#
 #     return MockCommit(commit_data)
-# 
-# 
+#
+#
 # def load_commits_data(period):
 #     """
 #     Load commit data from a file.
-#     
+#
 #     Args:
 #         period: Time period string
-#         
+#
 #     Returns:
 #         List of simplified commit objects
 #     """
 #     filename = f"commits_{period.replace(' ', '_').lower()}.json"
 #     filepath = TEST_DATA_DIR / filename
-#     
+#
 #     if not filepath.exists():
 #         print(f"No saved data found for {period}")
 #         return None
-#     
+#
 #     with open(filepath) as f:
 #         commits = json.load(f)
-#     
+#
 #     print(f"Loaded {len(commits)} commits from {filepath}")
 #     return commits
 # >>>>>>> 9dd5893 (Chore: ran pyupgrade to bring all code up to modern (3.10+) standards)
-# 
+#
+
 
 def test_calculate_ideal_affinity_with_real_data():
     """Test the calculate_ideal_affinity function with real commit data."""
