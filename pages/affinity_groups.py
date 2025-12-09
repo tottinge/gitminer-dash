@@ -7,12 +7,17 @@ from dash.dash_table import DataTable
 import data
 from utils import date_utils
 from utils.plotly_utils import create_empty_figure
-from algorithms.affinity_analysis import calculate_ideal_affinity
 from visualization.network_graph import (
     create_file_affinity_network,
     create_network_visualization,
 )
+from algorithms.affinity_calculator import calculate_affinities
 from utils.git import ensure_list
+
+# Simple in-process cache of affinity maps keyed by date range.
+# This avoids recomputing file-pair affinities for the same period when
+# sliders change on the affinity-groups page.
+_AFFINITY_CACHE: dict[tuple[str, str], dict[tuple[str, str], float]] = {}
 
 register_page(__name__, title="Affinity Groups")
 
@@ -110,15 +115,19 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
         # Convert commits_data to a list to prevent the iterator from being consumed
         commits_data = ensure_list(data.commits_in_period(starting, ending))
 
-        # Calculate ideal affinity
-        ideal_affinity, _, _ = calculate_ideal_affinity(
-            commits_data, target_node_count=15, max_nodes=max_nodes
-        )
+        # Cache affinities per date range so slider changes don't recompute
+        cache_key = (starting.isoformat(), ending.isoformat())
+        affinities = _AFFINITY_CACHE.get(cache_key)
+        if affinities is None:
+            affinities = calculate_affinities(commits_data)
+            _AFFINITY_CACHE[cache_key] = affinities
 
-        # Use the provided min_affinity value
-        # Note: create_file_affinity_network now returns (G, communities, stats)
+        # Note: create_file_affinity_network returns (G, communities, stats)
         G, communities, stats = create_file_affinity_network(
-            commits_data, min_affinity=min_affinity, max_nodes=max_nodes
+            commits_data,
+            min_affinity=min_affinity,
+            max_nodes=max_nodes,
+            precomputed_affinities=affinities,
         )
 
         # Store graph data for click handling

@@ -66,19 +66,30 @@ def test_page_uses_store_begin_end(
 
 
 def test_affinity_groups_uses_store_begin_end(capture_commits_call, monkeypatch):
+    """Ensure affinity_groups uses the store's begin/end when querying commits.
+
+    This test is intentionally focused on the contract that
+    `update_file_affinity_graph` passes the correct date range from the
+    global store into `data.commits_in_period`. The heavy computation and
+    visualization functions are stubbed out to avoid expensive work.
+    """
     from pages import affinity_groups as ag
 
+    # Stub out the heavy network creation and visualization functions
     monkeypatch.setattr(
-        ag, "calculate_ideal_affinity", lambda commits_data, **kw: (0.2, 0, 0)
+        ag,
+        "create_file_affinity_network",
+        lambda commits_data, **kw: (None, None, {}),
     )
-    monkeypatch.setattr(
-        ag, "create_file_affinity_network", lambda commits_data, **kw: (None, None, {})
-    )
+
     import plotly.graph_objects as go
 
     monkeypatch.setattr(
-        ag, "create_network_visualization", lambda G, communities: go.Figure()
+        ag,
+        "create_network_visualization",
+        lambda G, communities: go.Figure(),
     )
+
     ag.update_file_affinity_graph(STORE, 50, 0.2)
     assert capture_commits_call["begin"].isoformat() == STORE["begin"]
     assert capture_commits_call["end"].isoformat() == STORE["end"]

@@ -16,7 +16,7 @@ from tests.conftest import create_mock_commit, load_commits_json, TEST_DATA_DIR
 
 app = Dash(__name__, suppress_callback_exceptions=True)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from pages.affinity_groups import calculate_ideal_affinity
+from algorithms.affinity_analysis import calculate_ideal_affinity
 from visualization.network_graph import create_file_affinity_network
 
 def test_calculate_ideal_affinity_with_real_data():

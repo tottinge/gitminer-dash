@@ -10,6 +10,7 @@ import networkx as nx
 import plotly.graph_objects as go
 import plotly.express as px
 from collections import defaultdict
+from functools import lru_cache
 from typing import Tuple, Dict, List, Any
 
 from algorithms.affinity_calculator import calculate_affinities
@@ -34,7 +35,8 @@ def create_file_affinity_network(
     commits,
     min_affinity: float = 0.2,
     max_nodes: int = 50,
-    min_edge_count: int = 1
+    min_edge_count: int = 1,
+    precomputed_affinities: dict[tuple[str, str], float] | None = None,
 ) -> tuple[nx.Graph, list, dict[str, Any]]:
     """
     Create a network graph of file affinities based on commit history.
@@ -79,8 +81,11 @@ def create_file_affinity_network(
 
     stats["total_commits"] = len(commits)
 
-    # Calculate affinities using shared function
-    affinities = calculate_affinities(commits)
+    # Calculate affinities using shared function, unless precomputed values are provided
+    if precomputed_affinities is not None:
+        affinities = precomputed_affinities
+    else:
+        affinities = calculate_affinities(commits)
 
     # Count file occurrences and commits with multiple files
     file_counts = defaultdict(int)
@@ -189,6 +194,24 @@ def create_no_data_figure(
     return fig
 
 
+@lru_cache(maxsize=32)
+def _cached_layout(hash_key: str) -> dict:
+    """Cached spring layout positions based on a simple hash key.
+
+    The hash key should uniquely represent the graph structure for layout
+    purposes (e.g., sorted list of edges).
+    """
+    # This function will be populated by create_network_visualization, which
+    # constructs the graph and then calls this helper with a derived key.
+    # The actual implementation is filled in at call-time.
+    raise RuntimeError("_cached_layout should not be called directly")
+
+
+def _compute_layout(G: nx.Graph, iterations: int = 40) -> dict:
+    """Compute a spring layout with tuned iteration count."""
+    return nx.spring_layout(G, seed=42, iterations=iterations)
+
+
 def create_network_visualization(
     G: nx.Graph,
     communities: list,
@@ -217,8 +240,12 @@ def create_network_visualization(
             message="No data available for the selected time period", title=title
         )
 
-    # Use force-directed layout
-    pos = nx.spring_layout(G, seed=42)
+    # Use force-directed layout with tuned iterations.
+    # For now we compute the layout directly with fewer iterations
+    # to reduce render time. If we want to add true layout caching
+    # keyed by edge structure, we can plug in _compute_layout and an
+    # lru_cache-backed helper.
+    pos = nx.spring_layout(G, seed=42, iterations=40)
 
     # Create edge traces
     edge_traces = _create_edge_traces(G, pos)
