@@ -24,20 +24,20 @@ from utils.git import ensure_list
 
 def _count_file_occurrences(commits) -> tuple[dict[str, int], int]:
     """Count file occurrences and commits with multiple files.
-    
+
     Returns:
         Tuple of (file_counts dict, multi_file_commit_count)
     """
     file_counts = defaultdict(int)
     multi_file_commits = 0
-    
+
     for commit in commits:
         files_in_commit = len(commit.stats.files)
         for file in commit.stats.files:
             file_counts[file] += 1
         if files_in_commit >= 2:
             multi_file_commits += 1
-    
+
     return file_counts, multi_file_commits
 
 
@@ -48,46 +48,46 @@ def _build_graph_with_edges(
     min_affinity: float,
 ) -> nx.Graph:
     """Build graph with nodes and edges from affinity data.
-    
+
     Args:
         affinities: File pair affinity scores
         file_counts: Commit counts per file
         top_file_set: Set of files to include as nodes
         min_affinity: Minimum affinity threshold for edges
-    
+
     Returns:
         NetworkX graph with nodes and edges
     """
     G = nx.Graph()
-    
+
     # Add nodes for top files with commit count attribute
     for file in top_file_set:
         G.add_node(file, commit_count=file_counts[file])
-    
+
     # Add edges with weights based on affinity
     for (file1, file2), affinity in affinities.items():
         if file1 in top_file_set and file2 in top_file_set and affinity >= min_affinity:
             G.add_edge(file1, file2, weight=affinity)
-    
+
     return G
 
 
 def _assign_communities(G: nx.Graph) -> list:
     """Detect communities and assign them to graph nodes.
-    
+
     Args:
         G: NetworkX graph
-    
+
     Returns:
         List of communities
     """
     communities = nx.community.louvain_communities(G)
-    
+
     # Assign community ID to each node
     for i, community in enumerate(communities):
         for node in community:
             G.nodes[node]["community"] = i
-    
+
     return communities
 
 
@@ -103,7 +103,7 @@ def _calculate_graph_stats(
     communities: list,
 ) -> dict[str, Any]:
     """Calculate network statistics.
-    
+
     Args:
         G: NetworkX graph after filtering
         commits_count: Total number of commits
@@ -114,7 +114,7 @@ def _calculate_graph_stats(
         edges_before: Edge count before filtering
         isolated_count: Number of removed isolated nodes
         communities: List of detected communities
-    
+
     Returns:
         Dictionary of statistics
     """
@@ -133,22 +133,22 @@ def _calculate_graph_stats(
         "avg_edge_weight": 0,
         "avg_community_size": 0,
     }
-    
+
     # Calculate average community size
     if communities:
         community_sizes = [len(community) for community in communities]
         stats["avg_community_size"] = sum(community_sizes) / len(communities)
-    
+
     # Calculate average node degree
     if len(G.nodes()) > 0:
         degrees = [degree for _, degree in G.degree()]
         stats["avg_node_degree"] = sum(degrees) / len(G.nodes())
-    
+
     # Calculate average edge weight
     if len(G.edges()) > 0:
         weights = [data["weight"] for _, _, data in G.edges(data=True)]
         stats["avg_edge_weight"] = sum(weights) / len(G.edges())
-    
+
     return stats
 
 
@@ -197,7 +197,11 @@ def create_file_affinity_network(
     commits = ensure_list(commits)
 
     # Calculate affinities using shared function, unless precomputed values are provided
-    affinities = precomputed_affinities if precomputed_affinities is not None else calculate_affinities(commits)
+    affinities = (
+        precomputed_affinities
+        if precomputed_affinities is not None
+        else calculate_affinities(commits)
+    )
 
     # Early return if no affinities found
     if not affinities:
@@ -220,22 +224,31 @@ def create_file_affinity_network(
 
     # Build graph with nodes and edges
     G = _build_graph_with_edges(affinities, file_counts, top_file_set, min_affinity)
-    
+
     nodes_before = len(G.nodes())
     edges_before = len(G.edges())
 
     # Remove nodes with too few connections
     isolated_count = 0
     if min_edge_count > 0:
-        nodes_to_remove = [node for node, degree in G.degree() if degree < min_edge_count]
+        nodes_to_remove = [
+            node for node, degree in G.degree() if degree < min_edge_count
+        ]
         G.remove_nodes_from(nodes_to_remove)
         isolated_count = len(nodes_to_remove)
 
     # Early return if all nodes were filtered out
     if len(G.nodes()) == 0:
         stats = _calculate_graph_stats(
-            G, len(commits), multi_file_commits, len(all_files), len(affinities),
-            nodes_before, edges_before, isolated_count, []
+            G,
+            len(commits),
+            multi_file_commits,
+            len(all_files),
+            len(affinities),
+            nodes_before,
+            edges_before,
+            isolated_count,
+            [],
         )
         return G, [], stats
 
@@ -244,8 +257,15 @@ def create_file_affinity_network(
 
     # Calculate final statistics
     stats = _calculate_graph_stats(
-        G, len(commits), multi_file_commits, len(all_files), len(affinities),
-        nodes_before, edges_before, isolated_count, communities
+        G,
+        len(commits),
+        multi_file_commits,
+        len(all_files),
+        len(affinities),
+        nodes_before,
+        edges_before,
+        isolated_count,
+        communities,
     )
 
     return G, communities, stats
