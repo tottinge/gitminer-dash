@@ -33,6 +33,33 @@ def _get_cached_affinities(starting, ending, commits_data):
     return affinities
 
 
+def _build_graph_data_store(G, communities):
+    """Transform graph into serializable store format."""
+    graph_data = {"nodes": {}, "communities": {}}
+
+    for node in G.nodes():
+        node_community = G.nodes[node].get("community", 0)
+        commit_count = G.nodes[node].get("commit_count", 0)
+        degree = G.degree(node)
+
+        connected_communities = set()
+        for neighbor in G.neighbors(node):
+            neighbor_community = G.nodes[neighbor].get("community", 0)
+            connected_communities.add(neighbor_community)
+
+        graph_data["nodes"][node] = {
+            "commit_count": commit_count,
+            "degree": degree,
+            "community": node_community,
+            "connected_communities": sorted(list(connected_communities)),
+        }
+
+    for i, community in enumerate(communities):
+        graph_data["communities"][i] = list(community)
+
+    return graph_data
+
+
 layout = html.Div(
     children=[
         html.H1("File Affinity Groups"),
@@ -127,7 +154,6 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
         commits_data = ensure_list(data.commits_in_period(starting, ending))
         affinities = _get_cached_affinities(starting, ending, commits_data)
 
-        # Note: create_file_affinity_network returns (G, communities, stats)
         G, communities, stats = create_file_affinity_network(
             commits_data,
             min_affinity=min_affinity,
@@ -135,31 +161,7 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
             precomputed_affinities=affinities,
         )
 
-        # Store graph data for click handling
-        graph_data = {"nodes": {}, "communities": {}}
-
-        for node in G.nodes():
-            node_community = G.nodes[node].get("community", 0)
-            commit_count = G.nodes[node].get("commit_count", 0)
-            degree = G.degree(node)
-
-            # Find connected communities (for bridge detection)
-            connected_communities = set()
-            for neighbor in G.neighbors(node):
-                neighbor_community = G.nodes[neighbor].get("community", 0)
-                connected_communities.add(neighbor_community)
-
-            graph_data["nodes"][node] = {
-                "commit_count": commit_count,
-                "degree": degree,
-                "community": node_community,
-                "connected_communities": sorted(list(connected_communities)),
-            }
-
-        # Store community information
-        for i, community in enumerate(communities):
-            graph_data["communities"][i] = list(community)
-
+        graph_data = _build_graph_data_store(G, communities)
         return create_network_visualization(G, communities), graph_data
     except ValueError as e:
         # Check if this is the specific error about missing repository path
