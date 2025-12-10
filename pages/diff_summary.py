@@ -1,5 +1,3 @@
-from datetime import datetime, timedelta
-
 import plotly
 import plotly.express as px
 from dash import Input, Output, callback, dcc, html, register_page

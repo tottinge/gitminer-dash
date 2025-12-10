@@ -1,7 +1,4 @@
-from collections import defaultdict
-
-import plotly.graph_objects as go
-from dash import Input, Output, State, callback, dcc, html, no_update, register_page
+from dash import Input, Output, State, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.dcc import Slider, Store
 

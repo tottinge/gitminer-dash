@@ -7,7 +7,7 @@ from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta, timezone
 
 from algorithms.chain_clamper import clamp_chains_to_period
-from algorithms.chain_models import ChainData, ClampedChain
+from algorithms.chain_models import ChainData
 
 
 class TestClampChainsToPeriod(unittest.TestCase):

@@ -8,8 +8,6 @@ calculates an ideal minimum affinity threshold that results in 5-20 nodes.
 from tests import setup_path
 
 setup_path()
-import os
-import sys
 from collections import defaultdict
 from itertools import combinations
 

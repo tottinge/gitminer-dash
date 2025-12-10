@@ -5,6 +5,7 @@ from typing import TypeVar
 
 from git import Repo
 
+
 # We intentionally delegate repository resolution to the data module
 # to preserve single-source-of-truth for CLI arg handling.
 

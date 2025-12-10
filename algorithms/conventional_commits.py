@@ -7,7 +7,6 @@ and categorizing them by intent/type.
 
 import re
 from collections import Counter
-from datetime import datetime, timedelta
 
 import pandas as pd
 

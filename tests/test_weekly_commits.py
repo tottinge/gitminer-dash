@@ -3,7 +3,7 @@ Unit tests for the weekly commits module.
 """
 
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import Mock
 
 from algorithms.weekly_commits import (
@@ -198,7 +198,6 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
         from unittest.mock import patch
 
         with patch("dash.register_page"):
-            from pages.weekly_commits import layout
 
             # Verify the callback exists by attempting to import it
             try:

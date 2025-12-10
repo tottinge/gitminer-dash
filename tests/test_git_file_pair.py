@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 from utils.git import get_commits_for_file_pair
 

@@ -4,7 +4,6 @@ from statistics import mean
 from typing import NamedTuple
 
 import git
-from git import Repo
 
 from utils.git import get_repo as get_repo_util
 from utils.git import tree_entry_size

@@ -2,7 +2,6 @@ from tests import setup_path
 
 setup_path()
 import types
-from datetime import datetime
 
 import pytest
 

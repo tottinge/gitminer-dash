@@ -10,11 +10,9 @@ from tests import setup_path
 setup_path()
 import os
 import sys
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pandas import DataFrame
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 

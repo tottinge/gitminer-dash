@@ -6,7 +6,6 @@ used by various visualization pages.
 """
 
 from datetime import datetime, timedelta
-from urllib.parse import parse_qs
 
 from dateutil.relativedelta import relativedelta
 

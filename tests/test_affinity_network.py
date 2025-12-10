@@ -11,17 +11,15 @@ from tests import setup_path
 setup_path()
 import json
 import os
-import pickle
 import sys
 from collections import defaultdict
 from datetime import datetime
 from itertools import combinations
-from pathlib import Path
 
 import networkx as nx
 import plotly.express as px
 import plotly.graph_objects as go
-from git import Commit, Repo
+from git import Repo
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tests.conftest import TEST_DATA_DIR, create_mock_commit, load_commits_json

@@ -15,7 +15,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from algorithms.affinity_analysis import (
-    get_file_total_affinities,
     get_top_files_by_affinity,
 )
 from algorithms.affinity_calculator import calculate_affinities

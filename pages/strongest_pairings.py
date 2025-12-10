@@ -2,7 +2,6 @@ from collections.abc import Iterable
 
 from dash import Input, Output, State, callback, dcc, html, register_page
 from dash.dash_table import DataTable
-from dash.dcc import Dropdown
 from git import Commit
 
 import data
