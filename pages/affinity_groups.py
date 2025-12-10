@@ -22,6 +22,17 @@ _AFFINITY_CACHE: dict[tuple[str, str], dict[tuple[str, str], float]] = {}
 
 register_page(__name__, title="Affinity Groups")
 
+
+def _get_cached_affinities(starting, ending, commits_data):
+    """Get or compute affinities for date range."""
+    cache_key = (starting.isoformat(), ending.isoformat())
+    affinities = _AFFINITY_CACHE.get(cache_key)
+    if affinities is None:
+        affinities = calculate_affinities(commits_data)
+        _AFFINITY_CACHE[cache_key] = affinities
+    return affinities
+
+
 layout = html.Div(
     children=[
         html.H1("File Affinity Groups"),
@@ -113,15 +124,8 @@ layout = html.Div(
 def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
     try:
         starting, ending = date_utils.parse_date_range_from_store(store_data)
-        # Convert commits_data to a list to prevent the iterator from being consumed
         commits_data = ensure_list(data.commits_in_period(starting, ending))
-
-        # Cache affinities per date range so slider changes don't recompute
-        cache_key = (starting.isoformat(), ending.isoformat())
-        affinities = _AFFINITY_CACHE.get(cache_key)
-        if affinities is None:
-            affinities = calculate_affinities(commits_data)
-            _AFFINITY_CACHE[cache_key] = affinities
+        affinities = _get_cached_affinities(starting, ending, commits_data)
 
         # Note: create_file_affinity_network returns (G, communities, stats)
         G, communities, stats = create_file_affinity_network(
