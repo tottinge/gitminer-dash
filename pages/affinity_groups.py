@@ -60,6 +60,21 @@ def _build_graph_data_store(G, communities):
     return graph_data
 
 
+def _create_repo_error_figure():
+    """Create figure for missing repository path."""
+    return create_empty_figure(
+        "No repository path provided. Please run the application with a repository path as a command-line argument.\n\nExample: python app.py /path/to/your/git/repository",
+        title="File Affinity Network - Repository Path Required",
+    )
+
+
+def _create_error_figure(context: str, error_msg: str):
+    """Create figure for general errors."""
+    return create_empty_figure(
+        f"{context}: {error_msg}", title="File Affinity Network - Error"
+    )
+
+
 layout = html.Div(
     children=[
         html.H1("File Affinity Groups"),
@@ -151,41 +166,32 @@ layout = html.Div(
 def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
     try:
         starting, ending = date_utils.parse_date_range_from_store(store_data)
-        commits_data = ensure_list(data.commits_in_period(starting, ending))
-        affinities = _get_cached_affinities(starting, ending, commits_data)
+    except ValueError as e:
+        return _create_error_figure("Invalid date range", str(e)), {}
 
+    try:
+        commits_data = ensure_list(data.commits_in_period(starting, ending))
+    except ValueError as e:
+        if "No repository path provided" in str(e):
+            return _create_repo_error_figure(), {}
+        raise
+
+    affinities = _get_cached_affinities(starting, ending, commits_data)
+
+    try:
         G, communities, stats = create_file_affinity_network(
             commits_data,
             min_affinity=min_affinity,
             max_nodes=max_nodes,
             precomputed_affinities=affinities,
         )
-
-        graph_data = _build_graph_data_store(G, communities)
-        return create_network_visualization(G, communities), graph_data
-    except ValueError as e:
-        # Check if this is the specific error about missing repository path
-        if "No repository path provided" in str(e):
-            # Create a figure with a helpful message about repository path
-            fig = create_empty_figure(
-                "No repository path provided. Please run the application with a repository path as a command-line argument.\n\nExample: python app.py /path/to/your/git/repository",
-                title="File Affinity Network - Repository Path Required",
-            )
-            return fig, {}
-        else:
-            # Handle other ValueError exceptions
-            fig = create_empty_figure(
-                f"Error with input values: {str(e)}",
-                title="File Affinity Network - Input Error",
-            )
-            return fig, {}
     except Exception as e:
-        # Create a figure with a general error message
-        fig = create_empty_figure(
-            f"Error generating affinity graph: {str(e)}",
-            title="File Affinity Network - Error",
-        )
-        return fig, {}
+        return _create_error_figure("Graph generation failed", str(e)), {}
+
+    graph_data = _build_graph_data_store(G, communities)
+    figure = create_network_visualization(G, communities)
+
+    return figure, graph_data
 
 
 def get_commits_for_group_files(group_files: list[str], starting, ending) -> list[dict]:

@@ -74,13 +74,19 @@ def test_affinity_groups_uses_store_begin_end(capture_commits_call, monkeypatch)
     global store into `data.commits_in_period`. The heavy computation and
     visualization functions are stubbed out to avoid expensive work.
     """
+    from dash import Dash
+
+    Dash(__name__, suppress_callback_exceptions=True)
+    # Stub out the heavy network creation and visualization functions
+    import networkx as nx
+
     from pages import affinity_groups as ag
 
-    # Stub out the heavy network creation and visualization functions
+    mock_graph = nx.Graph()
     monkeypatch.setattr(
         ag,
         "create_file_affinity_network",
-        lambda commits_data, **kw: (None, None, {}),
+        lambda commits_data, **kw: (mock_graph, [], {}),
     )
 
     import plotly.graph_objects as go
