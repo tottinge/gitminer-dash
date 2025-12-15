@@ -96,6 +96,39 @@ def update_code_lines_graph(_: int, store_data):
     return figure, show
 
 
+def branch_for_commit(commit):
+    """Return a representative branch name for this commit, if any.
+
+    When commits originate from ``iter_commits('--all', ...)``, GitPython attaches reference
+    information that we can use directly. We first try ``commit.refs`` (references that point
+    at this commit), and fall back to ``commit.name_rev`` if needed. No extra git commands are
+    issued per commit.
+    """
+    # Prefer explicit refs attached to the commit
+    refs = getattr(commit, "refs", None)
+    if refs:
+        for ref in refs:
+            name = getattr(ref, "name", "")
+            if not name:
+                continue
+            # For names like "origin/main" or "heads/main", keep the leaf.
+            if "/" in name:
+                name = name.split("/")[-1]
+            return name
+
+    # Fallback: parse name_rev if available, e.g. "<sha> main" or "<sha> tags/v1.0^0"
+    name_rev = getattr(commit, "name_rev", "")
+    if isinstance(name_rev, str) and name_rev:
+        parts = name_rev.split()
+        if len(parts) > 1:
+            ref_part = parts[1]
+            if "/" in ref_part:
+                ref_part = ref_part.split("/")[-1]
+            return ref_part
+
+    return ""
+
+
 @callback(
     Output("id-chain-commits-table", "data"),
     Input("code-lines-graph", "clickData"),
@@ -125,38 +158,5 @@ def update_chain_commits_table(click_data):
     latest_commit = repo.commit(latest_sha)
     chain_commits = traverse_linear_chain(latest_commit, earliest_sha)
 
-    def _branch_for_commit(commit):
-        """Return a representative branch name for this commit, if any.
-
-        When commits originate from ``iter_commits('--all', ...)``, GitPython
-        attaches reference information that we can use directly. We first try
-        ``commit.refs`` (references that point at this commit), and fall back
-        to ``commit.name_rev`` if needed. No extra git commands are issued
-        per commit.
-        """
-        # Prefer explicit refs attached to the commit
-        refs = getattr(commit, "refs", None)
-        if refs:
-            for ref in refs:
-                name = getattr(ref, "name", "")
-                if not name:
-                    continue
-                # For names like "origin/main" or "heads/main", keep the leaf.
-                if "/" in name:
-                    name = name.split("/")[-1]
-                return name
-
-        # Fallback: parse name_rev if available, e.g. "<sha> main" or "<sha> tags/v1.0^0"
-        name_rev = getattr(commit, "name_rev", "")
-        if isinstance(name_rev, str) and name_rev:
-            parts = name_rev.split()
-            if len(parts) > 1:
-                ref_part = parts[1]
-                if "/" in ref_part:
-                    ref_part = ref_part.split("/")[-1]
-                return ref_part
-
-        return ""
-
     # Format for DataTable consumption, including branch column.
-    return commits_to_chain_rows(chain_commits, branch_getter=_branch_for_commit)
+    return commits_to_chain_rows(chain_commits, branch_getter=branch_for_commit)

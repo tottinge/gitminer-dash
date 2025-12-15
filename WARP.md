@@ -13,6 +13,10 @@ gitminer-dash is a Python Dash application for visualizing git repository metric
 - **Test Standards**: 
   - Follow FIRST principles (Fast, Isolated, Repeatable, Self-validating, Timely)
   - Tests must run in suite, not just individually
+  - Avoid order-dependent tests:
+    - Do not mutate process-global state (e.g. `sys.argv`, `sys.modules`, env vars) unless using `pytest`'s `monkeypatch` (or context-managed `patch`) so changes are automatically restored.
+    - Avoid deleting modules from `sys.modules` in tests.
+    - When importing Dash page modules in unit tests, stub `dash.register_page` (or instantiate a Dash app) so tests do not depend on page-registry global state or import order.
   - Use smallest possible scope with mocked dependencies
   - Use controlled test data from JSON fixtures
   - Prefer TAP-format reporting (via pytest plugins) for a clear results tree when available

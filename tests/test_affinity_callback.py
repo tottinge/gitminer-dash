@@ -51,14 +51,14 @@ def test_callback_with_mock_data(mock_commits_in_period):
 
 
 @patch("data.commits_in_period")
-def test_callback_without_repo_path(mock_commits_in_period):
+def test_callback_without_repo_path(mock_commits_in_period, monkeypatch):
     mock_commits_in_period.side_effect = ValueError(
         "No repository path provided. Please run the application with a repository path as a command-line argument."
     )
-    for module in list(sys.modules.keys()):
-        if module in ["date_utils", "data", "pages.affinity_groups"]:
-            del sys.modules[module]
-    sys.argv = ["app.py"]
+
+    # Avoid global sys.modules/sys.argv mutations (order-dependent).
+    monkeypatch.setattr(sys, "argv", ["app.py"])
+
     from pages.affinity_groups import update_file_affinity_graph
 
     period = "Last 30 days"

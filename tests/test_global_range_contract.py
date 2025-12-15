@@ -42,6 +42,12 @@ def capture_commits_call(monkeypatch):
 def test_page_uses_store_begin_end(
     target, build_args, capture_commits_call, monkeypatch
 ):
+    # Page modules call `dash.register_page` at import-time; make this test
+    # independent of Dash app instantiation / page registry global state.
+    import dash
+
+    monkeypatch.setattr(dash, "register_page", lambda *a, **k: None)
+
     (module_name, func_name) = target.rsplit(".", 1)
     mod = __import__(module_name, fromlist=[func_name])
     fn = getattr(mod, func_name)
@@ -73,11 +79,9 @@ def test_affinity_groups_uses_store_begin_end(capture_commits_call, monkeypatch)
     global store into `data.commits_in_period`. The heavy computation and
     visualization functions are stubbed out to avoid expensive work.
     """
-    from dash import Dash
+    import dash
 
-    Dash(__name__, suppress_callback_exceptions=True)
-    # Stub out the heavy network creation and visualization functions
-    import networkx as nx
+    monkeypatch.setattr(dash, "register_page", lambda *a, **k: None)
 
     from pages import affinity_groups as ag
 

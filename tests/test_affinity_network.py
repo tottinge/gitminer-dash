@@ -9,218 +9,31 @@ the resulting graph.
 from tests import setup_path
 
 setup_path()
+
 import json
 import os
 import sys
-from collections import defaultdict
 from datetime import datetime
+<<<<<<< HEAD
 from itertools import combinations
 
 import networkx as nx
 import plotly.express as px
 import plotly.graph_objects as go
+=======
+from pathlib import Path
+
+>>>>>>> 70ef25b (refactor: bring everything within complexity bounds, and eliminate test order dependencies)
 from git import Repo
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tests.conftest import TEST_DATA_DIR, create_mock_commit, load_commits_json
 from utils import date_utils
+from visualization.network_graph import (
+    create_file_affinity_network,
+    create_network_visualization,
+)
 
-
-def create_file_affinity_network(commits, min_affinity=0.5, max_nodes=50):
-    """
-    Create a network graph of file affinities based on commit history.
-
-    Args:
-        commits: Iterable of commit objects
-        min_affinity: Minimum affinity threshold for including edges
-        max_nodes: Maximum number of nodes to include in the graph
-
-    Returns:
-        A tuple of (networkx graph, communities)
-    """
-    if not commits:
-        return (nx.Graph(), [])
-    affinities = defaultdict(float)
-    for commit in commits:
-        files_in_commit = len(commit.stats.files)
-        if files_in_commit < 2:
-            continue
-        for combo in combinations(commit.stats.files, 2):
-            ordered_key = tuple(sorted(combo))
-            affinities[ordered_key] += 1 / files_in_commit
-    G = nx.Graph()
-    all_files = set()
-    for file_pair in affinities:
-        all_files.update(file_pair)
-    file_total_affinity = defaultdict(float)
-    for (file1, file2), affinity in affinities.items():
-        file_total_affinity[file1] += affinity
-        file_total_affinity[file2] += affinity
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
-    top_file_set = {file for (file, _) in top_files}
-    for file in top_file_set:
-        G.add_node(file)
-    for (file1, file2), affinity in affinities.items():
-        if (
-            file1 in top_file_set
-            and file2 in top_file_set
-            and (affinity >= min_affinity)
-        ):
-            G.add_edge(file1, file2, weight=affinity)
-    if len(G.nodes()) > 0:
-        communities = nx.community.louvain_communities(G)
-        for i, community in enumerate(communities):
-            for node in community:
-                G.nodes[node]["community"] = i
-    else:
-        communities = []
-    return (G, communities)
-
-
-def create_network_visualization(G, communities):
-    """
-    Create a Plotly figure for visualizing the file affinity network.
-
-    Args:
-        G: NetworkX graph of file affinities
-        communities: List of communities detected in the graph
-
-    Returns:
-        A Plotly figure object
-    """
-    if len(G.nodes()) == 0:
-        fig = go.Figure()
-        fig.add_annotation(
-            text="No data available for the selected time period",
-            xref="paper",
-            yref="paper",
-            x=0.5,
-            y=0.5,
-            showarrow=False,
-            font=dict(size=20),
-        )
-        fig.update_layout(
-            title="File Affinity Network - No Data",
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        )
-        return fig
-    pos = nx.spring_layout(G, seed=42)
-    edge_x = []
-    edge_y = []
-    edge_weights = []
-    if len(G.edges()) > 0:
-        for edge in G.edges():
-            (x0, y0) = pos[edge[0]]
-            (x1, y1) = pos[edge[1]]
-            edge_x.extend([x0, x1, None])
-            edge_y.extend([y0, y1, None])
-            edge_weights.append(G.edges[edge]["weight"])
-        max_weight = max(edge_weights) if edge_weights else 1
-        edge_traces = []
-        for i in range(0, len(edge_x), 3):
-            if i + 2 < len(edge_x):
-                edge_idx = i // 3
-                if edge_idx < len(edge_weights):
-                    width = 2 + edge_weights[edge_idx] / max_weight * 6
-                else:
-                    width = 2
-                edge_trace = go.Scatter(
-                    x=edge_x[i : i + 3],
-                    y=edge_y[i : i + 3],
-                    line=dict(width=width, color="#888"),
-                    hoverinfo="none",
-                    mode="lines",
-                    showlegend=False,
-                )
-                edge_traces.append(edge_trace)
-        if not edge_traces:
-            edge_trace = go.Scatter(
-                x=[],
-                y=[],
-                line=dict(width=0, color="#888"),
-                hoverinfo="none",
-                mode="lines",
-            )
-            edge_traces = [edge_trace]
-    else:
-        edge_trace = go.Scatter(
-            x=[], y=[], line=dict(width=0, color="#888"), hoverinfo="none", mode="lines"
-        )
-        edge_traces = [edge_trace]
-    node_traces = []
-    community_colors = px.colors.qualitative.Plotly
-    community_ids = set(nx.get_node_attributes(G, "community").values())
-    if not community_ids and len(G.nodes()) > 0:
-        node_x = []
-        node_y = []
-        node_text = []
-        node_size = []
-        for node in G.nodes():
-            (x, y) = pos[node]
-            node_x.append(x)
-            node_y.append(y)
-            node_text.append(node)
-            node_size.append(10 + G.degree(node) * 2)
-        node_trace = go.Scatter(
-            x=node_x,
-            y=node_y,
-            mode="markers",
-            hoverinfo="text",
-            text=node_text,
-            marker=dict(
-                color=community_colors[0],
-                size=node_size,
-                line=dict(width=1, color="#333"),
-            ),
-            name="All Files",
-        )
-        node_traces.append(node_trace)
-    else:
-        for community_id in community_ids:
-            community_nodes = [
-                node
-                for (node, data) in G.nodes(data=True)
-                if data.get("community") == community_id
-            ]
-            node_x = []
-            node_y = []
-            node_text = []
-            node_size = []
-            for node in community_nodes:
-                (x, y) = pos[node]
-                node_x.append(x)
-                node_y.append(y)
-                node_text.append(node)
-                node_size.append(10 + G.degree(node) * 2)
-            color = community_colors[community_id % len(community_colors)]
-            node_trace = go.Scatter(
-                x=node_x,
-                y=node_y,
-                mode="markers",
-                hoverinfo="text",
-                text=node_text,
-                marker=dict(
-                    color=color, size=node_size, line=dict(width=1, color="#333")
-                ),
-                name=f"Group {community_id + 1}",
-            )
-            node_traces.append(node_trace)
-    fig = go.Figure(
-        data=[*edge_traces, *node_traces],
-        layout=go.Layout(
-            title="File Affinity Network",
-            title_font=dict(size=16),
-            showlegend=True,
-            hovermode="closest",
-            margin=dict(b=20, l=5, r=5, t=40),
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        ),
-    )
-    return fig
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 TEST_PERIODS = ["Last 6 Months", "Last 1 Year", "Last 5 Years"]
@@ -309,7 +122,7 @@ def analyze_affinity_network(commits, period, min_affinity=0.5, max_nodes=50):
         files_in_commit = commit.stats.files.keys()
         files_in_commits.update(files_in_commit)
     start_time = datetime.now()
-    (G, communities) = create_file_affinity_network(
+    (G, communities, _stats) = create_file_affinity_network(
         commits, min_affinity=min_affinity, max_nodes=max_nodes
     )
     end_time = datetime.now()
@@ -402,7 +215,7 @@ def try_affinity_network_with_different_parameters(commits, period):
     for min_affinity in [0.1, 0.2, 0.3, 0.4, 0.5]:
         for max_nodes in [20, 50, 100]:
             try:
-                (G, communities) = create_file_affinity_network(
+                (G, communities, _stats) = create_file_affinity_network(
                     mock_commits, min_affinity=min_affinity, max_nodes=max_nodes
                 )
                 if len(G.nodes()) > 0 and len(G.edges()) > 0:
@@ -434,9 +247,9 @@ def main():
             all_results.append(result)
             if isinstance(commits[0], dict):
                 mock_commits = [create_mock_commit(commit) for commit in commits]
-                (G, communities) = create_file_affinity_network(mock_commits)
+                (G, communities, _stats) = create_file_affinity_network(mock_commits)
             else:
-                (G, communities) = create_file_affinity_network(commits)
+                (G, communities, _stats) = create_file_affinity_network(commits)
             if len(G.nodes()) > 0:
                 save_visualization(G, communities, period, 0.5, 50)
             param_results = try_affinity_network_with_different_parameters(
