@@ -6,7 +6,6 @@ It consolidates the best features from the original implementations in affinity_
 and improved_affinity_network.py.
 """
 
-from collections import defaultdict
 from functools import lru_cache
 from typing import Any
 
@@ -15,9 +14,17 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from algorithms.affinity_analysis import (
+    get_file_total_affinities,
     get_top_files_by_affinity,
 )
 from algorithms.affinity_calculator import calculate_affinities
+from algorithms.graph_statistics import (
+    calculate_graph_statistics,
+    count_files_in_commits,
+    count_multi_file_commits,
+    detect_and_assign_communities,
+    filter_low_degree_nodes,
+)
 from utils.git import ensure_list
 
 
@@ -195,19 +202,15 @@ def create_file_affinity_network(
     # Convert to list to handle iterator consumption
     commits = ensure_list(commits)
 
-    # Calculate affinities using shared function, unless precomputed values are provided
-    affinities = (
-        precomputed_affinities
-        if precomputed_affinities is not None
-        else calculate_affinities(commits)
-    )
+    stats["total_commits"] = len(commits)
 
-    # Early return if no affinities found
-    if not affinities:
-        return nx.Graph(), [], {"error": "No file affinities found"}
+    if precomputed_affinities is not None:
+        affinities = precomputed_affinities
+    else:
+        affinities = calculate_affinities(commits)
 
-    # Count file occurrences and commits with multiple files
-    file_counts, multi_file_commits = _count_file_occurrences(commits)
+    file_counts = count_files_in_commits(commits)
+    stats["commits_with_multiple_files"] = count_multi_file_commits(commits)
 
     # Get unique files from affinities
     all_files = set()
@@ -227,14 +230,7 @@ def create_file_affinity_network(
     nodes_before = len(G.nodes())
     edges_before = len(G.edges())
 
-    # Remove nodes with too few connections
-    isolated_count = 0
-    if min_edge_count > 0:
-        nodes_to_remove = [
-            node for node, degree in G.degree() if degree < min_edge_count
-        ]
-        G.remove_nodes_from(nodes_to_remove)
-        isolated_count = len(nodes_to_remove)
+    stats["isolated_nodes"] = filter_low_degree_nodes(G, min_edge_count)
 
     # Early return if all nodes were filtered out
     if len(G.nodes()) == 0:
@@ -251,21 +247,11 @@ def create_file_affinity_network(
         )
         return G, [], stats
 
-    # Find communities and assign to nodes
-    communities = _assign_communities(G)
+    communities, community_stats = detect_and_assign_communities(G)
+    stats.update(community_stats)
 
-    # Calculate final statistics
-    stats = _calculate_graph_stats(
-        G,
-        len(commits),
-        multi_file_commits,
-        len(all_files),
-        len(affinities),
-        nodes_before,
-        edges_before,
-        isolated_count,
-        communities,
-    )
+    graph_stats = calculate_graph_statistics(G)
+    stats.update(graph_stats)
 
     return G, communities, stats
 
