@@ -72,7 +72,11 @@ def create_file_affinity_network(
     commits = ensure_list(commits)
     stats["total_commits"] = len(commits)
 
-    affinities = precomputed_affinities if precomputed_affinities is not None else calculate_affinities(commits)
+    affinities = (
+        precomputed_affinities
+        if precomputed_affinities is not None
+        else calculate_affinities(commits)
+    )
 
     file_counts = count_files_in_commits(commits)
     stats["commits_with_multiple_files"] = count_multi_file_commits(commits)
