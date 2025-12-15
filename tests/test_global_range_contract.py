@@ -3,6 +3,7 @@ from tests import setup_path
 setup_path()
 import types
 
+import networkx as nx
 import pytest
 
 STORE = {

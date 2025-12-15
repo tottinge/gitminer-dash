@@ -14,16 +14,8 @@ import json
 import os
 import sys
 from datetime import datetime
-<<<<<<< HEAD
-from itertools import combinations
-
-import networkx as nx
-import plotly.express as px
-import plotly.graph_objects as go
-=======
 from pathlib import Path
 
->>>>>>> 70ef25b (refactor: bring everything within complexity bounds, and eliminate test order dependencies)
 from git import Repo
 
 from tests.conftest import TEST_DATA_DIR, create_mock_commit, load_commits_json
