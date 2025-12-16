@@ -151,7 +151,7 @@ def test_affinity_cache_different_date_ranges(mock_parse, mock_commits, mock_cal
 
 def test_get_commits_for_group_files_with_no_parents():
     """Test handling of commits without parents (initial commit)."""
-    from pages.affinity_groups import get_commits_for_group_files
+    from algorithms.commit_filter import get_commits_for_group_files
 
     with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
         mock_commit = Mock()
@@ -160,13 +160,10 @@ def test_get_commits_for_group_files_with_no_parents():
         mock_commit.message = "Initial commit"
         mock_commit.parents = []  # No parents
 
-        mock_commits.return_value = [mock_commit]
-
+        commits = [mock_commit]
         group_files = ["file1.py", "file2.py"]
-        start = datetime(2024, 1, 1)
-        end = datetime(2024, 1, 31)
 
-        result = get_commits_for_group_files(group_files, start, end)
+        result = get_commits_for_group_files(commits, group_files)
 
         # Should handle commits without parents gracefully
         assert isinstance(result, list)
@@ -174,7 +171,7 @@ def test_get_commits_for_group_files_with_no_parents():
 
 def test_get_commits_for_group_files_with_missing_paths():
     """Test handling of diff items without a_path or b_path."""
-    from pages.affinity_groups import get_commits_for_group_files
+    from algorithms.commit_filter import get_commits_for_group_files
 
     with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
         mock_commit = Mock()
@@ -190,13 +187,11 @@ def test_get_commits_for_group_files_with_missing_paths():
         diff_item2.b_path = "file1.py"
 
         mock_commit.diff.return_value = [diff_item1, diff_item2]
-        mock_commits.return_value = [mock_commit]
+        commits = [mock_commit]
 
         group_files = ["file1.py", "file2.py"]
-        start = datetime(2024, 1, 1)
-        end = datetime(2024, 1, 31)
 
-        result = get_commits_for_group_files(group_files, start, end)
+        result = get_commits_for_group_files(commits, group_files)
 
         # Should handle missing paths without crashing
         assert isinstance(result, list)
@@ -204,7 +199,7 @@ def test_get_commits_for_group_files_with_missing_paths():
 
 def test_get_commits_for_group_files_truncates_long_message():
     """Test that long commit messages are truncated to 100 chars."""
-    from pages.affinity_groups import get_commits_for_group_files
+    from algorithms.commit_filter import get_commits_for_group_files
 
     with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
         long_message = "A" * 150  # 150 character message
@@ -220,13 +215,10 @@ def test_get_commits_for_group_files_truncates_long_message():
         diff_item2.a_path = "file2.py"
         mock_commit.diff.return_value = [diff_item1, diff_item2]
 
-        mock_commits.return_value = [mock_commit]
-
+        commits = [mock_commit]
         group_files = ["file1.py", "file2.py"]
-        start = datetime(2024, 1, 1)
-        end = datetime(2024, 1, 31)
 
-        result = get_commits_for_group_files(group_files, start, end)
+        result = get_commits_for_group_files(commits, group_files)
 
         assert len(result) == 1
         assert len(result[0]["message"]) == 100
@@ -234,7 +226,7 @@ def test_get_commits_for_group_files_truncates_long_message():
 
 def test_get_commits_for_group_files_multiline_message():
     """Test that only first line of commit message is used."""
-    from pages.affinity_groups import get_commits_for_group_files
+    from algorithms.commit_filter import get_commits_for_group_files
 
     with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
         multiline = "feat: first line\n\nThis is the body\nMore details here"
@@ -250,13 +242,10 @@ def test_get_commits_for_group_files_multiline_message():
         diff_item2.a_path = "file2.py"
         mock_commit.diff.return_value = [diff_item1, diff_item2]
 
-        mock_commits.return_value = [mock_commit]
-
+        commits = [mock_commit]
         group_files = ["file1.py", "file2.py"]
-        start = datetime(2024, 1, 1)
-        end = datetime(2024, 1, 31)
 
-        result = get_commits_for_group_files(group_files, start, end)
+        result = get_commits_for_group_files(commits, group_files)
 
         assert len(result) == 1
         assert result[0]["message"] == "feat: first line"
@@ -264,7 +253,7 @@ def test_get_commits_for_group_files_multiline_message():
 
 def test_get_commits_for_group_files_sorts_by_timestamp():
     """Test that commits are sorted by timestamp, most recent first."""
-    from pages.affinity_groups import get_commits_for_group_files
+    from algorithms.commit_filter import get_commits_for_group_files
 
     with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
         # Create commits in non-chronological order
@@ -287,13 +276,10 @@ def test_get_commits_for_group_files_sorts_by_timestamp():
         mock_commit2.diff.return_value = [diff1, diff2]
 
         # Return in wrong order
-        mock_commits.return_value = [mock_commit1, mock_commit2]
-
+        commits = [mock_commit1, mock_commit2]
         group_files = ["file1.py", "file2.py"]
-        start = datetime(2024, 1, 1)
-        end = datetime(2024, 1, 31)
 
-        result = get_commits_for_group_files(group_files, start, end)
+        result = get_commits_for_group_files(commits, group_files)
 
         assert len(result) == 2
         # Most recent should be first
@@ -306,13 +292,15 @@ def test_update_node_details_table_parses_tooltip_correctly():
     from pages.affinity_groups import update_node_details_table
 
     with (
-        patch("pages.affinity_groups.get_commits_for_group_files") as mock_commits,
+        patch("pages.affinity_groups.get_commits_for_group_files") as mock_get_commits,
+        patch("pages.affinity_groups.data.commits_in_period") as mock_commits_in_period,
         patch(
             "pages.affinity_groups.date_utils.parse_date_range_from_store"
         ) as mock_parse,
     ):
         mock_parse.return_value = (datetime(2024, 1, 1), datetime(2024, 1, 31))
-        mock_commits.return_value = []
+        mock_commits_in_period.return_value = []
+        mock_get_commits.return_value = []
 
         # Test tooltip with <br> tags
         click_data = {
@@ -332,9 +320,9 @@ def test_update_node_details_table_parses_tooltip_correctly():
         result = update_node_details_table(click_data, graph_data, date_range_data)
 
         # Should parse correctly and call with correct files
-        assert mock_commits.called
-        call_args = mock_commits.call_args[0]
-        assert "src/main.py" in call_args[0]
+        assert mock_get_commits.called
+        call_args = mock_get_commits.call_args[0]
+        assert "src/main.py" in call_args[1]  # Second arg is group_files
 
 
 def test_update_node_details_table_empty_graph_data():
@@ -355,13 +343,15 @@ def test_update_node_details_table_missing_community():
     from pages.affinity_groups import update_node_details_table
 
     with (
-        patch("pages.affinity_groups.get_commits_for_group_files") as mock_commits,
+        patch("pages.affinity_groups.get_commits_for_group_files") as mock_get_commits,
+        patch("pages.affinity_groups.data.commits_in_period") as mock_commits_in_period,
         patch(
             "pages.affinity_groups.date_utils.parse_date_range_from_store"
         ) as mock_parse,
     ):
         mock_parse.return_value = (datetime(2024, 1, 1), datetime(2024, 1, 31))
-        mock_commits.return_value = []
+        mock_commits_in_period.return_value = []
+        mock_get_commits.return_value = []
 
         click_data = {"points": [{"text": "test.py"}]}
         graph_data = {

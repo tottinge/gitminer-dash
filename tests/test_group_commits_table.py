@@ -18,7 +18,7 @@ app = Dash(__name__, suppress_callback_exceptions=True)
 @patch("pages.affinity_groups.data.commits_in_period")
 def test_get_commits_for_group_files_with_multiple_file_commits(mock_commits_in_period):
     """Test that commits containing at least 2 group files are returned."""
-    from pages.affinity_groups import get_commits_for_group_files
+    from algorithms.commit_filter import get_commits_for_group_files
 
     # Mock commits
     mock_commit1 = Mock()
@@ -45,13 +45,10 @@ def test_get_commits_for_group_files_with_multiple_file_commits(mock_commits_in_
     diff_item3.a_path = "src/helper.py"
     mock_commit2.diff.return_value = [diff_item3]
 
-    mock_commits_in_period.return_value = [mock_commit1, mock_commit2]
-
+    commits = [mock_commit1, mock_commit2]
     group_files = ["src/main.py", "src/utils.py", "src/helper.py"]
-    start = datetime(2024, 1, 1)
-    end = datetime(2024, 1, 31)
 
-    result = get_commits_for_group_files(group_files, start, end)
+    result = get_commits_for_group_files(commits, group_files)
 
     # Only the first commit should be returned (has 2+ files)
     assert len(result) == 1
@@ -65,7 +62,7 @@ def test_get_commits_for_group_files_with_multiple_file_commits(mock_commits_in_
 @patch("pages.affinity_groups.data.commits_in_period")
 def test_get_commits_for_group_files_with_no_matching_commits(mock_commits_in_period):
     """Test that no commits are returned when no commits have 2+ group files."""
-    from pages.affinity_groups import get_commits_for_group_files
+    from algorithms.commit_filter import get_commits_for_group_files
 
     mock_commit = Mock()
     mock_commit.hexsha = "abc123"
@@ -77,13 +74,10 @@ def test_get_commits_for_group_files_with_no_matching_commits(mock_commits_in_pe
     diff_item.a_path = "src/other.py"
     mock_commit.diff.return_value = [diff_item]
 
-    mock_commits_in_period.return_value = [mock_commit]
-
+    commits = [mock_commit]
     group_files = ["src/main.py", "src/utils.py"]
-    start = datetime(2024, 1, 1)
-    end = datetime(2024, 1, 31)
 
-    result = get_commits_for_group_files(group_files, start, end)
+    result = get_commits_for_group_files(commits, group_files)
 
     assert len(result) == 0
 

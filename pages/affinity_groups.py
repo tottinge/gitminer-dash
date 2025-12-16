@@ -4,6 +4,7 @@ from dash.dcc import Slider, Store
 
 import data
 from algorithms.affinity_calculator import calculate_affinities
+from algorithms.commit_filter import get_commits_for_group_files
 from utils import date_utils
 from utils.git import ensure_list
 from utils.plotly_utils import create_empty_figure
@@ -191,53 +192,6 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
     return figure, graph_data
 
 
-def get_commits_for_group_files(group_files: list[str], starting, ending) -> list[dict]:
-    """
-    Get commits that contain at least two files from the group.
-
-    Args:
-        group_files: List of file paths in the group
-        starting: Start date for commit filtering
-        ending: End date for commit filtering
-
-    Returns:
-        List of dicts with keys: hash, timestamp, message, group_files
-    """
-    commits_data = []
-    group_files_set = set(group_files)
-
-    for commit in data.commits_in_period(starting, ending):
-        # Get modified files in this commit
-        modified_files = set()
-        if commit.parents:
-            for item in commit.diff(commit.parents[0]):
-                if hasattr(item, "a_path") and item.a_path:
-                    modified_files.add(item.a_path)
-                if hasattr(item, "b_path") and item.b_path:
-                    modified_files.add(item.b_path)
-
-        # Find which group files were modified
-        group_files_in_commit = list(group_files_set & modified_files)
-
-        # Only include commits with at least 2 group files
-        if len(group_files_in_commit) >= 2:
-            commits_data.append(
-                {
-                    "hash": commit.hexsha[:7],
-                    "timestamp": commit.committed_datetime.strftime("%Y-%m-%d %H:%M"),
-                    "message": commit.message.split("\n")[0][
-                        :100
-                    ],  # First line, truncated
-                    "group_files": ", ".join(sorted(group_files_in_commit)),
-                }
-            )
-
-    # Sort by timestamp (most recent first)
-    commits_data.sort(key=lambda x: x["timestamp"], reverse=True)
-
-    return commits_data
-
-
 @callback(
     Output("id-node-details-table", "data"),
     [Input("id-file-affinity-graph", "clickData")],
@@ -285,4 +239,5 @@ def update_node_details_table(click_data, graph_data, date_range_data):
     starting, ending = date_utils.parse_date_range_from_store(date_range_data)
 
     # Get commits for these files
-    return get_commits_for_group_files(group_files, starting, ending)
+    commits_in_period = data.commits_in_period(starting, ending)
+    return get_commits_for_group_files(commits_in_period, group_files)
