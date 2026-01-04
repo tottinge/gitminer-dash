@@ -179,3 +179,7 @@ test_data/*.html
 
 # Local temp dir for prepare
 .tmp/
+
+# Mutation testing artifacts
+mutants/
+.mutmut-cache/

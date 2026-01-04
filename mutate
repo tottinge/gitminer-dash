@@ -14,10 +14,8 @@ if [ -d .mutmut-cache ]; then
     rm -rf .mutmut-cache
 fi
 
-# Run mutmut with uv
-uv run mutmut run --paths-to-mutate=algorithms/,pages/,visualization/,utils/ \
-    --runner="uv run pytest" \
-    --use-coverage
+# Run mutmut (config from pyproject.toml)
+uv run mutmut run
 
 echo ""
 echo "Mutation testing complete!"
