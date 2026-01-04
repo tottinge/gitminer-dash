@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -e
+
+# Mutation testing script for gitminer-dash
+# Tests the quality of the test suite by introducing mutations
+
+echo "Running mutation testing with mutmut..."
+echo "This will test how well your tests catch bugs."
+echo ""
+
+# Clear any previous mutmut cache
+if [ -d .mutmut-cache ]; then
+    echo "Clearing previous mutation cache..."
+    rm -rf .mutmut-cache
+fi
+
+# Run mutmut with uv
+uv run mutmut run --paths-to-mutate=algorithms/,pages/,visualization/,utils/ \
+    --runner="uv run pytest" \
+    --use-coverage
+
+echo ""
+echo "Mutation testing complete!"
+echo ""
+echo "View results with:"
+echo "  uv run mutmut results"
+echo "  uv run mutmut html  # Generate HTML report"
+echo ""
+echo "Show specific mutations with:"
+echo "  uv run mutmut show <id>"
