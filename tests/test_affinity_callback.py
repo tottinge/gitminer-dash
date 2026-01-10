@@ -13,11 +13,12 @@ from tests import setup_path
 
 setup_path()
 import sys
-from unittest.mock import patch
 
 import plotly.graph_objects as go
 import pytest
 from dash import Dash
+
+import data
 
 # Pytest automatically loads conftest.py, so load_commits_data is available
 from tests.conftest import load_commits_data
@@ -25,10 +26,15 @@ from tests.conftest import load_commits_data
 app = Dash(__name__, suppress_callback_exceptions=True)
 
 
-@patch("data.commits_in_period")
-def test_callback_with_mock_data(mock_commits_in_period):
+def test_callback_with_mock_data(monkeypatch):
+    """Test the affinity graph callback with mocked commit data."""
     mock_commits = load_commits_data("last_6_months")
-    mock_commits_in_period.return_value = mock_commits
+
+    def mock_commits_in_period(*args, **kwargs):
+        return mock_commits
+
+    monkeypatch.setattr(data, "commits_in_period", mock_commits_in_period)
+
     from pages.affinity_groups import update_file_affinity_graph
 
     period = "Last 30 days"
@@ -50,13 +56,17 @@ def test_callback_with_mock_data(mock_commits_in_period):
         pytest.fail(f"Test failed with exception: {str(e)}")
 
 
-@patch("data.commits_in_period")
-def test_callback_without_repo_path(mock_commits_in_period, monkeypatch):
-    mock_commits_in_period.side_effect = ValueError(
-        "No repository path provided. Please run the application with a repository path as a command-line argument."
-    )
+def test_callback_without_repo_path(monkeypatch):
+    """Test the affinity graph callback without a repository path."""
 
-    # Avoid global sys.modules/sys.argv mutations (order-dependent).
+    def mock_commits_in_period_error(*args, **kwargs):
+        raise ValueError(
+            "No repository path provided. Please run the application with a repository path as a command-line argument."
+        )
+
+    monkeypatch.setattr(data, "commits_in_period", mock_commits_in_period_error)
+
+    # Avoid global sys.argv mutations (order-dependent)
     monkeypatch.setattr(sys, "argv", ["app.py"])
 
     from pages.affinity_groups import update_file_affinity_graph
@@ -85,5 +95,4 @@ def test_callback_without_repo_path(mock_commits_in_period, monkeypatch):
 
 
 if __name__ == "__main__":
-    test_callback_with_mock_data()
-    test_callback_without_repo_path()
+    pytest.main([__file__])

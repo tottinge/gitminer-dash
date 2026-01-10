@@ -10,16 +10,27 @@ gitminer-dash is a Python Dash application for visualizing git repository metric
   - Tests run after every change (not just once after all changes)
   - No task is complete until all tests pass successfully
   - Cannot commit unless all tests are running and reporting success
-- **Test Standards**: 
-  - Follow FIRST principles (Fast, Isolated, Repeatable, Self-validating, Timely)
+- **Test Standards - FIRST Principles**: 
+  - **Fast**: Tests run quickly to provide immediate feedback and encourage frequent execution
+  - **Isolated/Independent**: Tests don't depend on each other and can run in any order. Each test sets up its own data and assertions.
+  - **Repeatable**: Tests produce same results regardless of environment or when run. No dependency on environmental conditions, network, or time.
+  - **Self-validating**: Tests automatically determine pass/fail without human interpretation. Clear assertions indicate success or failure.
+  - **Timely**: Tests written at appropriate time (usually before or alongside production code)
+- **Test Implementation Standards**:
   - Tests must run in suite, not just individually
   - Avoid order-dependent tests:
     - Do not mutate process-global state (e.g. `sys.argv`, `sys.modules`, env vars) unless using `pytest`'s `monkeypatch` (or context-managed `patch`) so changes are automatically restored.
     - Avoid deleting modules from `sys.modules` in tests.
     - When importing Dash page modules in unit tests, stub `dash.register_page` (or instantiate a Dash app) so tests do not depend on page-registry global state or import order.
-  - Use smallest possible scope with mocked dependencies
-  - Use controlled test data from JSON fixtures
+  - Use smallest possible scope with mocked dependencies - each test should focus on one specific behavior
+  - Use controlled test data from JSON fixtures - tests should be deterministic with predictable data
   - Prefer TAP-format reporting (via pytest plugins) for a clear results tree when available
+- **Mocking Best Practices**:
+  - Use pytest's `monkeypatch` fixture instead of unittest.mock's `@patch` decorator
+  - Patch objects directly using `monkeypatch.setattr(object, attribute, value)` rather than string-based patching
+  - Create custom fixtures for complex mocking scenarios
+  - Avoid reloading modules in tests
+  - Example: `monkeypatch.setattr(date_utils, 'datetime', MockDatetime)` instead of `@patch('date_utils.datetime')`
 
 ## Development Workflow
 - **Small Incremental Changes**: 
@@ -49,8 +60,16 @@ gitminer-dash is a Python Dash application for visualizing git repository metric
 - **Prerequisites**: All tests must pass before any commit
 
 ## Code Quality Standards
-- **Code Virtues**: Follow Industrial Logic's 7 Code Virtues (see CODE_VIRTUES.md)
+- **Code Virtues**: Follow Industrial Logic's 7 Code Virtues
   - Priority order: Working > Unique > Simple > Clear > Easy > Developed > Brief
+  - **Working** (vs. Incomplete): Code must run and produce correct results. Must be assembled, integrated, executable, and proven to work recently with automated tests.
+  - **Unique** (vs. Duplicated): Single Point of Truth (SPOT). Eliminate duplication - each concept expressed once and only once.
+  - **Simple** (vs. Complicated): Objective structural simplicity. Minimize operations, operands, and paths. Fewer variables, computation steps, and logical paths.
+  - **Clear** (vs. Puzzling): Code that teammates can understand. Use idiomatic expressions and consistent naming within the codebase.
+  - **Easy** (vs. Difficult): Ease of change, not ease of reading. Organization that facilitates adding/removing functionality quickly.
+  - **Developed** (vs. Primitive): Proper abstractions, avoiding primitive obsession. Domain concepts over primitives (int, string, bool).
+  - **Brief** (vs. Chatty): Concise expression of concepts without unnecessary ceremony. Don't confuse brevity with obscurity.
+  - Complementary virtues: Cohesion (single responsibility), Locality (minimize coupling), Consistency (uniform approaches), Encapsulation (hide implementation details)
 - **Language Standards**: 
   - Python 3.10+ with type hints
   - Ruff for linting (line-length: 100)
