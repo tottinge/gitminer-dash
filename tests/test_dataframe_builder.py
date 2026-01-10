@@ -1,7 +1,8 @@
 """Unit and regression tests for DataFrame builder."""
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 
 from algorithms.chain_models import TIMELINE_COLUMNS, TimelineRow
 from algorithms.dataframe_builder import create_timeline_dataframe
