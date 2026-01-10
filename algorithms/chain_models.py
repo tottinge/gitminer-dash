@@ -78,3 +78,16 @@ class TimelineRow:
     tail: str
     duration: int
     density: float
+
+
+# Column names for timeline DataFrame, matching TimelineRow fields
+TIMELINE_COLUMNS = [
+    "first",
+    "last",
+    "elevation",
+    "commit_counts",
+    "head",
+    "tail",
+    "duration",
+    "density",
+]

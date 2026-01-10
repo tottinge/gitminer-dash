@@ -9,6 +9,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from dash import Dash
@@ -44,6 +45,43 @@ def create_mock_commit(commit_data):
         A mock commit object with the necessary attributes
     """
     return MockCommit(commit_data)
+
+
+def create_mock_commit_with_diffs(hexsha=None, message=None, date=None, modified_files=None):
+    """
+    Create a mock commit with diff support for testing git operations.
+
+    This helper creates commits with hexsha, message, committed_datetime, and diff().
+    Used by tests that need to mock git commit objects with file changes.
+
+    Args:
+        hexsha: Commit hash (optional)
+        message: Commit message
+        date: Commit datetime
+        modified_files: List of file paths modified in commit, or None for initial commits
+
+    Returns:
+        Mock commit object with necessary attributes for git operations
+    """
+    commit = Mock()
+    if hexsha is not None:
+        commit.hexsha = hexsha
+    commit.message = message
+    commit.committed_datetime = date
+    
+    if modified_files is not None:
+        parent = Mock()
+        commit.parents = [parent]
+        diff_items = []
+        for file_path in modified_files:
+            diff_item = Mock()
+            diff_item.a_path = file_path
+            diff_items.append(diff_item)
+        commit.diff = Mock(return_value=diff_items)
+    else:
+        commit.parents = []
+    
+    return commit
 
 
 def load_commits_json(period):

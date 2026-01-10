@@ -2,28 +2,11 @@ import unittest
 from datetime import datetime
 from unittest.mock import Mock
 
+from tests.conftest import create_mock_commit_with_diffs
 from utils.git import get_commit_messages_for_file
 
 
 class TestGetCommitMessagesForFile(unittest.TestCase):
-
-    def create_mock_commit(self, message, date, modified_files):
-        """Helper to create a mock commit."""
-        commit = Mock()
-        commit.message = message
-        commit.committed_datetime = date
-        if modified_files is not None:
-            parent = Mock()
-            commit.parents = [parent]
-            diff_items = []
-            for file_path in modified_files:
-                diff_item = Mock()
-                diff_item.a_path = file_path
-                diff_items.append(diff_item)
-            commit.diff = Mock(return_value=diff_items)
-        else:
-            commit.parents = []
-        return commit
 
     def test_empty_repo(self):
         """Test with no commits in the repo."""
@@ -42,15 +25,15 @@ class TestGetCommitMessagesForFile(unittest.TestCase):
         """Test finding commits that modified the target file."""
         start = datetime(2025, 1, 1)
         end = datetime(2025, 12, 31)
-        commit1 = self.create_mock_commit(
-            "feat: update test file",
-            datetime(2025, 6, 15, 10, 30),
-            ["test.py", "other.py"],
+        commit1 = create_mock_commit_with_diffs(
+            message="feat: update test file",
+            date=datetime(2025, 6, 15, 10, 30),
+            modified_files=["test.py", "other.py"],
         )
-        commit3 = self.create_mock_commit(
-            "refactor: test file again",
-            datetime(2025, 8, 10, 9, 45),
-            ["test.py"],
+        commit3 = create_mock_commit_with_diffs(
+            message="refactor: test file again",
+            date=datetime(2025, 8, 10, 9, 45),
+            modified_files=["test.py"],
         )
         repo = Mock()
         # iter_commits with path filter should only return commits for that file
@@ -64,10 +47,10 @@ class TestGetCommitMessagesForFile(unittest.TestCase):
         """Test that commits outside the date range are filtered out."""
         start = datetime(2025, 6, 1)
         end = datetime(2025, 7, 31)
-        commit2 = self.create_mock_commit(
-            "in range",
-            datetime(2025, 7, 1, 14, 20),
-            ["test.py"],
+        commit2 = create_mock_commit_with_diffs(
+            message="in range",
+            date=datetime(2025, 7, 1, 14, 20),
+            modified_files=["test.py"],
         )
         repo = Mock()
         # iter_commits with since/until should only return commits in date range
@@ -83,10 +66,10 @@ class TestGetCommitMessagesForFile(unittest.TestCase):
         multi_line_message = (
             "feat: add feature\n\nThis is a detailed description\nwith multiple lines"
         )
-        commit = self.create_mock_commit(
-            multi_line_message,
-            datetime(2025, 6, 15, 10, 30),
-            ["test.py"],
+        commit = create_mock_commit_with_diffs(
+            message=multi_line_message,
+            date=datetime(2025, 6, 15, 10, 30),
+            modified_files=["test.py"],
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit])
@@ -98,8 +81,10 @@ class TestGetCommitMessagesForFile(unittest.TestCase):
         """Test handling of initial commit with no parents."""
         start = datetime(2025, 1, 1)
         end = datetime(2025, 12, 31)
-        commit = self.create_mock_commit(
-            "Initial commit", datetime(2025, 6, 15, 10, 30), None
+        commit = create_mock_commit_with_diffs(
+            message="Initial commit",
+            date=datetime(2025, 6, 15, 10, 30),
+            modified_files=None,
         )
         repo = Mock()
         # iter_commits with path filter would return the commit if file exists

@@ -2,29 +2,11 @@ import unittest
 from datetime import datetime
 from unittest.mock import Mock
 
+from tests.conftest import create_mock_commit_with_diffs
 from utils.git import get_commits_for_file_pair
 
 
 class TestGetCommitsForFilePair(unittest.TestCase):
-
-    def create_mock_commit(self, hexsha, message, date, modified_files):
-        """Helper to create a mock commit."""
-        commit = Mock()
-        commit.hexsha = hexsha
-        commit.message = message
-        commit.committed_datetime = date
-        if modified_files is not None:
-            parent = Mock()
-            commit.parents = [parent]
-            diff_items = []
-            for file_path in modified_files:
-                diff_item = Mock()
-                diff_item.a_path = file_path
-                diff_items.append(diff_item)
-            commit.diff = Mock(return_value=diff_items)
-        else:
-            commit.parents = []
-        return commit
 
     def test_empty_repo(self):
         """Test with no commits in the repo."""
@@ -39,20 +21,23 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         """Test finding commits that modified both files."""
         start = datetime(2025, 1, 1)
         end = datetime(2025, 12, 31)
-        commit1 = self.create_mock_commit(
-            "abc123def",
-            "feat: update both files",
-            datetime(2025, 6, 15, 10, 30),
-            ["file1.py", "file2.py"],
+        commit1 = create_mock_commit_with_diffs(
+            hexsha="abc123def",
+            message="feat: update both files",
+            date=datetime(2025, 6, 15, 10, 30),
+            modified_files=["file1.py", "file2.py"],
         )
-        commit2 = self.create_mock_commit(
-            "def456ghi", "fix: only file1", datetime(2025, 7, 1, 14, 20), ["file1.py"]
+        commit2 = create_mock_commit_with_diffs(
+            hexsha="def456ghi",
+            message="fix: only file1",
+            date=datetime(2025, 7, 1, 14, 20),
+            modified_files=["file1.py"],
         )
-        commit3 = self.create_mock_commit(
-            "ghi789jkl",
-            "refactor: both files again",
-            datetime(2025, 8, 10, 9, 45),
-            ["file1.py", "file2.py", "other.py"],
+        commit3 = create_mock_commit_with_diffs(
+            hexsha="ghi789jkl",
+            message="refactor: both files again",
+            date=datetime(2025, 8, 10, 9, 45),
+            modified_files=["file1.py", "file2.py", "other.py"],
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit1, commit2, commit3])
@@ -68,23 +53,23 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         """Test that commits outside the date range are filtered out."""
         start = datetime(2025, 6, 1)
         end = datetime(2025, 7, 31)
-        commit1 = self.create_mock_commit(
-            "abc123def",
-            "before range",
-            datetime(2025, 5, 15, 10, 30),
-            ["file1.py", "file2.py"],
+        commit1 = create_mock_commit_with_diffs(
+            hexsha="abc123def",
+            message="before range",
+            date=datetime(2025, 5, 15, 10, 30),
+            modified_files=["file1.py", "file2.py"],
         )
-        commit2 = self.create_mock_commit(
-            "def456ghi",
-            "in range",
-            datetime(2025, 7, 1, 14, 20),
-            ["file1.py", "file2.py"],
+        commit2 = create_mock_commit_with_diffs(
+            hexsha="def456ghi",
+            message="in range",
+            date=datetime(2025, 7, 1, 14, 20),
+            modified_files=["file1.py", "file2.py"],
         )
-        commit3 = self.create_mock_commit(
-            "ghi789jkl",
-            "after range",
-            datetime(2025, 9, 10, 9, 45),
-            ["file1.py", "file2.py"],
+        commit3 = create_mock_commit_with_diffs(
+            hexsha="ghi789jkl",
+            message="after range",
+            date=datetime(2025, 9, 10, 9, 45),
+            modified_files=["file1.py", "file2.py"],
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit1, commit2, commit3])
@@ -98,11 +83,11 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         start = datetime(2025, 1, 1)
         end = datetime(2025, 12, 31)
         long_message = "a" * 100 + "\nSecond line"
-        commit = self.create_mock_commit(
-            "abc123def",
-            long_message,
-            datetime(2025, 6, 15, 10, 30),
-            ["file1.py", "file2.py"],
+        commit = create_mock_commit_with_diffs(
+            hexsha="abc123def",
+            message=long_message,
+            date=datetime(2025, 6, 15, 10, 30),
+            modified_files=["file1.py", "file2.py"],
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit])
@@ -115,8 +100,11 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         """Test handling of initial commit with no parents."""
         start = datetime(2025, 1, 1)
         end = datetime(2025, 12, 31)
-        commit = self.create_mock_commit(
-            "abc123def", "Initial commit", datetime(2025, 6, 15, 10, 30), None
+        commit = create_mock_commit_with_diffs(
+            hexsha="abc123def",
+            message="Initial commit",
+            date=datetime(2025, 6, 15, 10, 30),
+            modified_files=None,
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit])

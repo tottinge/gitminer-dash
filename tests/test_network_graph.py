@@ -7,10 +7,10 @@ from unittest.mock import Mock
 
 import networkx as nx
 
+from visualization.common import create_empty_figure
 from visualization.network_graph import (
     create_file_affinity_network,
     create_network_visualization,
-    create_no_data_figure,
 )
 
 
@@ -84,9 +84,9 @@ class TestNetworkGraph(unittest.TestCase):
         assert stats["unique_files"] == 3
         assert stats["nodes_after_filtering"] > 0
 
-    def test_create_no_data_figure(self):
-        """Test that no data figure is created correctly."""
-        fig = create_no_data_figure(message="Test message", title="Test Title")
+    def test_create_empty_figure(self):
+        """Test that empty figure is created correctly."""
+        fig = create_empty_figure(message="Test message", title="Test Title")
         assert fig is not None
         assert "Test Title" in fig.layout.title.text
 

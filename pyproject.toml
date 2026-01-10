@@ -56,6 +56,14 @@ dev = [
     "ruff>=0.14.2",
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# Exclude mutation testing directory to avoid conftest conflicts
+norecursedirs = ["mutants", ".git", ".pytest_cache", "__pycache__", "*.egg-info"]
+
 [tool.mutmut]
 paths_to_mutate = ["algorithms/", "pages/", "visualization/", "utils/"]
 also_copy = ["data.py", "config.py"]

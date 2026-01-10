@@ -6,6 +6,8 @@ Provides visualization functions for word frequency data from commit messages.
 
 import plotly.graph_objects as go
 
+from visualization.common import create_empty_figure
+
 
 def create_word_frequency_treemap(
     word_counts: dict[str, int],
@@ -23,22 +25,9 @@ def create_word_frequency_treemap(
         A Plotly figure object containing the treemap
     """
     if not word_counts:
-        fig = go.Figure()
-        fig.add_annotation(
-            text="No word frequency data available",
-            xref="paper",
-            yref="paper",
-            x=0.5,
-            y=0.5,
-            showarrow=False,
-            font=dict(size=20),
+        return create_empty_figure(
+            message="No word frequency data available", title=title
         )
-        fig.update_layout(
-            title=f"{title} - No Data",
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        )
-        return fig
 
     # Sort by frequency and take top N
     sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:top_n]

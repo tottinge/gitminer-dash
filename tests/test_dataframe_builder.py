@@ -5,7 +5,7 @@ Unit and regression tests for DataFrame builder.
 import unittest
 from datetime import datetime, timezone
 
-from algorithms.chain_models import TimelineRow
+from algorithms.chain_models import TIMELINE_COLUMNS, TimelineRow
 from algorithms.dataframe_builder import create_timeline_dataframe
 
 
@@ -17,16 +17,7 @@ class TestCreateTimelineDataFrame(unittest.TestCase):
         df = create_timeline_dataframe([])
 
         assert len(df) == 0
-        assert list(df.columns) == [
-            "first",
-            "last",
-            "elevation",
-            "commit_counts",
-            "head",
-            "tail",
-            "duration",
-            "density",
-        ]
+        assert list(df.columns) == TIMELINE_COLUMNS
 
     def test_single_row(self):
         """Test DataFrame creation from a single row."""
@@ -97,17 +88,7 @@ class TestCreateTimelineDataFrame(unittest.TestCase):
 
         df = create_timeline_dataframe([row])
 
-        expected_columns = [
-            "first",
-            "last",
-            "elevation",
-            "commit_counts",
-            "head",
-            "tail",
-            "duration",
-            "density",
-        ]
-        assert list(df.columns) == expected_columns
+        assert list(df.columns) == TIMELINE_COLUMNS
 
     def test_datetime_column_types(self):
         """Test that datetime columns have correct dtype."""

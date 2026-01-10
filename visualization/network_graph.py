@@ -23,6 +23,7 @@ from algorithms.graph_statistics import (
     filter_low_degree_nodes,
 )
 from utils.git import ensure_list
+from visualization.common import create_empty_figure
 
 
 def calculate_node_size(commit_count: int, degree: int) -> float:
@@ -116,35 +117,6 @@ def create_file_affinity_network(
     return G, communities, stats
 
 
-def create_no_data_figure(
-    message: str = "No data available", title: str = "File Affinity Network"
-) -> go.Figure:
-    """
-    Create a Plotly figure with a 'no data' message.
-
-    Args:
-        message: Message to display
-        title: Title for the figure
-
-    Returns:
-        A Plotly figure object with the message
-    """
-    fig = go.Figure()
-    fig.add_annotation(
-        text=message,
-        xref="paper",
-        yref="paper",
-        x=0.5,
-        y=0.5,
-        showarrow=False,
-        font=dict(size=20),
-    )
-    fig.update_layout(
-        title=f"{title} - No Data",
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-    )
-    return fig
 
 
 @lru_cache(maxsize=32)
@@ -187,7 +159,7 @@ def create_network_visualization(
         A Plotly figure object
     """
     if len(G.nodes()) == 0:
-        return create_no_data_figure(
+        return create_empty_figure(
             message="No data available for the selected time period", title=title
         )
 

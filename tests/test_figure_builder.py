@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from pandas import DataFrame
 
+from algorithms.chain_models import TIMELINE_COLUMNS
 from algorithms.figure_builder import create_timeline_figure
 
 
@@ -15,18 +16,7 @@ class TestCreateTimelineFigure(unittest.TestCase):
 
     def test_empty_dataframe(self):
         """Test figure creation from empty DataFrame."""
-        df = DataFrame(
-            columns=[
-                "first",
-                "last",
-                "elevation",
-                "commit_counts",
-                "head",
-                "tail",
-                "duration",
-                "density",
-            ]
-        )
+        df = DataFrame(columns=TIMELINE_COLUMNS)
 
         figure = create_timeline_figure(df)
 

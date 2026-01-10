@@ -7,7 +7,7 @@ into properly-typed pandas DataFrames for visualization.
 
 from pandas import DataFrame
 
-from algorithms.chain_models import TimelineRow
+from algorithms.chain_models import TIMELINE_COLUMNS, TimelineRow
 
 
 def create_timeline_dataframe(timeline_rows: list[TimelineRow]) -> DataFrame:
@@ -52,19 +52,7 @@ def create_timeline_dataframe(timeline_rows: list[TimelineRow]) -> DataFrame:
     ]
 
     # Create DataFrame
-    df = DataFrame(
-        rows,
-        columns=[
-            "first",
-            "last",
-            "elevation",
-            "commit_counts",
-            "head",
-            "tail",
-            "duration",
-            "density",
-        ],
-    )
+    df = DataFrame(rows, columns=TIMELINE_COLUMNS)
 
     # Convert datetime columns to pandas datetime type
     # This prevents "Can only use .dt accessor with datetimelike values" errors
