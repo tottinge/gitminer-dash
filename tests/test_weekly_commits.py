@@ -4,6 +4,7 @@ Unit tests for the weekly commits module.
 
 import unittest
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 from algorithms.weekly_commits import (
@@ -11,6 +12,7 @@ from algorithms.weekly_commits import (
     extract_commit_details,
     get_week_ending,
 )
+from visualization.weekly_commits import create_weekly_commits_figure
 
 
 class TestGetWeekEnding(unittest.TestCase):
@@ -188,6 +190,82 @@ class TestExtractCommitDetails(unittest.TestCase):
         assert result["lines_added"] == 0
         assert result["lines_removed"] == 0
         assert result["lines_modified"] == 0
+
+
+class TestCreateWeeklyCommitsFigure(unittest.TestCase):
+    """Tests for the weekly commits visualization figure builder."""
+
+    def _make_commit(self, summary: str, committer: str, dt: datetime) -> SimpleNamespace:
+        return SimpleNamespace(
+            summary=summary,
+            committer=SimpleNamespace(name=committer),
+            committed_datetime=dt,
+        )
+
+    def test_basic_figure_structure_and_stats(self):
+        """Figure uses all weeks on x-axis and produces matching stats HTML."""
+        week1 = datetime(2025, 11, 2, 23, 59, 59)
+        week2 = datetime(2025, 11, 9, 23, 59, 59)
+
+        # Use a long summary to verify truncation and presence in hover text
+        long_summary = "X" * 60
+        c1 = self._make_commit(long_summary, "Alice", datetime(2025, 10, 27, 10, 0, 0))
+        c2 = self._make_commit("Second commit", "Bob", datetime(2025, 10, 28, 11, 0, 0))
+        c3 = self._make_commit("Third commit", "Carol", datetime(2025, 11, 3, 9, 0, 0))
+
+        weeks = [
+            {"week_ending": week1, "commits": [c1, c2], "count": 2},
+            {"week_ending": week2, "commits": [c3], "count": 1},
+        ]
+
+        weekly_data = {
+            "weeks": weeks,
+            "min_commits": 1,
+            "max_commits": 2,
+            "avg_commits": 1.5,
+        }
+
+        fig, stats_html = create_weekly_commits_figure(weekly_data)
+
+        # X labels should be derived from week_ending in order and used as category array
+        expected_labels = [week1.strftime("%y-%m-%d"), week2.strftime("%y-%m-%d")]
+        assert fig.layout.barmode == "stack"
+        assert fig.layout.xaxis.title.text == "Week Ending"
+        assert fig.layout.yaxis.title.text == "Number of Commits"
+        assert list(fig.layout.xaxis.categoryarray) == expected_labels
+
+        # Base trace plus one trace per commit position (max 2 here)
+        assert len(fig.data) == 3
+
+        base = fig.data[0]
+        assert list(base.x) == expected_labels
+        assert list(base.y) == [0, 0]
+        assert base.name == "base"
+        assert base.showlegend is False
+        assert base.opacity == 0
+
+        # First commit-position trace has data for both weeks
+        first_commit_trace = fig.data[1]
+        assert list(first_commit_trace.x) == expected_labels
+        assert list(first_commit_trace.y) == [1, 1]
+        assert len(first_commit_trace.hovertext) == 2
+        # Hover text should contain truncated summary and committer name
+        hover0 = first_commit_trace.hovertext[0]
+        assert f"<b>{long_summary[:50]}</b><br>" in hover0
+        assert "Alice" in hover0
+
+        # Second commit-position trace has data only for the first week
+        second_commit_trace = fig.data[2]
+        assert list(second_commit_trace.x) == [expected_labels[0]]
+        assert list(second_commit_trace.y) == [1]
+        assert len(second_commit_trace.hovertext) == 1
+
+        # Stats HTML should contain the formatted min/avg/max text
+        spans = stats_html.children
+        texts = [span.children for span in spans]
+        assert "Minimum: 1 commits/week" in texts[0]
+        assert "Average: 1.5 commits/week" in texts[1]
+        assert "Maximum: 2 commits/week" in texts[2]
 
 
 class TestWeeklyCommitsCallback(unittest.TestCase):

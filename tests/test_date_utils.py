@@ -13,7 +13,7 @@ import pytest
 
 from utils import date_utils
 
-MOCK_DATE = datetime(2025, 10, 22, 17, 59)
+MOCK_DATE = datetime(2025, 10, 22, 17, 0)
 
 
 @pytest.fixture
