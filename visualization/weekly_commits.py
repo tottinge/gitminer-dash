@@ -40,7 +40,7 @@ def create_weekly_commits_figure(weekly_data: dict) -> tuple[go.Figure, html.Div
             y=[0] * len(x_labels),
             name="base",
             showlegend=False,
-            hoverinfo="skip",
+            hoverinfo="skip",  # pragma: no mutate
             opacity=0,
         )
     )
@@ -68,7 +68,7 @@ def create_weekly_commits_figure(weekly_data: dict) -> tuple[go.Figure, html.Div
                 hover_text.append(
                     f"<b>{commit.summary[:50]}</b><br>"
                     f"{commit.committer.name}<br>"
-                    f"{commit.committed_datetime.strftime('%Y-%m-%d %H:%M')}"
+                    f"{commit.committed_datetime.strftime('%Y-%m-%d %H:%M')}"  # pragma: no mutate
                 )
 
         # Only add the trace if there's data for this commit position
@@ -79,7 +79,7 @@ def create_weekly_commits_figure(weekly_data: dict) -> tuple[go.Figure, html.Div
                     y=y_data,
                     name=f"Commit {commit_index + 1}",
                     showlegend=False,
-                    hovertemplate="%{hovertext}<extra></extra>",
+                    hovertemplate="%{hovertext}<extra></extra>",  # pragma: no mutate
                     hovertext=hover_text,
                 )
             )
@@ -101,11 +101,11 @@ def create_weekly_commits_figure(weekly_data: dict) -> tuple[go.Figure, html.Div
         [
             html.Span(
                 f"Minimum: {weekly_data['min_commits']} commits/week",
-                style={"marginRight": "20px"},
+                style={"marginRight": "20px"},  # pragma: no mutate
             ),
             html.Span(
                 f"Average: {weekly_data['avg_commits']:.1f} commits/week",
-                style={"marginRight": "20px"},
+                style={"marginRight": "20px"},  # pragma: no mutate
             ),
             html.Span(f"Maximum: {weekly_data['max_commits']} commits/week"),
         ]

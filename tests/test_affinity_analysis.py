@@ -14,8 +14,6 @@ from tests import setup_path
 
 setup_path()
 
-from typing import List
-
 import pytest
 
 import algorithms.affinity_analysis as aa
@@ -70,7 +68,7 @@ def test_calculate_ideal_affinity_calls_calculate_affinities_with_commits(monkey
     ignore the commits argument.
     """
 
-    dummy_commits: List[str] = ["c1", "c2"]
+    dummy_commits: list[str] = ["c1", "c2"]
 
     called = {"value": False}
 
@@ -121,7 +119,7 @@ def test_calculate_ideal_affinity_simple_graph_threshold_and_counts(monkeypatch:
 
     monkeypatch.setattr(aa, "calculate_affinities", fake_calculate_affinities)
 
-    dummy_commits: List[str] = ["c1"]
+    dummy_commits: list[str] = ["c1"]
 
     threshold, node_count, edge_count = aa.calculate_ideal_affinity(
         dummy_commits, target_node_count=15, max_nodes=3

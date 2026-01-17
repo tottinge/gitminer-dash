@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime, timezone
 
 from pandas import DataFrame
+from unittest.mock import patch
 
 from algorithms.chain_models import TIMELINE_COLUMNS
 from algorithms.figure_builder import create_timeline_figure
@@ -242,6 +243,96 @@ class TestCreateTimelineFigure(unittest.TestCase):
         assert hasattr(figure, "data")
         assert hasattr(figure, "layout")
         assert hasattr(figure, "to_json")
+
+    def test_column_mappings_and_label_keys_are_as_expected(self):
+        """Test that px.timeline is called with expected columns and label keys.
+
+        This ensures that we treat label *keys* as part of the public
+        contract, while allowing label *values* (strings) to be cosmetic.
+        """
+        df = DataFrame(
+            [
+                {
+                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "elevation": 1,
+                    "commit_counts": 5,
+                    "head": "abc",
+                    "tail": "def",
+                    "duration": 9,
+                    "density": 1.8,
+                }
+            ]
+        )
+
+        with patch("algorithms.figure_builder.px.timeline") as mock_timeline:
+            sentinel_figure = object()
+            mock_timeline.return_value = sentinel_figure
+
+            result = create_timeline_figure(df)
+
+        # We should return whatever px.timeline returned
+        assert result is sentinel_figure
+
+        _, kwargs = mock_timeline.call_args
+
+        # Column mappings
+        assert kwargs["x_start"] == "first"
+        assert kwargs["x_end"] == "last"
+        assert kwargs["y"] == "elevation"
+        assert kwargs["color"] == "density"
+        assert kwargs["custom_data"] == ["head", "tail"]
+
+        # Label keys are part of the public contract
+        assert set(kwargs["labels"].keys()) == {
+            "elevation",
+            "density",
+            "first",
+            "last",
+            "duration",
+        }
+
+    def test_hover_data_configuration_is_as_expected(self):
+        """Test that px.timeline is called with the expected hover_data mapping.
+
+        This treats which fields appear in the tooltip as part of the
+        public contract for the timeline figure.
+        """
+        df = DataFrame(
+            [
+                {
+                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "elevation": 1,
+                    "commit_counts": 5,
+                    "head": "abc",
+                    "tail": "def",
+                    "duration": 9,
+                    "density": 1.8,
+                }
+            ]
+        )
+
+        with patch("algorithms.figure_builder.px.timeline") as mock_timeline:
+            sentinel_figure = object()
+            mock_timeline.return_value = sentinel_figure
+
+            result = create_timeline_figure(df)
+
+        assert result is sentinel_figure
+
+        _, kwargs = mock_timeline.call_args
+
+        assert kwargs["hover_data"] == {
+            "first": True,
+            "head": True,
+            "last": True,
+            "tail": True,
+            "commit_counts": True,
+            "duration": True,
+            "elevation": False,
+            "density": True,
+        }
 
 
 if __name__ == "__main__":

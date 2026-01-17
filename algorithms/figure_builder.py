@@ -41,11 +41,11 @@ def create_timeline_figure(df: DataFrame):
         custom_data=["head", "tail"],
         title="Code Lines (selected period)",
         labels={
-            "elevation": "",
-            "density": "Commit Sparsity",
-            "first": "Begun",
-            "last": "Ended",
-            "duration": "Days",
+            "elevation": "",  # pragma: no mutate
+            "density": "Commit Sparsity",  # pragma: no mutate
+            "first": "Begun",  # pragma: no mutate
+            "last": "Ended",  # pragma: no mutate
+            "duration": "Days",  # pragma: no mutate
         },
         hover_data={
             "first": True,

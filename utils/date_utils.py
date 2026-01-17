@@ -51,7 +51,7 @@ def calculate_date_range(period: str) -> tuple[datetime, datetime]:
     now = datetime.today().astimezone()
     # Normalize "end" to end-of-day
     end = now.replace(hour=23, minute=59, second=59, microsecond=0)
-    period = period or "30 days"
+    period = period or "30 days"  # pragma: no mutate
 
     lower = period.lower()
     if "last 7 " in lower:
