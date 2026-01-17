@@ -169,10 +169,9 @@ def test_file_changes_over_period_passes_each_sha_to_lines_changed(mock_repo):
     with patch(
         "algorithms.file_changes._commits_touching_file",
         return_value=_SHAS,
-    ):
-        with patch("algorithms.file_changes._lines_changed_in_commit") as mock_lines:
-            mock_lines.return_value = 10
-            file_changes_over_period("file1.py", repo=mock_repo)
+    ), patch("algorithms.file_changes._lines_changed_in_commit") as mock_lines:
+        mock_lines.return_value = 10
+        file_changes_over_period("file1.py", repo=mock_repo)
 
     called_shas = [call.args[1] for call in mock_lines.call_args_list]
     assert called_shas == _SHAS
@@ -183,10 +182,9 @@ def test_file_changes_over_period_passes_correct_args_to_blob_size(mock_repo):
     with patch(
         "algorithms.file_changes._commits_touching_file",
         return_value=_SHAS,
-    ):
-        with patch("algorithms.file_changes._blob_size_at_commit") as mock_blob:
-            mock_blob.return_value = 1000
-            file_changes_over_period("file1.py", repo=mock_repo)
+    ), patch("algorithms.file_changes._blob_size_at_commit") as mock_blob:
+        mock_blob.return_value = 1000
+        file_changes_over_period("file1.py", repo=mock_repo)
 
     calls = mock_blob.call_args_list
     assert len(calls) == 2
