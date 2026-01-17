@@ -10,6 +10,7 @@ from tests import setup_path
 setup_path()
 import os
 import sys
+from unittest.mock import patch
 
 from algorithms.affinity_analysis import calculate_ideal_affinity
 from tests.conftest import TEST_DATA_DIR, create_mock_commit, load_commits_json
@@ -35,10 +36,17 @@ def test_calculate_ideal_affinity_with_real_data():
 
 
 def test_calculate_ideal_affinity_with_edge_cases():
-    """Test the calculate_ideal_affinity function with edge cases."""
-    (ideal_affinity, node_count, edge_count) = calculate_ideal_affinity(
+    """Test the calculate_ideal_affinity function with edge cases and defaults."""
+    # When no commits are provided, we should get the documented default values.
+    ideal_affinity, node_count, edge_count = calculate_ideal_affinity(
         [], target_node_count=15, max_nodes=50
     )
+    assert ideal_affinity == 0.2
+    assert node_count == 0
+    assert edge_count == 0
+
+    # When there are commits but no relevant affinities, we should also fall back
+    # to the same default tuple.
     single_commit = [
         {
             "hash": "123456",
@@ -49,9 +57,23 @@ def test_calculate_ideal_affinity_with_edge_cases():
         }
     ]
     mock_commits = [create_mock_commit(commit) for commit in single_commit]
-    (ideal_affinity, node_count, edge_count) = calculate_ideal_affinity(
-        mock_commits, target_node_count=15, max_nodes=50
-    )
+
+    with patch(
+        "algorithms.affinity_analysis.calculate_affinities", return_value={}
+    ), patch(
+        "algorithms.affinity_analysis.get_top_files_and_affinities",
+        return_value=(set(), []),
+    ):
+        ideal_affinity, node_count, edge_count = calculate_ideal_affinity(
+            mock_commits, target_node_count=15, max_nodes=50
+        )
+
+    assert ideal_affinity == 0.2
+    assert node_count == 0
+    assert edge_count == 0
+
+    # Sanity check: when there *are* affinities, we should not crash. The
+    # specific values depend on the real data and are covered in other tests.
     no_pairs_commits = [
         {
             "hash": "123456",
@@ -69,9 +91,52 @@ def test_calculate_ideal_affinity_with_edge_cases():
         },
     ]
     mock_commits = [create_mock_commit(commit) for commit in no_pairs_commits]
-    (ideal_affinity, node_count, edge_count) = calculate_ideal_affinity(
+    ideal_affinity, node_count, edge_count = calculate_ideal_affinity(
         mock_commits, target_node_count=15, max_nodes=50
     )
+    assert isinstance(ideal_affinity, float)
+    assert isinstance(node_count, int)
+    assert isinstance(edge_count, int)
+
+
+def test_calculate_ideal_affinity_parameter_defaults():
+    """Default parameter values should be stable and explicit.
+
+    Rather than introspecting ``__defaults__`` directly (which can be affected by
+    wrappers used by tooling such as mutation-test runners), verify behaviour:
+    calling the function with no explicit tuning arguments should be equivalent
+    to calling it with the documented defaults.
+    """
+    base_commit = {
+        "hash": "123456",
+        "author": "Test Author",
+        "date": "2025-10-23T13:53:00",
+        "message": "Test commit",
+        "files": ["file1.py", "file2.py"],
+    }
+    mock_commits = [create_mock_commit(base_commit)]
+
+    # Patch heavy internals so we can focus purely on how the parameters are
+    # propagated into the implementation.
+    with patch(
+        "algorithms.affinity_analysis.calculate_affinities", return_value={}
+    ), patch(
+        "algorithms.affinity_analysis.get_top_files_and_affinities",
+        return_value=(set(), []),
+    ) as mock_get:
+        # First call relies on the function's default values.
+        calculate_ideal_affinity(mock_commits)
+        # Second call supplies the documented defaults explicitly.
+        calculate_ideal_affinity(
+            mock_commits, target_node_count=15, max_nodes=50
+        )
+
+    # ``get_top_files_and_affinities`` should have been called twice with the
+    # same ``max_nodes`` value, and that value should be 50.
+    assert mock_get.call_count == 2
+    first_call_args = mock_get.call_args_list[0][0]
+    second_call_args = mock_get.call_args_list[1][0]
+    assert first_call_args[2] == second_call_args[2] == 50
 
 
 def test_calculate_ideal_affinity_with_synthetic_data():

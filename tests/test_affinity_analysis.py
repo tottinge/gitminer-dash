@@ -47,8 +47,8 @@ def test_get_top_files_by_affinity_ranks_by_total_score_not_name() -> None:
     """
 
     affinities = {
-        ("aa.py", "zz.py"): 0.1,
-        ("bb.py", "zz.py"): 0.9,
+        ("qq.py", "mm.py"): 0.1,
+        ("aa.py", "mm.py"): 0.9,
     }
 
     # Totals:
@@ -57,8 +57,8 @@ def test_get_top_files_by_affinity_ranks_by_total_score_not_name() -> None:
     #   zz.py: 1.0
     top = aa.get_top_files_by_affinity(affinities, max_nodes=2)
 
-    # The top files by score should be zz.py and bb.py, not e.g. aa.py
-    assert top == {"zz.py", "bb.py"}
+    # The top files should be ordered by score, not name
+    assert top == {"mm.py", "aa.py"}
 
 
 def test_calculate_ideal_affinity_calls_calculate_affinities_with_commits(
