@@ -1,7 +1,7 @@
 """Tests for `algorithms/file_changes.py`."""
 
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -141,6 +141,126 @@ def test_files_changes_over_period_empty_list(mock_repo):
         repo=mock_repo,
     )
     assert len(results) == 0
+
+
+def test_file_changes_over_period_uses_default_window_when_start_end_none(monkeypatch, mock_repo):
+    """When start/end are None, use a 1-year window ending at now()."""
+    fixed_now = datetime(2025, 1, 1, 12, 0, 0)
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):  # type: ignore[override]
+            return fixed_now if tz is None else fixed_now.astimezone(tz)
+
+    # Patch datetime used in the module under test
+    monkeypatch.setattr("algorithms.file_changes.datetime", FixedDateTime)
+
+    with patch("algorithms.file_changes._commits_touching_file") as mock_commits:
+        file_changes_over_period("file1.py", repo=mock_repo)
+
+    assert mock_commits.call_count == 1
+    _repo, _target_file, start, end = mock_commits.call_args[0]
+    assert start == fixed_now - timedelta(days=365)
+    assert end == fixed_now
+
+
+def test_file_changes_over_period_passes_each_sha_to_lines_changed(mock_repo):
+    """Each SHA returned by _commits_touching_file must be passed to the helper."""
+    with patch(
+        "algorithms.file_changes._commits_touching_file",
+        return_value=_SHAS,
+    ):
+        with patch("algorithms.file_changes._lines_changed_in_commit") as mock_lines:
+            mock_lines.return_value = 10
+            file_changes_over_period("file1.py", repo=mock_repo)
+
+    called_shas = [call.args[1] for call in mock_lines.call_args_list]
+    assert called_shas == _SHAS
+
+
+def test_file_changes_over_period_passes_correct_args_to_blob_size(mock_repo):
+    """_blob_size_at_commit must be called with (repo, sha, target_file)."""
+    with patch(
+        "algorithms.file_changes._commits_touching_file",
+        return_value=_SHAS,
+    ):
+        with patch("algorithms.file_changes._blob_size_at_commit") as mock_blob:
+            mock_blob.return_value = 1000
+            file_changes_over_period("file1.py", repo=mock_repo)
+
+    calls = mock_blob.call_args_list
+    assert len(calls) == 2
+
+    (repo1, oldest_sha, path1), _ = calls[0]
+    (repo2, newest_sha, path2), _ = calls[1]
+
+    assert repo1 is mock_repo
+    assert repo2 is mock_repo
+    assert (oldest_sha, newest_sha) == (_SHAS[-1], _SHAS[0])
+    assert path1 == path2 == "file1.py"
+
+
+def test_file_changes_over_period_no_lines_changed_keeps_avg_at_zero(mock_repo):
+    """If numstat output is empty, avg_changes should be 0.0, not 1.0."""
+
+    def no_changes_show_side_effect(_sha: str, *args: str) -> str:
+        return ""  # no numstat lines at all
+
+    mock_repo.git.show.side_effect = no_changes_show_side_effect
+
+    commits, avg_changes, total_change, percent_change = file_changes_over_period(
+        "file1.py",
+        start=datetime.now() - timedelta(days=30),
+        end=datetime.now(),
+        repo=mock_repo,
+    )
+
+    assert commits == len(_SHAS)
+    assert avg_changes == 0.0
+
+
+def test_file_changes_over_period_zero_original_size_has_zero_percent_change(mock_repo):
+    """When original size is 0, percent_change must be 0.0 (no division)."""
+
+    def zero_size_cat_file(_flag: str, spec: str) -> str:
+        sha, _ = spec.split(":", 1)
+        if sha == _SHAS[-1]:  # oldest
+            return "0"
+        return "100"
+
+    mock_repo.git.cat_file.side_effect = zero_size_cat_file
+
+    _, _, _, percent_change = file_changes_over_period(
+        "file1.py",
+        start=datetime.now() - timedelta(days=30),
+        end=datetime.now(),
+        repo=mock_repo,
+    )
+
+    assert percent_change == 0.0
+
+
+def test_file_changes_over_period_small_original_size_computes_percent(mock_repo):
+    """When original size is 1, percent_change should still be computed."""
+
+    def tiny_sizes_cat_file(_flag: str, spec: str) -> str:
+        sha, _ = spec.split(":", 1)
+        if sha == _SHAS[-1]:  # oldest
+            return "1"
+        if sha == _SHAS[0]:  # newest
+            return "2"
+        return "1"
+
+    mock_repo.git.cat_file.side_effect = tiny_sizes_cat_file
+
+    _, _, _, percent_change = file_changes_over_period(
+        "file1.py",
+        start=datetime.now() - timedelta(days=30),
+        end=datetime.now(),
+        repo=mock_repo,
+    )
+
+    assert percent_change == 100.0
 
 
 if __name__ == "__main__":

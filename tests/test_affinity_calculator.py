@@ -27,6 +27,21 @@ def test_single_file_commits_ignored():
     assert len(affinities) == 0
 
 
+def test_single_file_commit_does_not_stop_later_commits():
+    """Single-file commits must not prevent later multi-file commits from counting."""
+    single_file_commit = Mock()
+    single_file_commit.stats.files = {"a.py": {}}
+
+    multi_file_commit = Mock()
+    multi_file_commit.stats.files = {"a.py": {}, "b.py": {}}
+
+    affinities = calculate_affinities([single_file_commit, multi_file_commit])
+
+    # The single-file commit should be ignored, but the multi-file commit
+    # must still contribute its affinity.
+    assert affinities[("a.py", "b.py")] == 0.5
+
+
 def test_two_file_commit():
     """Test affinity calculation for a commit with two files."""
     commit = Mock()
