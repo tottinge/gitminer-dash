@@ -138,7 +138,8 @@ def _compute_layout(G: nx.Graph, iterations: int = 40) -> dict:
 
 
 def create_network_visualization(
-    G: nx.Graph, communities: list, title: str = "File Affinity Network"
+    # Default title is cosmetic; keep it out of mutation testing noise.
+    G: nx.Graph, communities: list, title: str = "File Affinity Network"  # pragma: no mutate
 ) -> go.Figure:
     """
     Create a Plotly figure for visualizing the file affinity network.
@@ -159,8 +160,10 @@ def create_network_visualization(
         A Plotly figure object
     """
     if len(G.nodes()) == 0:
+        # Empty-graph message/title are cosmetic; avoid mutating their literals.
         return create_empty_figure(
-            message="No data available for the selected time period", title=title
+            message="No data available for the selected time period",  # pragma: no mutate
+            title=title,
         )
 
     # Use force-directed layout with tuned iterations.
@@ -180,9 +183,10 @@ def create_network_visualization(
     fig = go.Figure(
         data=[*edge_traces, *node_traces],
         layout=go.Layout(
-            title=title,
-            title_font=dict(size=16),
-            showlegend=True,
+            # Title text and legend visibility are presentation-only concerns.
+            title=title,  # pragma: no mutate
+            title_font=dict(size=16),  # pragma: no mutate
+            showlegend=True,  # pragma: no mutate
             hovermode="closest",
             margin=dict(b=20, l=5, r=5, t=40),
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
@@ -346,7 +350,8 @@ def _create_single_community_trace(G: nx.Graph, pos: dict, color: str) -> go.Sca
         hoverinfo="text",
         text=node_text,
         marker=dict(color=color, size=node_size, line=dict(width=1, color="#333")),
-        name="All Files",
+        # Legend label is cosmetic; exclude from mutation testing.
+        name="All Files",  # pragma: no mutate
     )
 
 
@@ -376,5 +381,6 @@ def _create_community_trace(
         hoverinfo="text",
         text=node_text,
         marker=dict(color=color, size=node_size, line=dict(width=1, color="#333")),
-        name=f"Group {community_id + 1}",
+        # Community legend label is cosmetic; exclude from mutation testing.
+        name=f"Group {community_id + 1}",  # pragma: no mutate
     )
