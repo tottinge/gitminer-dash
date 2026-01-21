@@ -372,6 +372,79 @@ class TestNetworkGraph(unittest.TestCase):
 
         assert set(zip(xs, ys, strict=True)) == {(0.0, 0.0), (1.0, 2.0)}
 
+    def test_create_file_affinity_network_with_large_synthetic_dataset(self):
+        """Larger synthetic dataset should produce a non-trivial but bounded graph.
+
+        This is a higher-level integration test that exercises the real
+        calculate_affinities path over multiple file groups with different
+        co-change densities. It is intentionally less brittle: we assert
+        structural properties of the resulting graph rather than exact
+        counts, so future tuning of the affinity algorithm is allowed
+        as long as the overall shape remains sane.
+        """
+        commits: list[Mock] = []
+
+        # Group 1: dense cluster of three files that almost always change together.
+        for _ in range(5):
+            c = Mock()
+            c.stats = Mock()
+            c.stats.files = {
+                "group1_file1.py": {},
+                "group1_file2.py": {},
+                "group1_file3.py": {},
+            }
+            commits.append(c)
+
+        # Group 2: medium-density cluster with varying pairs/triples.
+        for i in range(10):
+            files = ["group2_file1.py"]
+            if i % 2 == 0:
+                files.append("group2_file2.py")
+            if i % 3 == 0:
+                files.append("group2_file3.py")
+
+            c = Mock()
+            c.stats = Mock()
+            c.stats.files = {name: {} for name in files}
+            commits.append(c)
+
+        # Group 3: mostly single-file commits with occasional co-changes.
+        for i in range(20):
+            files = ["group3_file1.py"]
+            if i % 10 == 0:
+                files.append("group3_file2.py")
+            if i % 15 == 0:
+                files.append("group3_file3.py")
+
+            c = Mock()
+            c.stats = Mock()
+            c.stats.files = {name: {} for name in files}
+            commits.append(c)
+
+        G, communities, stats = create_file_affinity_network(
+            commits,
+            min_affinity=0.2,
+            max_nodes=50,
+        )
+
+        # Basic sanity: graph is non-empty but respects max_nodes.
+        assert len(G.nodes()) >= 5
+        assert len(G.nodes()) <= 50
+        assert len(G.edges()) >= 1
+
+        # Ensure that each synthetic group contributed at least one node.
+        assert "group1_file1.py" in G.nodes
+        assert "group2_file1.py" in G.nodes
+        assert "group3_file1.py" in G.nodes
+
+        # The stats dict should remain internally consistent with the graph.
+        assert stats["nodes_after_filtering"] == len(G.nodes())
+        assert stats["edges_after_filtering"] == len(G.edges())
+
+        # We expect at least one multi-node connected component.
+        components = list(nx.connected_components(G))
+        assert any(len(component) > 1 for component in components)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -8,8 +8,37 @@ weekly commit statistics.
 from collections import defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timedelta
+from typing import Any, TypedDict
 
 from git import Commit
+
+
+class WeekSummary(TypedDict):
+    """Statistics for a single calendar week of commits."""
+
+    week_ending: datetime
+    commits: list[Commit]
+    count: int
+
+
+class WeeklyCommitsResult(TypedDict):
+    """Typed result structure for weekly commits aggregation."""
+
+    weeks: list[WeekSummary]
+    min_commits: int
+    max_commits: int
+    avg_commits: float
+
+
+class CommitDetails(TypedDict):
+    """Typed dictionary for details extracted from a single commit."""
+
+    date: str
+    committer: str
+    description: str
+    lines_added: int
+    lines_removed: int
+    lines_modified: int
 
 
 def get_week_ending(dt: datetime) -> datetime:
@@ -41,7 +70,7 @@ def _normalize_datetime(dt: datetime) -> datetime:
 
 def calculate_weekly_commits(
     commits_data: Iterable[Commit], begin: datetime, end: datetime
-) -> dict[str, any]:
+) -> WeeklyCommitsResult:
     """
     Group commits by week and calculate statistics.
 
@@ -114,7 +143,7 @@ def calculate_weekly_commits(
     }
 
 
-def extract_commit_details(commit: Commit) -> dict[str, any]:
+def extract_commit_details(commit: Commit) -> CommitDetails:
     """
     Extract details from a commit for display.
 

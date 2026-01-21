@@ -9,10 +9,9 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
   - `calculate_affinities()` - Main entry point, returns dict of (file1, file2) → affinity score
   - `_calculate_affinities_from_commits()` - Inner loop logic, reusable for custom affinity calculations
   
-- `affinity_analysis.py` - Advanced analysis and threshold optimization
+- `affinity_analysis.py` - Advanced analysis helpers built on affinities
   - `get_file_total_affinities()` - Aggregate affinity scores per file
   - `get_top_files_by_affinity()` - Filter to N most connected files
-  - `calculate_ideal_affinity()` - Auto-tune threshold for target node count
 
 ## Commit Chain Analysis
 **Purpose**: Analyze sequences of related commits and their temporal patterns
