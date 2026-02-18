@@ -26,22 +26,36 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual([], self.create_affinity_list([]))
 
     def test_single_pairing(self):
-        result = self.create_affinity_list([commit_with("a", "b")])
+        with patch(
+            "pages.strongest_pairings.calculate_affinities",
+            return_value={("a", "b"): 0.42},
+        ):
+            result = self.create_affinity_list([commit_with("a", "b")])
+
         self.assertEqual(1, len(result))
         (affinity_calculated, files) = parse_record(result[0])
-        self.assertEqual(0.5, affinity_calculated)
+        self.assertEqual(0.42, affinity_calculated)
         self.assertSequenceEqual(files, ["a", "b"])
 
     def test_one_common_two_leaf_nodes(self):
-        result = self.create_affinity_list(
-            [commit_with("a", "b"), commit_with("a", "c")]
-        )
+        with patch(
+            "pages.strongest_pairings.calculate_affinities",
+            return_value={("a", "b"): 0.2, ("a", "c"): 0.1},
+        ):
+            result = self.create_affinity_list(
+                [commit_with("a", "b"), commit_with("a", "c")]
+            )
+
         self.assertEqual(2, len(result))
-        for record in result:
-            with self.subTest(record):
-                (affinity_calculated, files) = parse_record(record)
-                self.assertEqual(affinity_calculated, 0.5)
-                self.assertIn("a", files)
+
+        # Must be sorted by affinity descending
+        (affinity_calculated, files) = parse_record(result[0])
+        self.assertEqual(0.2, affinity_calculated)
+        self.assertIn("a", files)
+
+        (affinity_calculated, files) = parse_record(result[1])
+        self.assertEqual(0.1, affinity_calculated)
+        self.assertIn("a", files)
 
     def test_with_three_files_per_commit(self):
         result = self.create_affinity_list(

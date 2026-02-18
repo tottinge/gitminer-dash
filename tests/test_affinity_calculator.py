@@ -39,7 +39,7 @@ def test_single_file_commit_does_not_stop_later_commits():
 
     # The single-file commit should be ignored, but the multi-file commit
     # must still contribute its affinity.
-    assert affinities[("a.py", "b.py")] == 0.5
+    assert affinities[("a.py", "b.py")] == 1.0
 
 
 def test_two_file_commit():
@@ -48,7 +48,7 @@ def test_two_file_commit():
     commit.stats.files = {"a.py": {}, "b.py": {}}
     affinities = calculate_affinities([commit])
     assert len(affinities) == 1
-    assert affinities["a.py", "b.py"] == 0.5
+    assert affinities["a.py", "b.py"] == 1.0
 
 
 def test_three_file_commit():
@@ -69,7 +69,7 @@ def test_multiple_commits_accumulate():
     commit2 = Mock()
     commit2.stats.files = {"a.py": {}, "b.py": {}}
     affinities = calculate_affinities([commit1, commit2])
-    assert affinities["a.py", "b.py"] == 1.0
+    assert affinities["a.py", "b.py"] == 2.0
 
 
 def test_file_pair_ordering():
@@ -88,7 +88,7 @@ def test_mixed_file_counts():
     commit2 = Mock()
     commit2.stats.files = {"b.py": {}, "c.py": {}, "d.py": {}}
     affinities = calculate_affinities([commit1, commit2])
-    assert affinities["a.py", "b.py"] == 0.5
+    assert affinities["a.py", "b.py"] == 1.0
     assert affinities["b.py", "c.py"] == 1 / 3
     assert affinities["b.py", "d.py"] == 1 / 3
     assert affinities["c.py", "d.py"] == 1 / 3
@@ -120,9 +120,22 @@ def test_real_world_scenario():
     commit3 = Mock()
     commit3.stats.files = {"config.py": {}, "main.py": {}, "utils.py": {}}
     affinities = calculate_affinities([commit1, commit2, commit3])
-    assert abs(affinities["config.py", "main.py"] - (0.5 + 1 / 3)) < 0.001
-    assert abs(affinities["config.py", "utils.py"] - (0.5 + 1 / 3)) < 0.001
+    assert abs(affinities["config.py", "main.py"] - (1.0 + 1 / 3)) < 0.001
+    assert abs(affinities["config.py", "utils.py"] - (1.0 + 1 / 3)) < 0.001
     assert abs(affinities["main.py", "utils.py"] - 1 / 3) < 0.001
+
+
+def test_integration_network_graph_uses_calculate_affinities_by_default():
+    """Integration: network graph should use calculate_affinities when not precomputed."""
+    from visualization.network_graph import create_file_affinity_network
+
+    commit = Mock()
+    commit.stats.files = {"a.py": {}, "b.py": {}}
+
+    expected = calculate_affinities([commit])[("a.py", "b.py")]
+
+    (G, communities, stats) = create_file_affinity_network([commit], min_affinity=0.0)
+    assert G.edges["a.py", "b.py"]["weight"] == expected
 
 
 if __name__ == "__main__":

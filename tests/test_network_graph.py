@@ -37,8 +37,10 @@ class TestNetworkGraph(unittest.TestCase):
         """Test that a commit with two files creates one edge."""
         commit = Mock()
         commit.stats.files = {"a.py": {}, "b.py": {}}
+
+        precomputed_affinities = {("a.py", "b.py"): 0.5}
         (G, communities, stats) = create_file_affinity_network(
-            [commit], min_affinity=0.4
+            [commit], min_affinity=0.4, precomputed_affinities=precomputed_affinities
         )
         assert len(G.nodes()) == 2
         assert len(G.edges()) == 1
@@ -48,8 +50,10 @@ class TestNetworkGraph(unittest.TestCase):
         """Test that min_affinity threshold filters edges."""
         commit = Mock()
         commit.stats.files = {"a.py": {}, "b.py": {}}
+
+        precomputed_affinities = {("a.py", "b.py"): 0.8}
         (G, communities, stats) = create_file_affinity_network(
-            [commit], min_affinity=0.9
+            [commit], min_affinity=0.9, precomputed_affinities=precomputed_affinities
         )
         assert len(G.edges()) == 0
 
@@ -57,7 +61,11 @@ class TestNetworkGraph(unittest.TestCase):
         """Test that nodes have correct attributes."""
         commit = Mock()
         commit.stats.files = {"a.py": {}, "b.py": {}}
-        (G, communities, stats) = create_file_affinity_network([commit])
+
+        precomputed_affinities = {("a.py", "b.py"): 0.5}
+        (G, communities, stats) = create_file_affinity_network(
+            [commit], min_affinity=0.0, precomputed_affinities=precomputed_affinities
+        )
         assert "commit_count" in G.nodes["a.py"]
         assert "commit_count" in G.nodes["b.py"]
         assert G.nodes["a.py"]["commit_count"] == 1
@@ -67,10 +75,12 @@ class TestNetworkGraph(unittest.TestCase):
         """Test that edges have correct weight values."""
         commit = Mock()
         commit.stats.files = {"a.py": {}, "b.py": {}}
+
+        precomputed_affinities = {("a.py", "b.py"): 0.42}
         (G, communities, stats) = create_file_affinity_network(
-            [commit], min_affinity=0.1
+            [commit], min_affinity=0.1, precomputed_affinities=precomputed_affinities
         )
-        assert G.edges["a.py", "b.py"]["weight"] == 0.5
+        assert G.edges["a.py", "b.py"]["weight"] == 0.42
 
     def test_stats_tracking(self):
         """Test that statistics are correctly tracked."""
@@ -78,7 +88,11 @@ class TestNetworkGraph(unittest.TestCase):
         commit1.stats.files = {"a.py": {}, "b.py": {}}
         commit2 = Mock()
         commit2.stats.files = {"b.py": {}, "c.py": {}}
-        (G, communities, stats) = create_file_affinity_network([commit1, commit2])
+
+        precomputed_affinities = {("a.py", "b.py"): 0.5, ("b.py", "c.py"): 0.4}
+        (G, communities, stats) = create_file_affinity_network(
+            [commit1, commit2], min_affinity=0.0, precomputed_affinities=precomputed_affinities
+        )
         assert stats["total_commits"] == 2
         assert stats["commits_with_multiple_files"] == 2
         assert stats["unique_files"] == 3
@@ -170,7 +184,11 @@ class TestNetworkGraph(unittest.TestCase):
         """Test visualization with actual graph."""
         commit = Mock()
         commit.stats.files = {"a.py": {}, "b.py": {}}
-        (G, communities, stats) = create_file_affinity_network([commit])
+
+        precomputed_affinities = {("a.py", "b.py"): 0.5}
+        (G, communities, stats) = create_file_affinity_network(
+            [commit], min_affinity=0.0, precomputed_affinities=precomputed_affinities
+        )
         fig = create_network_visualization(G, communities, title="Test Network")
         assert fig is not None
         assert "Test Network" in fig.layout.title.text
