@@ -68,11 +68,13 @@ def mock_repo():
 
 
 def test_file_changes_over_period(mock_repo):
-    (commits, avg_changes, total_change, percent_change) = file_changes_over_period(
-        "file1.py",
-        start=datetime.now() - timedelta(days=30),
-        end=datetime.now(),
-        repo=mock_repo,
+    (commits, avg_changes, total_change, percent_change) = (
+        file_changes_over_period(
+            "file1.py",
+            start=datetime.now() - timedelta(days=30),
+            end=datetime.now(),
+            repo=mock_repo,
+        )
     )
 
     assert commits == 5
@@ -87,11 +89,13 @@ def test_file_changes_over_period(mock_repo):
 
 
 def test_file_changes_over_period_no_commits(mock_repo):
-    (commits, avg_changes, total_change, percent_change) = file_changes_over_period(
-        "nonexistent.py",
-        start=datetime.now() - timedelta(days=30),
-        end=datetime.now(),
-        repo=mock_repo,
+    (commits, avg_changes, total_change, percent_change) = (
+        file_changes_over_period(
+            "nonexistent.py",
+            start=datetime.now() - timedelta(days=30),
+            end=datetime.now(),
+            repo=mock_repo,
+        )
     )
 
     assert commits == 0
@@ -143,7 +147,9 @@ def test_files_changes_over_period_empty_list(mock_repo):
     assert len(results) == 0
 
 
-def test_file_changes_over_period_uses_default_window_when_start_end_none(monkeypatch, mock_repo):
+def test_file_changes_over_period_uses_default_window_when_start_end_none(
+    monkeypatch, mock_repo
+):
     """When start/end are None, use a 1-year window ending at now()."""
     fixed_now = datetime(2025, 1, 1, 12, 0, 0)
 
@@ -155,7 +161,9 @@ def test_file_changes_over_period_uses_default_window_when_start_end_none(monkey
     # Patch datetime used in the module under test
     monkeypatch.setattr("algorithms.file_changes.datetime", FixedDateTime)
 
-    with patch("algorithms.file_changes._commits_touching_file") as mock_commits:
+    with patch(
+        "algorithms.file_changes._commits_touching_file"
+    ) as mock_commits:
         file_changes_over_period("file1.py", repo=mock_repo)
 
     assert mock_commits.call_count == 1
@@ -166,10 +174,13 @@ def test_file_changes_over_period_uses_default_window_when_start_end_none(monkey
 
 def test_file_changes_over_period_passes_each_sha_to_lines_changed(mock_repo):
     """Each SHA returned by _commits_touching_file must be passed to the helper."""
-    with patch(
-        "algorithms.file_changes._commits_touching_file",
-        return_value=_SHAS,
-    ), patch("algorithms.file_changes._lines_changed_in_commit") as mock_lines:
+    with (
+        patch(
+            "algorithms.file_changes._commits_touching_file",
+            return_value=_SHAS,
+        ),
+        patch("algorithms.file_changes._lines_changed_in_commit") as mock_lines,
+    ):
         mock_lines.return_value = 10
         file_changes_over_period("file1.py", repo=mock_repo)
 
@@ -179,10 +190,13 @@ def test_file_changes_over_period_passes_each_sha_to_lines_changed(mock_repo):
 
 def test_file_changes_over_period_passes_correct_args_to_blob_size(mock_repo):
     """_blob_size_at_commit must be called with (repo, sha, target_file)."""
-    with patch(
-        "algorithms.file_changes._commits_touching_file",
-        return_value=_SHAS,
-    ), patch("algorithms.file_changes._blob_size_at_commit") as mock_blob:
+    with (
+        patch(
+            "algorithms.file_changes._commits_touching_file",
+            return_value=_SHAS,
+        ),
+        patch("algorithms.file_changes._blob_size_at_commit") as mock_blob,
+    ):
         mock_blob.return_value = 1000
         file_changes_over_period("file1.py", repo=mock_repo)
 
@@ -206,18 +220,22 @@ def test_file_changes_over_period_no_lines_changed_keeps_avg_at_zero(mock_repo):
 
     mock_repo.git.show.side_effect = no_changes_show_side_effect
 
-    commits, avg_changes, total_change, percent_change = file_changes_over_period(
-        "file1.py",
-        start=datetime.now() - timedelta(days=30),
-        end=datetime.now(),
-        repo=mock_repo,
+    commits, avg_changes, total_change, percent_change = (
+        file_changes_over_period(
+            "file1.py",
+            start=datetime.now() - timedelta(days=30),
+            end=datetime.now(),
+            repo=mock_repo,
+        )
     )
 
     assert commits == len(_SHAS)
     assert avg_changes == 0.0
 
 
-def test_file_changes_over_period_zero_original_size_has_zero_percent_change(mock_repo):
+def test_file_changes_over_period_zero_original_size_has_zero_percent_change(
+    mock_repo,
+):
     """When original size is 0, percent_change must be 0.0 (no division)."""
 
     def zero_size_cat_file(_flag: str, spec: str) -> str:
@@ -238,7 +256,9 @@ def test_file_changes_over_period_zero_original_size_has_zero_percent_change(moc
     assert percent_change == 0.0
 
 
-def test_file_changes_over_period_small_original_size_computes_percent(mock_repo):
+def test_file_changes_over_period_small_original_size_computes_percent(
+    mock_repo,
+):
     """When original size is 1, percent_change should still be computed."""
 
     def tiny_sizes_cat_file(_flag: str, spec: str) -> str:

@@ -5,7 +5,10 @@ import data
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_clamper import clamp_chains_to_period
 from algorithms.chain_layout import calculate_chain_layout
-from algorithms.chain_traversal import commits_to_chain_rows, traverse_linear_chain
+from algorithms.chain_traversal import (
+    commits_to_chain_rows,
+    traverse_linear_chain,
+)
 from algorithms.commit_graph import build_commit_graph
 from algorithms.dataframe_builder import create_timeline_dataframe
 from algorithms.figure_builder import create_timeline_figure
@@ -46,7 +49,10 @@ layout = html.Div(
                                 {"name": "Author", "id": "author"},
                                 {"name": "Message", "id": "message"},
                             ],
-                            style_table={"maxHeight": "400px", "overflowY": "auto"},
+                            style_table={
+                                "maxHeight": "400px",
+                                "overflowY": "auto",
+                            },
                             style_cell={
                                 "textAlign": "left",
                                 "padding": "3px 8px",
@@ -63,7 +69,10 @@ layout = html.Div(
 
 
 @callback(
-    [Output("code-lines-graph", "figure"), Output("id-code-lines-container", "style")],
+    [
+        Output("code-lines-graph", "figure"),
+        Output("id-code-lines-container", "style"),
+    ],
     Input("code-lines-refresh-button", "n_clicks"),
     Input("global-date-range", "data"),
     running=[(Output("code-lines-refresh-button", "disabled"), True, False)],

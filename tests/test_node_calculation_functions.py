@@ -32,9 +32,9 @@ def _get_top_files_and_affinities(commits, affinities, max_nodes):
     for (file1, file2), affinity in affinities.items():
         file_total_affinity[file1] += affinity
         file_total_affinity[file2] += affinity
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
+    top_files = sorted(
+        file_total_affinity.items(), key=lambda x: x[1], reverse=True
+    )[:max_nodes]
     top_file_set = {file for (file, _) in top_files}
     relevant_affinities = [
         affinity
@@ -102,7 +102,8 @@ class TestCreateNodeTooltip:
         """Test tooltip with special characters in filename."""
         result = create_node_tooltip("path/to/file-name_v2.py", 10, 5)
         assert (
-            result == "File: path/to/file-name_v2.py<br>Commits: 10<br>Connections: 5"
+            result
+            == "File: path/to/file-name_v2.py<br>Commits: 10<br>Connections: 5"
         )
 
     def test_long_filename(self):
@@ -250,7 +251,10 @@ class TestGetTopFilesAndAffinities:
     def test_equal_affinity_values(self):
         """Test behavior with equal affinity values."""
         commits = []
-        affinities = {("file1.py", "file2.py"): 0.5, ("file3.py", "file4.py"): 0.5}
+        affinities = {
+            ("file1.py", "file2.py"): 0.5,
+            ("file3.py", "file4.py"): 0.5,
+        }
         (top_files, relevant_affinities) = _get_top_files_and_affinities(
             commits, affinities, max_nodes=2
         )

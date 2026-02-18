@@ -25,7 +25,9 @@ def get_week_ending(dt: datetime) -> datetime:
         A datetime representing the Sunday ending that week (23:59:59)
     """
     days_until_sunday = (6 - dt.weekday()) % 7
-    sunday = dt if days_until_sunday == 0 else dt + timedelta(days=days_until_sunday)
+    sunday = (
+        dt if days_until_sunday == 0 else dt + timedelta(days=days_until_sunday)
+    )
 
     return sunday.replace(hour=23, minute=59, second=59, microsecond=0)
 
@@ -67,7 +69,9 @@ def calculate_weekly_commits(
         week_ending = get_week_ending(commit_date)
         # Normalize the key for consistent lookup
         week_key = (
-            week_ending.replace(tzinfo=None) if week_ending.tzinfo else week_ending
+            week_ending.replace(tzinfo=None)
+            if week_ending.tzinfo
+            else week_ending
         )
         weeks_map[week_key].append(commit)
 

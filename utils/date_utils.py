@@ -126,7 +126,11 @@ def parse_date_range_from_store(store_data) -> tuple[datetime, datetime]:
     else:
         period = DEFAULT_PERIOD
 
-    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
+    if (
+        isinstance(store_data, dict)
+        and "begin" in store_data
+        and "end" in store_data
+    ):
         start = datetime.fromisoformat(store_data["begin"])
         end = datetime.fromisoformat(store_data["end"])
     else:

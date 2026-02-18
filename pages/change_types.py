@@ -33,7 +33,9 @@ def change_series_20day():
 
 layout = html.Div(
     [
-        html.P(id="id-no-data-message", children="No tags found in repository."),
+        html.P(
+            id="id-no-data-message", children="No tags found in repository."
+        ),
         html.Div(
             id="id-graph-container",
             children=[
@@ -41,7 +43,9 @@ layout = html.Div(
                     id="loading-change-types-graph",
                     type="circle",
                     children=[
-                        dcc.Graph(id="id-local_graph", style={"height": "500px"})
+                        dcc.Graph(
+                            id="id-local_graph", style={"height": "500px"}
+                        )
                     ],
                 )
             ],

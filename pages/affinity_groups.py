@@ -108,7 +108,9 @@ layout = html.Div(
                             max=0.5,
                             step=0.01,
                             value=0.2,
-                            marks={i / 100: str(i / 100) for i in range(5, 51, 5)},
+                            marks={
+                                i / 100: str(i / 100) for i in range(5, 51, 5)
+                            },
                         ),
                     ],
                 ),
@@ -118,7 +120,9 @@ layout = html.Div(
             id="loading-file-affinity-graph",
             type="circle",
             children=[
-                dcc.Graph(id="id-file-affinity-graph", style={"height": "600px"})
+                dcc.Graph(
+                    id="id-file-affinity-graph", style={"height": "600px"}
+                )
             ],
         ),
         html.H3("Group Commits"),

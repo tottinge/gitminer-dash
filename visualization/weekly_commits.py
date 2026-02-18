@@ -8,7 +8,9 @@ import plotly.graph_objects as go
 from dash import html
 
 
-def create_weekly_commits_figure(weekly_data: dict) -> tuple[go.Figure, html.Div]:
+def create_weekly_commits_figure(
+    weekly_data: dict,
+) -> tuple[go.Figure, html.Div]:
     """
     Create a Plotly figure for weekly commits visualization.
 

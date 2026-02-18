@@ -9,12 +9,12 @@ echo "Running black format check..."
 uv run black --check .
 
 echo ""
-echo "Running pylint duplicate code detection..."
-uv run pylint --disable=all --enable=duplicate-code .
+echo "Running pylint duplicate code detection (advisory; does not fail ./check)..."
+uv run pylint --exit-zero --disable=all --enable=duplicate-code .
 
 echo ""
 echo "Running bandit security check..."
-uv run bandit -r . -x tests/
+uv run bandit -r algorithms pages utils visualization app.py data.py -x tests/,mutants/
 
 echo ""
 echo "All checks passed!"

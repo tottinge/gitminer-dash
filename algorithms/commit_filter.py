@@ -28,7 +28,9 @@ def get_commits_for_group_files(
             group_files_in_commit = list(group_files_set & modified_files)
 
             if len(group_files_in_commit) >= 2:
-                commits_data.append(_format_commit_data(commit, group_files_in_commit))
+                commits_data.append(
+                    _format_commit_data(commit, group_files_in_commit)
+                )
         except (AttributeError, ValueError):
             # Skip commits that can't be processed (e.g., missing attributes)
             continue
@@ -51,8 +53,9 @@ def _get_modified_files(commit) -> set[str]:
             if hasattr(item, "b_path") and item.b_path:
                 modified_files.add(item.b_path)
     except Exception:  # noqa: S110
-        # Git diff operations can fail for various reasons (repo state, permissions, etc.)
-        pass
+        # Git diff operations can fail for various reasons (repo state, permissions, etc.).
+        # Return whatever we've collected so far (possibly empty) rather than swallowing.
+        return modified_files
 
     return modified_files
 

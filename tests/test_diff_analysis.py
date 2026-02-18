@@ -35,7 +35,9 @@ def test_dataframe_initialized_with_correct_columns_when_empty():
 def test_dataframe_with_single_commit():
     """Test that DataFrame is correctly populated with a single commit."""
     mock_commit = MagicMock()
-    mock_commit.committed_datetime.date.return_value = datetime(2024, 1, 15).date()
+    mock_commit.committed_datetime.date.return_value = datetime(
+        2024, 1, 15
+    ).date()
     mock_commit.stats.total = {"insertions": 10, "deletions": 5}
     commits_data = [mock_commit]
     start = datetime(2024, 1, 1)
@@ -60,10 +62,14 @@ def test_dataframe_with_single_commit():
 def test_dataframe_with_multiple_commits_same_day():
     """Test that DataFrame correctly aggregates multiple commits on the same day."""
     mock_commit1 = MagicMock()
-    mock_commit1.committed_datetime.date.return_value = datetime(2024, 1, 15).date()
+    mock_commit1.committed_datetime.date.return_value = datetime(
+        2024, 1, 15
+    ).date()
     mock_commit1.stats.total = {"insertions": 10, "deletions": 5}
     mock_commit2 = MagicMock()
-    mock_commit2.committed_datetime.date.return_value = datetime(2024, 1, 15).date()
+    mock_commit2.committed_datetime.date.return_value = datetime(
+        2024, 1, 15
+    ).date()
     mock_commit2.stats.total = {"insertions": 20, "deletions": 15}
     commits_data = [mock_commit1, mock_commit2]
     start = datetime(2024, 1, 1)
@@ -83,10 +89,14 @@ def test_dataframe_with_multiple_commits_same_day():
 def test_dataframe_with_commits_different_days():
     """Test that DataFrame correctly handles commits on different days."""
     mock_commit1 = MagicMock()
-    mock_commit1.committed_datetime.date.return_value = datetime(2024, 1, 15).date()
+    mock_commit1.committed_datetime.date.return_value = datetime(
+        2024, 1, 15
+    ).date()
     mock_commit1.stats.total = {"insertions": 10, "deletions": 5}
     mock_commit2 = MagicMock()
-    mock_commit2.committed_datetime.date.return_value = datetime(2024, 1, 16).date()
+    mock_commit2.committed_datetime.date.return_value = datetime(
+        2024, 1, 16
+    ).date()
     mock_commit2.stats.total = {"insertions": 20, "deletions": 25}
     commits_data = [mock_commit1, mock_commit2]
     start = datetime(2024, 1, 1)

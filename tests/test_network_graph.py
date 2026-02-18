@@ -40,7 +40,9 @@ class TestNetworkGraph(unittest.TestCase):
 
         precomputed_affinities = {("a.py", "b.py"): 0.5}
         (G, communities, stats) = create_file_affinity_network(
-            [commit], min_affinity=0.4, precomputed_affinities=precomputed_affinities
+            [commit],
+            min_affinity=0.4,
+            precomputed_affinities=precomputed_affinities,
         )
         assert len(G.nodes()) == 2
         assert len(G.edges()) == 1
@@ -53,7 +55,9 @@ class TestNetworkGraph(unittest.TestCase):
 
         precomputed_affinities = {("a.py", "b.py"): 0.8}
         (G, communities, stats) = create_file_affinity_network(
-            [commit], min_affinity=0.9, precomputed_affinities=precomputed_affinities
+            [commit],
+            min_affinity=0.9,
+            precomputed_affinities=precomputed_affinities,
         )
         assert len(G.edges()) == 0
 
@@ -64,7 +68,9 @@ class TestNetworkGraph(unittest.TestCase):
 
         precomputed_affinities = {("a.py", "b.py"): 0.5}
         (G, communities, stats) = create_file_affinity_network(
-            [commit], min_affinity=0.0, precomputed_affinities=precomputed_affinities
+            [commit],
+            min_affinity=0.0,
+            precomputed_affinities=precomputed_affinities,
         )
         assert "commit_count" in G.nodes["a.py"]
         assert "commit_count" in G.nodes["b.py"]
@@ -78,7 +84,9 @@ class TestNetworkGraph(unittest.TestCase):
 
         precomputed_affinities = {("a.py", "b.py"): 0.42}
         (G, communities, stats) = create_file_affinity_network(
-            [commit], min_affinity=0.1, precomputed_affinities=precomputed_affinities
+            [commit],
+            min_affinity=0.1,
+            precomputed_affinities=precomputed_affinities,
         )
         assert G.edges["a.py", "b.py"]["weight"] == 0.42
 
@@ -91,7 +99,9 @@ class TestNetworkGraph(unittest.TestCase):
 
         precomputed_affinities = {("a.py", "b.py"): 0.5, ("b.py", "c.py"): 0.4}
         (G, communities, stats) = create_file_affinity_network(
-            [commit1, commit2], min_affinity=0.0, precomputed_affinities=precomputed_affinities
+            [commit1, commit2],
+            min_affinity=0.0,
+            precomputed_affinities=precomputed_affinities,
         )
         assert stats["total_commits"] == 2
         assert stats["commits_with_multiple_files"] == 2
@@ -112,27 +122,34 @@ class TestNetworkGraph(unittest.TestCase):
 
         # Control collaborators so we can assert stats precisely while still
         # going through the public function.
-        with patch(
-            "visualization.network_graph.count_files_in_commits",
-            return_value={"a.py": 1, "b.py": 2, "c.py": 2},
-        ), patch(
-            "visualization.network_graph.count_multi_file_commits",
-            return_value=2,
-        ), patch(
-            "visualization.network_graph.get_top_files_by_affinity",
-            return_value={"a.py", "b.py", "c.py"},
-        ), patch(
-            "visualization.network_graph.filter_low_degree_nodes",
-            return_value=1,
-        ), patch(
-            "visualization.network_graph.detect_and_assign_communities",
-            return_value=(
-                ["community-1", "community-2"],
-                {"communities": 2, "avg_community_size": 1.5},
+        with (
+            patch(
+                "visualization.network_graph.count_files_in_commits",
+                return_value={"a.py": 1, "b.py": 2, "c.py": 2},
             ),
-        ), patch(
-            "visualization.network_graph.calculate_graph_statistics",
-            return_value={"avg_node_degree": 1.5, "avg_edge_weight": 0.5},
+            patch(
+                "visualization.network_graph.count_multi_file_commits",
+                return_value=2,
+            ),
+            patch(
+                "visualization.network_graph.get_top_files_by_affinity",
+                return_value={"a.py", "b.py", "c.py"},
+            ),
+            patch(
+                "visualization.network_graph.filter_low_degree_nodes",
+                return_value=1,
+            ),
+            patch(
+                "visualization.network_graph.detect_and_assign_communities",
+                return_value=(
+                    ["community-1", "community-2"],
+                    {"communities": 2, "avg_community_size": 1.5},
+                ),
+            ),
+            patch(
+                "visualization.network_graph.calculate_graph_statistics",
+                return_value={"avg_node_degree": 1.5, "avg_edge_weight": 0.5},
+            ),
         ):
             # Provide explicit affinities so we know exactly which pairs exist.
             precomputed_affinities = {
@@ -187,7 +204,9 @@ class TestNetworkGraph(unittest.TestCase):
 
         precomputed_affinities = {("a.py", "b.py"): 0.5}
         (G, communities, stats) = create_file_affinity_network(
-            [commit], min_affinity=0.0, precomputed_affinities=precomputed_affinities
+            [commit],
+            min_affinity=0.0,
+            precomputed_affinities=precomputed_affinities,
         )
         fig = create_network_visualization(G, communities, title="Test Network")
         assert fig is not None
@@ -219,7 +238,12 @@ class TestNetworkGraph(unittest.TestCase):
         """Graph nodes and edges must be restricted to the top files set."""
         commits = [Mock()]
         commits[0].stats = Mock()
-        commits[0].stats.files = {"a.py": {}, "b.py": {}, "c.py": {}, "d.py": {}}
+        commits[0].stats.files = {
+            "a.py": {},
+            "b.py": {},
+            "c.py": {},
+            "d.py": {},
+        }
 
         affinities = {
             ("a.py", "b.py"): 0.9,
@@ -227,12 +251,15 @@ class TestNetworkGraph(unittest.TestCase):
             ("c.py", "d.py"): 0.7,
         }
 
-        with patch(
-            "visualization.network_graph.calculate_affinities",
-            return_value=affinities,
-        ), patch(
-            "visualization.network_graph.get_top_files_by_affinity",
-            return_value={"a.py", "b.py", "c.py"},
+        with (
+            patch(
+                "visualization.network_graph.calculate_affinities",
+                return_value=affinities,
+            ),
+            patch(
+                "visualization.network_graph.get_top_files_by_affinity",
+                return_value={"a.py", "b.py", "c.py"},
+            ),
         ):
             (G, communities, stats) = create_file_affinity_network(
                 commits, max_nodes=3, min_affinity=0.1
@@ -251,7 +278,9 @@ class TestNetworkGraph(unittest.TestCase):
 
         precomputed = {("a.py", "b.py"): 0.5}
 
-        with patch("visualization.network_graph.calculate_affinities") as mock_calc:
+        with patch(
+            "visualization.network_graph.calculate_affinities"
+        ) as mock_calc:
             (G, communities, stats) = create_file_affinity_network(
                 commits,
                 min_affinity=0.1,
@@ -296,12 +325,16 @@ class TestNetworkGraph(unittest.TestCase):
 
         fig = create_network_visualization(G, communities, title="Nodes Test")
 
-        marker_traces = [t for t in fig.data if "markers" in getattr(t, "mode", "")]
+        marker_traces = [
+            t for t in fig.data if "markers" in getattr(t, "mode", "")
+        ]
         total_nodes_plotted = sum(len(t.x) for t in marker_traces)
 
         assert total_nodes_plotted == len(G.nodes())
 
-    def test_visualization_uses_given_layout_positions_for_edges_and_nodes(self):
+    def test_visualization_uses_given_layout_positions_for_edges_and_nodes(
+        self,
+    ):
         """create_network_visualization must respect layout positions from spring_layout.
 
         We patch the layout to return fixed coordinates and then verify that both
@@ -316,17 +349,24 @@ class TestNetworkGraph(unittest.TestCase):
 
         fixed_pos = {"a.py": (0.0, 0.0), "b.py": (1.0, 2.0)}
 
-        with patch("visualization.network_graph.nx.spring_layout", return_value=fixed_pos):
-            fig = create_network_visualization(G, communities, title="Layout Test")
+        with patch(
+            "visualization.network_graph.nx.spring_layout",
+            return_value=fixed_pos,
+        ):
+            fig = create_network_visualization(
+                G, communities, title="Layout Test"
+            )
 
         # Edges: look for a line trace that connects the two fixed coordinates.
         line_traces = [t for t in fig.data if getattr(t, "mode", "") == "lines"]
         coords = {(tuple(t.x), tuple(t.y)) for t in line_traces}
 
-        assert ( (0.0, 1.0, None), (0.0, 2.0, None) ) in coords
+        assert ((0.0, 1.0, None), (0.0, 2.0, None)) in coords
 
         # Nodes: all node markers should be at the fixed positions we provided.
-        marker_traces = [t for t in fig.data if "markers" in getattr(t, "mode", "")]
+        marker_traces = [
+            t for t in fig.data if "markers" in getattr(t, "mode", "")
+        ]
         xs = [x for t in marker_traces for x in t.x]
         ys = [y for t in marker_traces for y in t.y]
 

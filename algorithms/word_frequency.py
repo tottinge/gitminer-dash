@@ -73,7 +73,9 @@ STOP_WORDS = {
 
 
 def calculate_word_frequency(
-    messages: list[str], min_word_length: int = 3, exclude_stop_words: bool = True
+    messages: list[str],
+    min_word_length: int = 3,
+    exclude_stop_words: bool = True,
 ) -> dict[str, int]:
     """Calculate word frequency from commit messages.
 

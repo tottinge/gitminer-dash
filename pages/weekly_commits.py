@@ -10,7 +10,10 @@ from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 
 import data
-from algorithms.weekly_commits import calculate_weekly_commits, extract_commit_details
+from algorithms.weekly_commits import (
+    calculate_weekly_commits,
+    extract_commit_details,
+)
 from utils import date_utils
 from utils.plotly_utils import create_empty_figure
 from visualization.weekly_commits import create_weekly_commits_figure
@@ -31,7 +34,9 @@ layout = html.Div(
                     id="loading-weekly-graph",
                     type="circle",
                     children=[
-                        dcc.Graph(id="id-weekly-commits-graph", figure={"data": []}),
+                        dcc.Graph(
+                            id="id-weekly-commits-graph", figure={"data": []}
+                        ),
                     ],
                 ),
             ],

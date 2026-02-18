@@ -30,7 +30,9 @@ def create_word_frequency_treemap(
         )
 
     # Sort by frequency and take top N
-    sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:top_n]
+    sorted_words = sorted(
+        word_counts.items(), key=lambda x: x[1], reverse=True
+    )[:top_n]
 
     # Prepare data for treemap
     words = [word for word, _ in sorted_words]

@@ -99,7 +99,11 @@ def create_file_affinity_network(
     stats["nodes_before_filtering"] = len(G.nodes())
 
     for (file1, file2), affinity in affinities.items():
-        if file1 in top_file_set and file2 in top_file_set and affinity >= min_affinity:
+        if (
+            file1 in top_file_set
+            and file2 in top_file_set
+            and affinity >= min_affinity
+        ):
             G.add_edge(file1, file2, weight=affinity)
 
     stats["edges_before_filtering"] = len(G.edges())
@@ -115,8 +119,6 @@ def create_file_affinity_network(
     stats.update(graph_stats)
 
     return G, communities, stats
-
-
 
 
 @lru_cache(maxsize=32)
@@ -139,7 +141,9 @@ def _compute_layout(G: nx.Graph, iterations: int = 40) -> dict:
 
 def create_network_visualization(
     # Default title is cosmetic; keep it out of mutation testing noise.
-    G: nx.Graph, communities: list, title: str = "File Affinity Network"  # pragma: no mutate
+    G: nx.Graph,
+    communities: list,
+    title: str = "File Affinity Network",  # pragma: no mutate
 ) -> go.Figure:
     """
     Create a Plotly figure for visualizing the file affinity network.
@@ -248,7 +252,9 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
             edge_idx = i // 3
             if edge_idx < len(edge_weights):
                 width = 2 + (edge_weights[edge_idx] / max_weight) * 6
-                text = edge_texts[edge_idx] if edge_idx < len(edge_texts) else ""
+                text = (
+                    edge_texts[edge_idx] if edge_idx < len(edge_texts) else ""
+                )
             else:
                 width = 2
                 text = ""
@@ -280,7 +286,9 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
     )
 
 
-def _create_node_traces(G: nx.Graph, pos: dict, communities: list) -> list[go.Scatter]:
+def _create_node_traces(
+    G: nx.Graph, pos: dict, communities: list
+) -> list[go.Scatter]:
     """
     Create node traces for the network visualization.
 
@@ -326,7 +334,9 @@ def _create_node_traces(G: nx.Graph, pos: dict, communities: list) -> list[go.Sc
     return node_traces
 
 
-def _create_single_community_trace(G: nx.Graph, pos: dict, color: str) -> go.Scatter:
+def _create_single_community_trace(
+    G: nx.Graph, pos: dict, color: str
+) -> go.Scatter:
     """Create a trace for all nodes in a single color."""
     node_x = []
     node_y = []
@@ -349,7 +359,9 @@ def _create_single_community_trace(G: nx.Graph, pos: dict, color: str) -> go.Sca
         mode="markers",
         hoverinfo="text",
         text=node_text,
-        marker=dict(color=color, size=node_size, line=dict(width=1, color="#333")),
+        marker=dict(
+            color=color, size=node_size, line=dict(width=1, color="#333")
+        ),
         # Legend label is cosmetic; exclude from mutation testing.
         name="All Files",  # pragma: no mutate
     )
@@ -380,7 +392,9 @@ def _create_community_trace(
         mode="markers",
         hoverinfo="text",
         text=node_text,
-        marker=dict(color=color, size=node_size, line=dict(width=1, color="#333")),
+        marker=dict(
+            color=color, size=node_size, line=dict(width=1, color="#333")
+        ),
         # Community legend label is cosmetic; exclude from mutation testing.
         name=f"Group {community_id + 1}",  # pragma: no mutate
     )

@@ -78,7 +78,10 @@ layout = html.Div(
                                             "width": "20%",
                                             "textAlign": "left",
                                         },
-                                        {"if": {"column_id": "count"}, "width": "10%"},
+                                        {
+                                            "if": {"column_id": "count"},
+                                            "width": "10%",
+                                        },
                                         {},
                                     ],
                                 )
@@ -91,7 +94,8 @@ layout = html.Div(
                     style={"flex": "0 0 400px", "minWidth": "400px"},
                     children=[
                         html.H3(
-                            "Commit Message Word Frequency", style={"margin": "10px 0"}
+                            "Commit Message Word Frequency",
+                            style={"margin": "10px 0"},
                         ),
                         dcc.Loading(
                             id="loading-word-frequency",
@@ -130,10 +134,18 @@ def populate_graph(store_data):
     begin, end = date_utils.parse_date_range_from_store(store_data)
     commits_data = data.commits_in_period(begin, end)
     repo = data.get_repo()
-    usages = calculate_file_commit_frequency(commits_data, repo, begin, end, top_n=20)
+    usages = calculate_file_commit_frequency(
+        commits_data, repo, begin, end, top_n=20
+    )
 
     # Create DataFrame with all metrics (ensure columns even when no data)
-    columns = ["filename", "count", "avg_changes", "total_change", "percent_change"]
+    columns = [
+        "filename",
+        "count",
+        "avg_changes",
+        "total_change",
+        "percent_change",
+    ]
     frame = DataFrame(usages if usages else [], columns=columns)
 
     # Create bar chart using just filename and count

@@ -84,18 +84,24 @@ def file_changes_over_period(
     if not shas:
         return 0, 0.0, 0, 0.0
 
-    lines_changed = [_lines_changed_in_commit(repo, sha, target_file) for sha in shas]
+    lines_changed = [
+        _lines_changed_in_commit(repo, sha, target_file) for sha in shas
+    ]
     commits = len(shas)
     avg_changes = mean(lines_changed) if lines_changed else 0.0
 
     newest_sha = shas[0]
     oldest_sha = shas[-1]
     original_size = _blob_size_at_commit(repo, oldest_sha, target_file)
-    final_size = _blob_size_at_commit(repo, newest_sha, target_file) or original_size
+    final_size = (
+        _blob_size_at_commit(repo, newest_sha, target_file) or original_size
+    )
 
     total_change = abs(final_size - original_size)
     percent_change = (
-        (final_size - original_size) / original_size * 100 if original_size > 0 else 0.0
+        (final_size - original_size) / original_size * 100
+        if original_size > 0
+        else 0.0
     )
 
     return commits, avg_changes, total_change, percent_change
@@ -142,7 +148,9 @@ def files_changes_over_period(
             results[file_path] = stats
 
         except Exception:
-            logging.getLogger(__name__).exception(f"Error processing file {file_path}")
+            logging.getLogger(__name__).exception(
+                f"Error processing file {file_path}"
+            )
             results[file_path] = FileChangeStats(
                 file_path=file_path,
                 commits=0,

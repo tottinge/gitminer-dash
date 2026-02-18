@@ -366,7 +366,9 @@ class TestClampingProperties(unittest.TestCase):
 
         for clamped in result:
             # Must have some overlap with period
-            assert not (clamped.clamped_last < start or clamped.clamped_first > end)
+            assert not (
+                clamped.clamped_last < start or clamped.clamped_first > end
+            )
 
 
 if __name__ == "__main__":

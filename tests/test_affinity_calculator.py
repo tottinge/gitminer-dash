@@ -134,7 +134,9 @@ def test_integration_network_graph_uses_calculate_affinities_by_default():
 
     expected = calculate_affinities([commit])[("a.py", "b.py")]
 
-    (G, communities, stats) = create_file_affinity_network([commit], min_affinity=0.0)
+    (G, communities, stats) = create_file_affinity_network(
+        [commit], min_affinity=0.0
+    )
     assert G.edges["a.py", "b.py"]["weight"] == expected
 
 

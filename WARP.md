@@ -7,6 +7,9 @@ Treat these as an order of operations. Earlier virtues are prerequisites for lat
 ### Working (as opposed to incomplete)
 - Keep the codebase in a working state at all times.
 - Prove it works *recently* via automated tests; do not rely on “it should work.”
+- Treat lint/format/security checks as part of “Working”, not optional polish.
+- Before proposing a commit/PR, run `./check` and `./run_tests`.
+- If `ruff` (or any check) fails, fix it immediately and re-run `./run_tests` after the fix.
 - If you break something, stop and fix it before continuing.
 
 ### Unique (as opposed to duplicated)

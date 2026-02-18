@@ -180,9 +180,7 @@ def save_visualization(G, communities, period, min_affinity, max_nodes):
         Path to the saved file
     """
     fig = create_network_visualization(G, communities)
-    filename = (
-        f"network_{period.replace(' ', '_').lower()}_{min_affinity}_{max_nodes}.html"
-    )
+    filename = f"network_{period.replace(' ', '_').lower()}_{min_affinity}_{max_nodes}.html"
     filepath = TEST_DATA_DIR / filename
     fig.write_html(str(filepath))
     return filepath
@@ -211,7 +209,9 @@ def try_affinity_network_with_different_parameters(commits, period):
                     mock_commits, min_affinity=min_affinity, max_nodes=max_nodes
                 )
                 if len(G.nodes()) > 0 and len(G.edges()) > 0:
-                    save_visualization(G, communities, period, min_affinity, max_nodes)
+                    save_visualization(
+                        G, communities, period, min_affinity, max_nodes
+                    )
                 result = analyze_affinity_network(
                     mock_commits, period, min_affinity, max_nodes
                 )
@@ -238,8 +238,12 @@ def main():
             result = analyze_affinity_network(commits, period)
             all_results.append(result)
             if isinstance(commits[0], dict):
-                mock_commits = [create_mock_commit(commit) for commit in commits]
-                (G, communities, _stats) = create_file_affinity_network(mock_commits)
+                mock_commits = [
+                    create_mock_commit(commit) for commit in commits
+                ]
+                (G, communities, _stats) = create_file_affinity_network(
+                    mock_commits
+                )
             else:
                 (G, communities, _stats) = create_file_affinity_network(commits)
             if len(G.nodes()) > 0:

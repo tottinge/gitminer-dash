@@ -66,6 +66,8 @@ def update_merge_graph(n_clicks: int, store_data):
         dcc.Loading(
             id="loading-merge-graph",
             type="circle",
-            children=[dcc.Graph(figure=bar_chart_figure, style={"height": "500px"})],
+            children=[
+                dcc.Graph(figure=bar_chart_figure, style={"height": "500px"})
+            ],
         )
     ]

@@ -61,7 +61,9 @@ def test_get_top_files_by_affinity_ranks_by_total_score_not_name() -> None:
     assert top == {"zz.py", "bb.py"}
 
 
-def test_calculate_ideal_affinity_calls_calculate_affinities_with_commits(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_calculate_ideal_affinity_calls_calculate_affinities_with_commits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """calculate_ideal_affinity must pass the commits iterable through.
 
     This kills mutants that call calculate_affinities(None) or otherwise
@@ -91,7 +93,9 @@ def test_calculate_ideal_affinity_calls_calculate_affinities_with_commits(monkey
     assert edge_count == 0
 
 
-def test_calculate_ideal_affinity_simple_graph_threshold_and_counts(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_calculate_ideal_affinity_simple_graph_threshold_and_counts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """For a tiny graph we can predict threshold, node_count and edge_count.
 
     Affinities:

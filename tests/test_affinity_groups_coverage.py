@@ -27,20 +27,26 @@ def test_callback_with_invalid_date_range(mock_parse, mock_commits):
     max_nodes = 50
     min_affinity = 0.2
 
-    figure, graph_data = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+    figure, graph_data = update_file_affinity_graph(
+        store_data, max_nodes, min_affinity
+    )
 
     assert isinstance(figure, go.Figure)
     assert graph_data == {}
     assert hasattr(figure, "layout")
     if hasattr(figure.layout, "annotations") and figure.layout.annotations:
         message = figure.layout.annotations[0].text
-        assert "Invalid date range" in message or "Invalid date format" in message
+        assert (
+            "Invalid date range" in message or "Invalid date format" in message
+        )
 
 
 @patch("pages.affinity_groups.create_file_affinity_network")
 @patch("data.commits_in_period")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
-def test_callback_with_network_creation_error(mock_parse, mock_commits, mock_network):
+def test_callback_with_network_creation_error(
+    mock_parse, mock_commits, mock_network
+):
     """Test that errors during network creation are handled."""
     from pages.affinity_groups import update_file_affinity_graph
 
@@ -52,7 +58,9 @@ def test_callback_with_network_creation_error(mock_parse, mock_commits, mock_net
     max_nodes = 50
     min_affinity = 0.2
 
-    figure, graph_data = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+    figure, graph_data = update_file_affinity_graph(
+        store_data, max_nodes, min_affinity
+    )
 
     assert isinstance(figure, go.Figure)
     assert graph_data == {}
@@ -71,7 +79,9 @@ def test_callback_with_empty_commits(mock_parse, mock_commits):
     max_nodes = 50
     min_affinity = 0.2
 
-    figure, graph_data = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+    figure, graph_data = update_file_affinity_graph(
+        store_data, max_nodes, min_affinity
+    )
 
     assert isinstance(figure, go.Figure)
     # Empty commits should return valid but possibly empty graph
@@ -81,9 +91,14 @@ def test_callback_with_empty_commits(mock_parse, mock_commits):
 @patch("pages.affinity_groups.calculate_affinities")
 @patch("data.commits_in_period")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
-def test_affinity_caching_behavior(mock_parse, mock_commits, mock_calc_affinities):
+def test_affinity_caching_behavior(
+    mock_parse, mock_commits, mock_calc_affinities
+):
     """Test that affinity calculations are cached properly."""
-    from pages.affinity_groups import _AFFINITY_CACHE, update_file_affinity_graph
+    from pages.affinity_groups import (
+        _AFFINITY_CACHE,
+        update_file_affinity_graph,
+    )
 
     # Clear cache before test
     _AFFINITY_CACHE.clear()
@@ -108,11 +123,15 @@ def test_affinity_caching_behavior(mock_parse, mock_commits, mock_calc_affinitie
     min_affinity = 0.2
 
     # First call should calculate affinities
-    figure1, data1 = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+    figure1, data1 = update_file_affinity_graph(
+        store_data, max_nodes, min_affinity
+    )
     assert mock_calc_affinities.call_count == 1
 
     # Second call with same date range should use cache
-    figure2, data2 = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+    figure2, data2 = update_file_affinity_graph(
+        store_data, max_nodes, min_affinity
+    )
     assert mock_calc_affinities.call_count == 1  # Still 1, not 2
 
     # Third call with different parameters should still use cache
@@ -123,9 +142,14 @@ def test_affinity_caching_behavior(mock_parse, mock_commits, mock_calc_affinitie
 @patch("pages.affinity_groups.calculate_affinities")
 @patch("data.commits_in_period")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
-def test_affinity_cache_different_date_ranges(mock_parse, mock_commits, mock_calc):
+def test_affinity_cache_different_date_ranges(
+    mock_parse, mock_commits, mock_calc
+):
     """Test that different date ranges create separate cache entries."""
-    from pages.affinity_groups import _AFFINITY_CACHE, update_file_affinity_graph
+    from pages.affinity_groups import (
+        _AFFINITY_CACHE,
+        update_file_affinity_graph,
+    )
 
     _AFFINITY_CACHE.clear()
 
@@ -292,8 +316,12 @@ def test_update_node_details_table_parses_tooltip_correctly():
     from pages.affinity_groups import update_node_details_table
 
     with (
-        patch("pages.affinity_groups.get_commits_for_group_files") as mock_get_commits,
-        patch("pages.affinity_groups.data.commits_in_period") as mock_commits_in_period,
+        patch(
+            "pages.affinity_groups.get_commits_for_group_files"
+        ) as mock_get_commits,
+        patch(
+            "pages.affinity_groups.data.commits_in_period"
+        ) as mock_commits_in_period,
         patch(
             "pages.affinity_groups.date_utils.parse_date_range_from_store"
         ) as mock_parse,
@@ -304,7 +332,9 @@ def test_update_node_details_table_parses_tooltip_correctly():
 
         # Test tooltip with <br> tags
         click_data = {
-            "points": [{"text": "File: src/main.py<br>Commits: 10<br>Connections: 3"}]
+            "points": [
+                {"text": "File: src/main.py<br>Commits: 10<br>Connections: 3"}
+            ]
         }
         graph_data = {
             "nodes": {
@@ -317,7 +347,9 @@ def test_update_node_details_table_parses_tooltip_correctly():
         }
         date_range_data = {"start": "2024-01-01"}
 
-        result = update_node_details_table(click_data, graph_data, date_range_data)
+        result = update_node_details_table(
+            click_data, graph_data, date_range_data
+        )
 
         # Should parse correctly and call with correct files
         assert mock_get_commits.called
@@ -343,8 +375,12 @@ def test_update_node_details_table_missing_community():
     from pages.affinity_groups import update_node_details_table
 
     with (
-        patch("pages.affinity_groups.get_commits_for_group_files") as mock_get_commits,
-        patch("pages.affinity_groups.data.commits_in_period") as mock_commits_in_period,
+        patch(
+            "pages.affinity_groups.get_commits_for_group_files"
+        ) as mock_get_commits,
+        patch(
+            "pages.affinity_groups.data.commits_in_period"
+        ) as mock_commits_in_period,
         patch(
             "pages.affinity_groups.date_utils.parse_date_range_from_store"
         ) as mock_parse,
@@ -365,7 +401,9 @@ def test_update_node_details_table_missing_community():
         }
         date_range_data = {}
 
-        result = update_node_details_table(click_data, graph_data, date_range_data)
+        result = update_node_details_table(
+            click_data, graph_data, date_range_data
+        )
 
         # Should handle missing community gracefully
         assert isinstance(result, list)

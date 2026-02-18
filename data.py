@@ -35,14 +35,18 @@ def _dt_key(dt: datetime) -> str:
 
 
 @lru_cache(maxsize=2)
-def _cached_commits(repo_path: str, begin_key: str, end_key: str) -> list[Commit]:
+def _cached_commits(
+    repo_path: str, begin_key: str, end_key: str
+) -> list[Commit]:
     repo = Repo(repo_path)
     begin = datetime.fromisoformat(begin_key)
     end = datetime.fromisoformat(end_key)
     return list(repo.iter_commits("--all", since=begin, until=end))
 
 
-def commits_in_period(beginning: datetime, ending: datetime) -> Iterable[Commit]:
+def commits_in_period(
+    beginning: datetime, ending: datetime
+) -> Iterable[Commit]:
     repo_path = repository_path()
     begin_key = _dt_key(beginning)
     end_key = _dt_key(ending)

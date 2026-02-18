@@ -13,13 +13,19 @@ from algorithms.chain_traversal import (
 
 
 def make_commit(
-    sha: str, *, parent=None, when: datetime | None = None, author_name: str = "Alice"
+    sha: str,
+    *,
+    parent=None,
+    when: datetime | None = None,
+    author_name: str = "Alice",
 ):
     """Create a minimal mock commit object for testing."""
     commit = Mock()
     commit.hexsha = sha
     commit.parents = [parent] if parent is not None else []
-    commit.committed_datetime = when or datetime(2024, 1, 1, tzinfo=timezone.utc)
+    commit.committed_datetime = when or datetime(
+        2024, 1, 1, tzinfo=timezone.utc
+    )
     commit.message = f"Commit {sha} message"
 
     author = Mock()
@@ -31,7 +37,9 @@ def make_commit(
 
 def test_traverse_linear_chain_simple_chain():
     """Walks from latest back to earliest and returns commits oldest->newest."""
-    c1 = make_commit("c1", when=datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc))
+    c1 = make_commit(
+        "c1", when=datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
+    )
     c2 = make_commit(
         "c2", parent=c1, when=datetime(2024, 1, 2, 12, 0, tzinfo=timezone.utc)
     )
@@ -46,7 +54,9 @@ def test_traverse_linear_chain_simple_chain():
 
 def test_traverse_linear_chain_single_commit():
     """When earliest and latest are the same, returns a single-element list."""
-    c1 = make_commit("only", when=datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc))
+    c1 = make_commit(
+        "only", when=datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
+    )
 
     chain = traverse_linear_chain(c1, "only")
 

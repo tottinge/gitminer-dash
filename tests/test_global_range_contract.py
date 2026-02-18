@@ -72,7 +72,9 @@ def test_page_uses_store_begin_end(
     assert capture_commits_call["end"].isoformat() == STORE["end"]
 
 
-def test_affinity_groups_uses_store_begin_end(capture_commits_call, monkeypatch):
+def test_affinity_groups_uses_store_begin_end(
+    capture_commits_call, monkeypatch
+):
     """Ensure affinity_groups uses the store's begin/end when querying commits.
 
     This test is intentionally focused on the contract that

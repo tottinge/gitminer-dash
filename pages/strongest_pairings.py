@@ -81,7 +81,10 @@ layout = html.Div(
                                             columns=[
                                                 {"name": "Hash", "id": "hash"},
                                                 {"name": "Date", "id": "date"},
-                                                {"name": "Message", "id": "message"},
+                                                {
+                                                    "name": "Message",
+                                                    "id": "message",
+                                                },
                                             ],
                                             style_cell={
                                                 "textAlign": "left",
@@ -123,7 +126,9 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
     affinities = calculate_affinities(dataset)
 
     # Sort by numeric affinity value, then format for display
-    sorted_pairs = sorted(affinities.items(), key=lambda kv: kv[1], reverse=True)
+    sorted_pairs = sorted(
+        affinities.items(), key=lambda kv: kv[1], reverse=True
+    )
     return [
         dict(Affinity=f"{value:6.2f}", Pairing="\n".join(key))
         for key, value in sorted_pairs[:50]
@@ -137,7 +142,11 @@ def create_affinity_list(dataset: Iterable[Commit]) -> list[dict[str, str]]:
 def handle_period_selection(store_data):
     # Use the shared store's explicit begin/end when available
     period = (store_data or {}).get("period", date_utils.DEFAULT_PERIOD)
-    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
+    if (
+        isinstance(store_data, dict)
+        and "begin" in store_data
+        and "end" in store_data
+    ):
         from datetime import datetime as _dt
 
         starting = _dt.fromisoformat(store_data["begin"])
@@ -145,9 +154,13 @@ def handle_period_selection(store_data):
     else:
         starting, ending = date_utils.calculate_date_range(period)
 
-    affinity_list = create_affinity_list(data.commits_in_period(starting, ending))
+    affinity_list = create_affinity_list(
+        data.commits_in_period(starting, ending)
+    )
     if not affinity_list:
-        return [{"Affinity": "-----", "Pairing": "No commits detected in period"}]
+        return [
+            {"Affinity": "-----", "Pairing": "No commits detected in period"}
+        ]
     return affinity_list
 
 
@@ -181,7 +194,11 @@ def show_commit_details(active_cell, store_data, table_data):
     file1, file2 = files
 
     # Get date range
-    if isinstance(store_data, dict) and "begin" in store_data and "end" in store_data:
+    if (
+        isinstance(store_data, dict)
+        and "begin" in store_data
+        and "end" in store_data
+    ):
         from datetime import datetime as _dt
 
         starting = _dt.fromisoformat(store_data["begin"])

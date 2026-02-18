@@ -14,7 +14,9 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         repo.iter_commits = Mock(return_value=[])
         start = datetime(2025, 1, 1)
         end = datetime(2025, 12, 31)
-        result = get_commits_for_file_pair(repo, "file1.py", "file2.py", start, end)
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
         self.assertEqual([], result)
 
     def test_commits_with_both_files(self):
@@ -41,7 +43,9 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit1, commit2, commit3])
-        result = get_commits_for_file_pair(repo, "file1.py", "file2.py", start, end)
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
         self.assertEqual(2, len(result))
         self.assertEqual("abc123d", result[0]["hash"])
         self.assertEqual("2025-06-15 10:30", result[0]["date"])
@@ -73,7 +77,9 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit1, commit2, commit3])
-        result = get_commits_for_file_pair(repo, "file1.py", "file2.py", start, end)
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
         self.assertEqual(1, len(result))
         self.assertEqual("def456g", result[0]["hash"])
         self.assertEqual("in range", result[0]["message"])
@@ -91,7 +97,9 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit])
-        result = get_commits_for_file_pair(repo, "file1.py", "file2.py", start, end)
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
         self.assertEqual(1, len(result))
         self.assertEqual(80, len(result[0]["message"]))
         self.assertEqual("a" * 80, result[0]["message"])
@@ -108,7 +116,9 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         )
         repo = Mock()
         repo.iter_commits = Mock(return_value=[commit])
-        result = get_commits_for_file_pair(repo, "file1.py", "file2.py", start, end)
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
         self.assertEqual(0, len(result))
 
 

@@ -24,9 +24,14 @@ class TestGetCachedAffinities:
     """Tests for _get_cached_affinities() function."""
 
     @patch("pages.affinity_groups.calculate_affinities")
-    def test_get_cached_affinities_computes_when_not_cached(self, mock_calculate):
+    def test_get_cached_affinities_computes_when_not_cached(
+        self, mock_calculate
+    ):
         """Test that _get_cached_affinities computes affinities when not in cache."""
-        from pages.affinity_groups import _AFFINITY_CACHE, _get_cached_affinities
+        from pages.affinity_groups import (
+            _AFFINITY_CACHE,
+            _get_cached_affinities,
+        )
 
         # Clear cache
         _AFFINITY_CACHE.clear()
@@ -52,7 +57,10 @@ class TestGetCachedAffinities:
     @patch("pages.affinity_groups.calculate_affinities")
     def test_get_cached_affinities_returns_cached_data(self, mock_calculate):
         """Test that _get_cached_affinities returns cached data without recomputing."""
-        from pages.affinity_groups import _AFFINITY_CACHE, _get_cached_affinities
+        from pages.affinity_groups import (
+            _AFFINITY_CACHE,
+            _get_cached_affinities,
+        )
 
         # Setup cache
         starting = datetime(2024, 1, 1)
@@ -70,9 +78,14 @@ class TestGetCachedAffinities:
         mock_calculate.assert_not_called()
 
     @patch("pages.affinity_groups.calculate_affinities")
-    def test_get_cached_affinities_different_dates_compute_separately(self, mock_calculate):
+    def test_get_cached_affinities_different_dates_compute_separately(
+        self, mock_calculate
+    ):
         """Test that different date ranges compute separately and both are cached."""
-        from pages.affinity_groups import _AFFINITY_CACHE, _get_cached_affinities
+        from pages.affinity_groups import (
+            _AFFINITY_CACHE,
+            _get_cached_affinities,
+        )
 
         _AFFINITY_CACHE.clear()
 
@@ -169,7 +182,10 @@ class TestBuildGraphDataStore:
         result = _build_graph_data_store(G, communities)
 
         # file1.py connects to communities 1 and 2
-        assert set(result["nodes"]["file1.py"]["connected_communities"]) == {1, 2}
+        assert set(result["nodes"]["file1.py"]["connected_communities"]) == {
+            1,
+            2,
+        }
         # file2.py connects to community 0
         assert result["nodes"]["file2.py"]["connected_communities"] == [0]
 
@@ -187,9 +203,9 @@ class TestBuildGraphDataStore:
         result = _build_graph_data_store(G, communities)
 
         # Verify communities are converted to lists
-        assert result["communities"][0] == ["file1.py", "file2.py"] or result["communities"][
-            0
-        ] == ["file2.py", "file1.py"]
+        assert result["communities"][0] == ["file1.py", "file2.py"] or result[
+            "communities"
+        ][0] == ["file2.py", "file1.py"]
         assert result["communities"][1] == ["file3.py"]
 
     def test_build_graph_data_store_empty_graph(self):
@@ -233,7 +249,9 @@ class TestUpdateFileAffinityGraphInvalidDateRange:
         min_affinity = 0.2
 
         # Execute
-        figure, graph_data = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+        figure, graph_data = update_file_affinity_graph(
+            store_data, max_nodes, min_affinity
+        )
 
         # Verify
         assert isinstance(figure, go.Figure)
@@ -250,7 +268,9 @@ class TestUpdateFileAffinityGraphNoRepository:
 
     @patch("data.commits_in_period")
     @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
-    def test_update_file_affinity_graph_no_repository_path(self, mock_parse, mock_commits):
+    def test_update_file_affinity_graph_no_repository_path(
+        self, mock_parse, mock_commits
+    ):
         """Test that missing repository path returns appropriate error figure."""
         from pages.affinity_groups import update_file_affinity_graph
 
@@ -263,7 +283,9 @@ class TestUpdateFileAffinityGraphNoRepository:
         min_affinity = 0.2
 
         # Execute
-        figure, graph_data = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+        figure, graph_data = update_file_affinity_graph(
+            store_data, max_nodes, min_affinity
+        )
 
         # Verify
         assert isinstance(figure, go.Figure)
@@ -290,14 +312,18 @@ class TestUpdateFileAffinityGraphExceptionHandling:
         # Setup
         mock_parse.return_value = (datetime(2024, 1, 1), datetime(2024, 1, 31))
         mock_commits.return_value = [Mock()]
-        mock_network.side_effect = RuntimeError("Graph computation failed unexpectedly")
+        mock_network.side_effect = RuntimeError(
+            "Graph computation failed unexpectedly"
+        )
 
         store_data = {"start": "2024-01-01", "end": "2024-01-31"}
         max_nodes = 50
         min_affinity = 0.2
 
         # Execute
-        figure, graph_data = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+        figure, graph_data = update_file_affinity_graph(
+            store_data, max_nodes, min_affinity
+        )
 
         # Verify
         assert isinstance(figure, go.Figure)
@@ -330,7 +356,9 @@ class TestUpdateFileAffinityGraphExceptionHandling:
         min_affinity = 0.2
 
         # Execute
-        figure, graph_data = update_file_affinity_graph(store_data, max_nodes, min_affinity)
+        figure, graph_data = update_file_affinity_graph(
+            store_data, max_nodes, min_affinity
+        )
 
         # Verify
         assert isinstance(figure, go.Figure)

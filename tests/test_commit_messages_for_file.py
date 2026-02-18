@@ -63,9 +63,7 @@ class TestGetCommitMessagesForFile(unittest.TestCase):
         """Test that full commit messages including multiple lines are preserved."""
         start = datetime(2025, 1, 1)
         end = datetime(2025, 12, 31)
-        multi_line_message = (
-            "feat: add feature\n\nThis is a detailed description\nwith multiple lines"
-        )
+        multi_line_message = "feat: add feature\n\nThis is a detailed description\nwith multiple lines"
         commit = create_mock_commit_with_diffs(
             message=multi_line_message,
             date=datetime(2025, 6, 15, 10, 30),

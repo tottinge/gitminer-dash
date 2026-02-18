@@ -42,7 +42,9 @@ def test_exclude_one_element_communities() -> None:
         expected_ids
     ), f"Expected communities {expected_ids}, got {included_ids}"
     for community_id, nodes in included_communities:
-        assert len(nodes) > 1, f"Community {community_id} has only {len(nodes)} node"
+        assert (
+            len(nodes) > 1
+        ), f"Community {community_id} has only {len(nodes)} node"
 
 
 if __name__ == "__main__":

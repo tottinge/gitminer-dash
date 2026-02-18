@@ -16,7 +16,9 @@ app = Dash(__name__, suppress_callback_exceptions=True)
 
 
 @patch("pages.affinity_groups.data.commits_in_period")
-def test_get_commits_for_group_files_with_multiple_file_commits(mock_commits_in_period):
+def test_get_commits_for_group_files_with_multiple_file_commits(
+    mock_commits_in_period,
+):
     """Test that commits containing at least 2 group files are returned."""
     from algorithms.commit_filter import get_commits_for_group_files
 
@@ -60,7 +62,9 @@ def test_get_commits_for_group_files_with_multiple_file_commits(mock_commits_in_
 
 
 @patch("pages.affinity_groups.data.commits_in_period")
-def test_get_commits_for_group_files_with_no_matching_commits(mock_commits_in_period):
+def test_get_commits_for_group_files_with_no_matching_commits(
+    mock_commits_in_period,
+):
     """Test that no commits are returned when no commits have 2+ group files."""
     from algorithms.commit_filter import get_commits_for_group_files
 
@@ -84,12 +88,16 @@ def test_get_commits_for_group_files_with_no_matching_commits(mock_commits_in_pe
 
 @patch("pages.affinity_groups.get_commits_for_group_files")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
-def test_update_node_details_table_with_valid_click(mock_parse, mock_get_commits):
+def test_update_node_details_table_with_valid_click(
+    mock_parse, mock_get_commits
+):
     """Test that clicking a node returns commits for that group."""
     from pages.affinity_groups import update_node_details_table
 
     click_data = {
-        "points": [{"text": "File: src/main.py<br>Commits: 10<br>Connections: 3"}]
+        "points": [
+            {"text": "File: src/main.py<br>Commits: 10<br>Connections: 3"}
+        ]
     }
     graph_data = {
         "nodes": {
@@ -152,7 +160,9 @@ def test_update_node_details_table_with_invalid_node():
     from pages.affinity_groups import update_node_details_table
 
     click_data = {
-        "points": [{"text": "File: nonexistent.py<br>Commits: 0<br>Connections: 0"}]
+        "points": [
+            {"text": "File: nonexistent.py<br>Commits: 0<br>Connections: 0"}
+        ]
     }
     graph_data = {
         "nodes": {

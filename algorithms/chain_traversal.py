@@ -26,7 +26,9 @@ class HasCommitFields(Protocol):
     message: str
 
     @property
-    def parents(self) -> Iterable[HasCommitFields]:  # pragma: no cover - attribute
+    def parents(
+        self,
+    ) -> Iterable[HasCommitFields]:  # pragma: no cover - attribute
         ...
 
     @property
@@ -137,7 +139,9 @@ def commits_to_chain_rows(
 
         # Author name (fall back gracefully if missing)
         author_obj = getattr(commit, "author", None)
-        author_name = getattr(author_obj, "name", "") if author_obj is not None else ""
+        author_name = (
+            getattr(author_obj, "name", "") if author_obj is not None else ""
+        )
 
         # First line of message, truncated
         message_full = commit.message or ""

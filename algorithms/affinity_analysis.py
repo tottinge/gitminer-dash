@@ -50,9 +50,9 @@ def get_top_files_by_affinity(affinities: dict, max_nodes: int) -> set[str]:
         True
     """
     file_total_affinity = get_file_total_affinities(affinities)
-    top_files = sorted(file_total_affinity.items(), key=lambda x: x[1], reverse=True)[
-        :max_nodes
-    ]
+    top_files = sorted(
+        file_total_affinity.items(), key=lambda x: x[1], reverse=True
+    )[:max_nodes]
     return {file for file, _ in top_files}
 
 

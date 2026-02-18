@@ -84,7 +84,11 @@ def test_calculate_ideal_affinity_with_synthetic_data():
                 "author": "Test Author",
                 "date": f"2025-10-{23 - i}T13:53:00",
                 "message": f"Group 1 commit {i}",
-                "files": ["group1_file1.py", "group1_file2.py", "group1_file3.py"],
+                "files": [
+                    "group1_file1.py",
+                    "group1_file2.py",
+                    "group1_file3.py",
+                ],
             }
         )
     for i in range(10):

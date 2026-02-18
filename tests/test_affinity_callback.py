@@ -48,10 +48,18 @@ def test_callback_with_mock_data(monkeypatch):
             figure = result
         assert isinstance(figure, go.Figure)
         if hasattr(figure, "data"):
-            node_traces = [trace for trace in figure.data if trace.mode == "markers"]
-            edge_traces = [trace for trace in figure.data if trace.mode == "lines"]
-            assert len(node_traces) > 0, "Figure should have at least one node trace"
-            assert len(edge_traces) > 0, "Figure should have at least one edge trace"
+            node_traces = [
+                trace for trace in figure.data if trace.mode == "markers"
+            ]
+            edge_traces = [
+                trace for trace in figure.data if trace.mode == "lines"
+            ]
+            assert (
+                len(node_traces) > 0
+            ), "Figure should have at least one node trace"
+            assert (
+                len(edge_traces) > 0
+            ), "Figure should have at least one edge trace"
     except Exception as e:
         pytest.fail(f"Test failed with exception: {str(e)}")
 

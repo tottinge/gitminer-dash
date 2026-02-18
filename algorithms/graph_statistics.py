@@ -49,7 +49,9 @@ def detect_and_assign_communities(G: nx.Graph) -> tuple[list, dict[str, float]]:
 
         if communities:
             community_sizes = [len(c) for c in communities]
-            stats["avg_community_size"] = sum(community_sizes) / len(communities)
+            stats["avg_community_size"] = sum(community_sizes) / len(
+                communities
+            )
 
         for i, community in enumerate(communities):
             for node in community:
@@ -63,6 +65,8 @@ def filter_low_degree_nodes(G: nx.Graph, min_degree: int) -> int:
     if min_degree <= 0:
         return 0
 
-    nodes_to_remove = [node for node, degree in G.degree() if degree < min_degree]
+    nodes_to_remove = [
+        node for node, degree in G.degree() if degree < min_degree
+    ]
     G.remove_nodes_from(nodes_to_remove)
     return len(nodes_to_remove)

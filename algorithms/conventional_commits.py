@@ -66,7 +66,9 @@ def prepare_changes_by_date(commits_data, weeks=12) -> pd.DataFrame:
         match = conventional_commit_match_pattern.match(commit.message)
         if match:
             intent = normalize_intent(match.group(1))
-            daily_change_counter[(commit.committed_datetime.date(), intent)] += 1
+            daily_change_counter[
+                (commit.committed_datetime.date(), intent)
+            ] += 1
 
     dataset = sorted(
         (date, intent, count)

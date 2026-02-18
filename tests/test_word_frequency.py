@@ -82,7 +82,11 @@ class TestWordFrequency(unittest.TestCase):
 
     def test_special_characters_ignored(self):
         """Test that special characters and numbers are ignored."""
-        messages = ["fix bug #123", "update version 2.0", "add feature (urgent)"]
+        messages = [
+            "fix bug #123",
+            "update version 2.0",
+            "add feature (urgent)",
+        ]
         result = calculate_word_frequency(messages)
         self.assertNotIn("123", result)
         self.assertNotIn("#123", result)

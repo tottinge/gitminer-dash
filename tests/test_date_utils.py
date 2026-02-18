@@ -98,8 +98,18 @@ def test_calculate_date_range_6_months(mock_datetime):
 def test_calculate_date_range_has_full_day_times(mock_datetime, period_label):
     """Start is at 00:00:00 and end is at 23:59:59 for all supported periods."""
     begin, end = date_utils.calculate_date_range(period_label)
-    assert (begin.hour, begin.minute, begin.second, begin.microsecond) == (0, 0, 0, 0)
-    assert (end.hour, end.minute, end.second, end.microsecond) == (23, 59, 59, 0)
+    assert (begin.hour, begin.minute, begin.second, begin.microsecond) == (
+        0,
+        0,
+        0,
+        0,
+    )
+    assert (end.hour, end.minute, end.second, end.microsecond) == (
+        23,
+        59,
+        59,
+        0,
+    )
 
 
 def test_calculate_date_range_1_year(mock_datetime):

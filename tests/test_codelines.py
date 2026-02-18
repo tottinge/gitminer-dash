@@ -19,7 +19,9 @@ import pytest
         {"points": []},
     ],
 )
-def test_update_chain_commits_table_returns_empty_for_missing_points(click_data):
+def test_update_chain_commits_table_returns_empty_for_missing_points(
+    click_data,
+):
     """Return an empty list when clickData is missing or has no usable points.
 
     Covers:

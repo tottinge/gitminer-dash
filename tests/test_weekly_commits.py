@@ -103,7 +103,9 @@ class TestCalculateWeeklyCommits(unittest.TestCase):
         commit3.committed_datetime = datetime(2025, 11, 1, 10, 0, 0)
         begin = datetime(2025, 10, 1)
         end = datetime(2025, 11, 2)
-        result = calculate_weekly_commits([commit1, commit2, commit3], begin, end)
+        result = calculate_weekly_commits(
+            [commit1, commit2, commit3], begin, end
+        )
         week_with_commits = [w for w in result["weeks"] if w["count"] == 3]
         assert len(week_with_commits) == 1
         assert result["max_commits"] == 3
@@ -118,7 +120,9 @@ class TestCalculateWeeklyCommits(unittest.TestCase):
         commit3.committed_datetime = datetime(2025, 10, 20, 10, 0, 0)
         begin = datetime(2025, 10, 1)
         end = datetime(2025, 10, 31)
-        result = calculate_weekly_commits([commit1, commit2, commit3], begin, end)
+        result = calculate_weekly_commits(
+            [commit1, commit2, commit3], begin, end
+        )
         weeks_with_commits = [w for w in result["weeks"] if w["count"] > 0]
         assert len(weeks_with_commits) == 3
         assert result["max_commits"] == 1
@@ -132,7 +136,9 @@ class TestCalculateWeeklyCommits(unittest.TestCase):
         commit_monday.committed_datetime = datetime(2025, 10, 27, 0, 0, 1)
         begin = datetime(2025, 10, 1)
         end = datetime(2025, 10, 31)
-        result = calculate_weekly_commits([commit_sunday, commit_monday], begin, end)
+        result = calculate_weekly_commits(
+            [commit_sunday, commit_monday], begin, end
+        )
         weeks_with_one_commit = [w for w in result["weeks"] if w["count"] == 1]
         assert len(weeks_with_one_commit) == 2
 
@@ -195,7 +201,9 @@ class TestExtractCommitDetails(unittest.TestCase):
 class TestCreateWeeklyCommitsFigure(unittest.TestCase):
     """Tests for the weekly commits visualization figure builder."""
 
-    def _make_commit(self, summary: str, committer: str, dt: datetime) -> SimpleNamespace:
+    def _make_commit(
+        self, summary: str, committer: str, dt: datetime
+    ) -> SimpleNamespace:
         return SimpleNamespace(
             summary=summary,
             committer=SimpleNamespace(name=committer),
@@ -209,9 +217,15 @@ class TestCreateWeeklyCommitsFigure(unittest.TestCase):
 
         # Use a long summary to verify truncation and presence in hover text
         long_summary = "X" * 60
-        c1 = self._make_commit(long_summary, "Alice", datetime(2025, 10, 27, 10, 0, 0))
-        c2 = self._make_commit("Second commit", "Bob", datetime(2025, 10, 28, 11, 0, 0))
-        c3 = self._make_commit("Third commit", "Carol", datetime(2025, 11, 3, 9, 0, 0))
+        c1 = self._make_commit(
+            long_summary, "Alice", datetime(2025, 10, 27, 10, 0, 0)
+        )
+        c2 = self._make_commit(
+            "Second commit", "Bob", datetime(2025, 10, 28, 11, 0, 0)
+        )
+        c3 = self._make_commit(
+            "Third commit", "Carol", datetime(2025, 11, 3, 9, 0, 0)
+        )
 
         weeks = [
             {"week_ending": week1, "commits": [c1, c2], "count": 2},
@@ -228,7 +242,10 @@ class TestCreateWeeklyCommitsFigure(unittest.TestCase):
         fig, stats_html = create_weekly_commits_figure(weekly_data)
 
         # X labels should be derived from week_ending in order and used as category array
-        expected_labels = [week1.strftime("%y-%m-%d"), week2.strftime("%y-%m-%d")]
+        expected_labels = [
+            week1.strftime("%y-%m-%d"),
+            week2.strftime("%y-%m-%d"),
+        ]
         assert fig.layout.barmode == "stack"
         assert fig.layout.xaxis.title.text == "Week Ending"
         assert fig.layout.yaxis.title.text == "Number of Commits"
@@ -285,7 +302,9 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
             except ImportError:
                 callback_exists = False
 
-            assert callback_exists, "Callback update_commit_details_table should exist"
+            assert (
+                callback_exists
+            ), "Callback update_commit_details_table should exist"
 
     def test_callback_produces_table_from_fake_week_data(self):
         """Test that given fake data of a week's commits, the callback produces the correct table."""
@@ -339,7 +358,9 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
             from pages.weekly_commits import update_commit_details_table
 
-            table_data, message = update_commit_details_table(click_data, store_data)
+            table_data, message = update_commit_details_table(
+                click_data, store_data
+            )
 
             # Verify table has correct structure and data
             assert len(table_data) == 2
@@ -403,7 +424,9 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
                 ]
             }
 
-            table_data, message = update_commit_details_table(click_data, store_data)
+            table_data, message = update_commit_details_table(
+                click_data, store_data
+            )
 
             assert table_data == []
             assert message == "No commits found for week ending 25-12-31"
@@ -459,7 +482,9 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
             from pages.weekly_commits import update_commit_details_table
 
-            table_data, message = update_commit_details_table(click_data, store_data)
+            table_data, message = update_commit_details_table(
+                click_data, store_data
+            )
 
             # Verify all three commits are in the table
             assert len(table_data) == 3
@@ -543,7 +568,9 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
             from pages.weekly_commits import update_commit_details_table
 
-            table_data, message = update_commit_details_table(click_data, store_data)
+            table_data, message = update_commit_details_table(
+                click_data, store_data
+            )
 
             # Verify message contains correct count and week
             assert "5 commits" in message

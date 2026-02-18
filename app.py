@@ -1,6 +1,15 @@
 import sys
 
-from dash import Dash, Input, Output, callback, dcc, html, page_container, page_registry
+from dash import (
+    Dash,
+    Input,
+    Output,
+    callback,
+    dcc,
+    html,
+    page_container,
+    page_registry,
+)
 
 import data
 from utils import date_utils
@@ -55,7 +64,10 @@ app.layout = html.Div(
 
 
 # Compute store from dropdown only (no URL syncing)
-@callback(Output("global-date-range", "data"), Input("global-period-dropdown", "value"))
+@callback(
+    Output("global-date-range", "data"),
+    Input("global-period-dropdown", "value"),
+)
 def compute_store(period_label: str):
     period = period_label or date_utils.DEFAULT_PERIOD
     begin, end = date_utils.calculate_date_range(period)

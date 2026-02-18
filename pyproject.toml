@@ -24,8 +24,12 @@ dev = [
 ]
 
 [tool.ruff]
-line-length = 100
+line-length = 80
 target-version = "py310"
+
+[tool.black]
+line-length = 80
+target-version = ["py310"]
 
 [tool.ruff.lint]
 # Keep rule set focused but expanding over time

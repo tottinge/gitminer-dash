@@ -74,7 +74,8 @@ def test_detect_and_assign_communities_assigns_community_ids_to_nodes_and_return
     ]
 
     with patch(
-        "networkx.community.louvain_communities", return_value=expected_communities
+        "networkx.community.louvain_communities",
+        return_value=expected_communities,
     ):
         communities, stats = detect_and_assign_communities(G)
 

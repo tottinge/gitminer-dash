@@ -29,7 +29,9 @@ class MockCommit:
 
         class MockStats:
             def __init__(self, files):
-                self.files = {file: {"insertions": 1, "deletions": 1} for file in files}
+                self.files = {
+                    file: {"insertions": 1, "deletions": 1} for file in files
+                }
 
         self.stats = MockStats(data["files"])
 
@@ -47,7 +49,9 @@ def create_mock_commit(commit_data):
     return MockCommit(commit_data)
 
 
-def create_mock_commit_with_diffs(hexsha=None, message=None, date=None, modified_files=None):
+def create_mock_commit_with_diffs(
+    hexsha=None, message=None, date=None, modified_files=None
+):
     """
     Create a mock commit with diff support for testing git operations.
 
@@ -68,7 +72,7 @@ def create_mock_commit_with_diffs(hexsha=None, message=None, date=None, modified
         commit.hexsha = hexsha
     commit.message = message
     commit.committed_datetime = date
-    
+
     if modified_files is not None:
         parent = Mock()
         commit.parents = [parent]
@@ -80,7 +84,7 @@ def create_mock_commit_with_diffs(hexsha=None, message=None, date=None, modified
         commit.diff = Mock(return_value=diff_items)
     else:
         commit.parents = []
-    
+
     return commit
 
 

@@ -9,7 +9,9 @@ from algorithms.chain_models import ClampedChain, TimelineRow
 from algorithms.stacking import SequenceStacker
 
 
-def calculate_chain_layout(clamped_chains: list[ClampedChain]) -> list[TimelineRow]:
+def calculate_chain_layout(
+    clamped_chains: list[ClampedChain],
+) -> list[TimelineRow]:
     """
     Calculate layout for timeline visualization.
 
@@ -32,11 +34,17 @@ def calculate_chain_layout(clamped_chains: list[ClampedChain]) -> list[TimelineR
 
     for clamped in clamped_chains:
         # Calculate elevation using stacker to prevent overlaps
-        height = stacker.height_for([clamped.clamped_first, clamped.clamped_last])
+        height = stacker.height_for(
+            [clamped.clamped_first, clamped.clamped_last]
+        )
 
         # Calculate derived metrics
         duration_days = clamped.clamped_duration.days
-        density = (duration_days / clamped.commit_count) if clamped.commit_count else 0
+        density = (
+            (duration_days / clamped.commit_count)
+            if clamped.commit_count
+            else 0
+        )
 
         row = TimelineRow(
             first=clamped.clamped_first,
