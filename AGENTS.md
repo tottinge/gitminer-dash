@@ -72,3 +72,28 @@ Write and maintain micro/unit tests so they are:
 ## 3) Refactoring safety rule
 - Refactor only with a passing test baseline.
 - After each small refactor, re-run tests to confirm the code remains Working.
+
+## 4) Canonical script entrypoints (prefer scripts over ad-hoc commands)
+- Use executable scripts in the repository root as the default workflow entrypoints.
+- Before running raw `uv run ...` commands, check whether a dedicated script exists.
+- If a project script exists for the task, use it unless the user explicitly asks for a raw command.
+- Use raw `uv run ...` only for focused one-off commands not covered by scripts.
+- If a script is missing needed behavior, propose updating the script rather than bypassing it.
+
+### Script map
+- `./onboard`: setup environment and dependencies.
+- `./prepare`: update local branch, sync environment, and refresh hooks.
+- `./run_tests`: standard full test run for this repo.
+- `./check`: lint/format/security checks for repo readiness.
+- `./mutate`: mutation testing for test-suite quality.
+- `./run <path-to-git-repository>`: run the app against a target local git repo.
+- `./run_with_coverage.sh <args>`: run app with coverage and generate reports.
+- `./annotate`: collect and apply runtime-guided type annotations.
+- `./fixup`: experimental auto-fix/format/upgrade pass (opt-in; review changes carefully).
+- `colors_def.sh`: shared shell utility sourced by scripts; not a direct workflow entrypoint.
+
+## 5) Wrapper precedence for validation workflows
+- Do not replace `./run_tests` with direct `uv run pytest` for standard validation.
+- Do not replace `./check` with separate ad-hoc tool calls for standard validation.
+- Prefer wrapper scripts to preserve project flags, behavior, and conventions.
+- After each change, run `./run_tests`; before commit/PR, run both `./check` and `./run_tests`.

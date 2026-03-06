@@ -1,4 +1,4 @@
-!/bin/env bash
+#!/usr/bin/env bash
 echo "Experimental - don't run unless you're ready to reset hard"
 echo ""
 echo "This will do all the ruff fixups, reformat with black, and "
