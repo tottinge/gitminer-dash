@@ -16,7 +16,7 @@ from utils import date_utils
 
 if len(sys.argv) < 2:
     print("Usage: app.py <repo_name>")
-    exit(1)
+    sys.exit(1)
 
 app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
 
