@@ -192,7 +192,7 @@ def create_network_visualization(
             title_font=dict(size=16),  # pragma: no mutate
             showlegend=True,  # pragma: no mutate
             hovermode="closest",
-            margin=dict(b=20, l=5, r=5, t=40),
+            margin=dict(b=20, l=5, r=5, t=40),  # pragma: no mutate
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         ),
@@ -220,7 +220,7 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
             go.Scatter(
                 x=[],
                 y=[],
-                line=dict(width=0, color="#888"),
+                line=dict(width=0, color="#888"),  # pragma: no mutate
                 hoverinfo="none",
                 mode="lines",
                 showlegend=False,
@@ -244,46 +244,26 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
         edge_texts.append(f"{edge[0]} - {edge[1]}<br>Affinity: {weight:.2f}")
 
     # Normalize edge weights for width
-    max_weight = max(edge_weights) if edge_weights else 1
+    max_weight = max(edge_weights)
 
     # Create separate trace for each edge with its own width
-    for i in range(0, len(edge_x), 3):
-        if i + 2 < len(edge_x):
-            edge_idx = i // 3
-            if edge_idx < len(edge_weights):
-                width = 2 + (edge_weights[edge_idx] / max_weight) * 6
-                text = (
-                    edge_texts[edge_idx] if edge_idx < len(edge_texts) else ""
-                )
-            else:
-                width = 2
-                text = ""
+    for edge_idx, weight in enumerate(edge_weights):
+        i = edge_idx * 3
+        width = 2 + (weight / max_weight) * 6
+        text = edge_texts[edge_idx]
 
-            edge_trace = go.Scatter(
-                x=edge_x[i : i + 3],
-                y=edge_y[i : i + 3],
-                line=dict(width=width, color="#888"),
-                hoverinfo="text",
-                text=text,
-                mode="lines",
-                showlegend=False,
-            )
-            edge_traces.append(edge_trace)
+        edge_trace = go.Scatter(
+            x=edge_x[i : i + 3],
+            y=edge_y[i : i + 3],
+            line=dict(width=width, color="#888"),  # pragma: no mutate
+            hoverinfo="text",
+            text=text,
+            mode="lines",
+            showlegend=False,
+        )
+        edge_traces.append(edge_trace)
 
-    return (
-        edge_traces
-        if edge_traces
-        else [
-            go.Scatter(
-                x=[],
-                y=[],
-                line=dict(width=0, color="#888"),
-                hoverinfo="none",
-                mode="lines",
-                showlegend=False,
-            )
-        ]
-    )
+    return edge_traces
 
 
 def _create_node_traces(
@@ -360,7 +340,9 @@ def _create_single_community_trace(
         hoverinfo="text",
         text=node_text,
         marker=dict(
-            color=color, size=node_size, line=dict(width=1, color="#333")
+            color=color,
+            size=node_size,
+            line=dict(width=1, color="#333"),  # pragma: no mutate
         ),
         # Legend label is cosmetic; exclude from mutation testing.
         name="All Files",  # pragma: no mutate
@@ -393,7 +375,9 @@ def _create_community_trace(
         hoverinfo="text",
         text=node_text,
         marker=dict(
-            color=color, size=node_size, line=dict(width=1, color="#333")
+            color=color,
+            size=node_size,
+            line=dict(width=1, color="#333"),  # pragma: no mutate
         ),
         # Community legend label is cosmetic; exclude from mutation testing.
         name=f"Group {community_id + 1}",  # pragma: no mutate

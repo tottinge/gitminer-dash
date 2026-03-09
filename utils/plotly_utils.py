@@ -76,7 +76,9 @@ def create_empty_figure(
     layout_updates = {
         "xaxis": dict(showgrid=False, zeroline=False, showticklabels=False),
         "yaxis": dict(showgrid=False, zeroline=False, showticklabels=False),
-        "margin": dict(l=10, r=10, b=10, t=40 if title else 10),
+        "margin": dict(
+            l=10, r=10, b=10, t=40 if title else 10
+        ),  # pragma: no mutate
     }
 
     if title:

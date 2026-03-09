@@ -6,9 +6,11 @@ import unittest
 from unittest.mock import Mock, patch
 
 import networkx as nx
+import plotly.graph_objects as go
 
 from visualization.common import create_empty_figure
 from visualization.network_graph import (
+    _create_edge_traces,
     create_file_affinity_network,
     create_network_visualization,
 )
@@ -444,6 +446,123 @@ class TestNetworkGraph(unittest.TestCase):
         # We expect at least one multi-node connected component.
         components = list(nx.connected_components(G))
         assert any(len(component) > 1 for component in components)
+
+    def test_create_edge_traces_empty_graph_contract(self):
+        """Empty edge sets should produce one explicit empty line trace."""
+        G = nx.Graph()
+        traces = _create_edge_traces(G, pos={})
+
+        assert len(traces) == 1
+        trace = traces[0]
+        assert trace.x is not None
+        assert trace.y is not None
+        assert len(trace.x) == 0
+        assert len(trace.y) == 0
+        assert trace.mode == "lines"
+        assert trace.hoverinfo == "none"
+        assert trace.showlegend is False
+        assert trace.line.width == 0
+
+    def test_create_edge_traces_non_empty_contract(self):
+        """Edge traces should preserve geometry, text, and width scaling."""
+        G = nx.Graph()
+        G.add_edge("a.py", "b.py", weight=0.25)
+        G.add_edge("a.py", "c.py", weight=0.5)
+
+        pos = {
+            "a.py": (0.0, 0.0),
+            "b.py": (1.0, 0.0),
+            "c.py": (0.0, 1.0),
+        }
+
+        traces = _create_edge_traces(G, pos)
+        assert len(traces) == 2
+
+        # Shared contract for each edge trace
+        for trace in traces:
+            assert trace.mode == "lines"
+            assert trace.hoverinfo == "text"
+            assert trace.showlegend is False
+            assert trace.x is not None
+            assert trace.y is not None
+            assert len(trace.x) == 3
+            assert len(trace.y) == 3
+            assert trace.x[2] is None
+            assert trace.y[2] is None
+
+        width_by_text = {trace.text: trace.line.width for trace in traces}
+        assert set(width_by_text.keys()) == {
+            "a.py - b.py<br>Affinity: 0.25",
+            "a.py - c.py<br>Affinity: 0.50",
+        }
+        assert round(width_by_text["a.py - b.py<br>Affinity: 0.25"], 2) == 5.0
+        assert round(width_by_text["a.py - c.py<br>Affinity: 0.50"], 2) == 8.0
+
+    def test_create_network_visualization_calls_contracts(self):
+        """Visualization should call collaborators with stable parameters."""
+        G = nx.Graph()
+        G.add_edge("a.py", "b.py", weight=0.5)
+        communities = [["a.py", "b.py"]]
+        fixed_pos = {"a.py": (0.0, 0.0), "b.py": (1.0, 1.0)}
+
+        edge_trace = go.Scatter(x=[0, 1, None], y=[0, 1, None], mode="lines")
+        node_trace = go.Scatter(x=[0, 1], y=[0, 1], mode="markers")
+
+        with (
+            patch(
+                "visualization.network_graph.nx.spring_layout",
+                return_value=fixed_pos,
+            ) as mock_layout,
+            patch(
+                "visualization.network_graph._create_edge_traces",
+                return_value=[edge_trace],
+            ) as mock_edges,
+            patch(
+                "visualization.network_graph._create_node_traces",
+                return_value=[node_trace],
+            ) as mock_nodes,
+        ):
+            fig = create_network_visualization(
+                G, communities, title="Strict Network"
+            )
+
+        mock_layout.assert_called_once_with(G, seed=42, iterations=40)
+        mock_edges.assert_called_once_with(G, fixed_pos)
+        mock_nodes.assert_called_once_with(G, fixed_pos, communities)
+
+        assert len(fig.data) == 2
+        assert fig.layout.title.text == "Strict Network"
+        assert fig.layout.title.font.size == 16
+        assert fig.layout.showlegend is True
+        assert fig.layout.hovermode == "closest"
+        assert fig.layout.xaxis.showgrid is False
+        assert fig.layout.xaxis.zeroline is False
+        assert fig.layout.xaxis.showticklabels is False
+        assert fig.layout.yaxis.showgrid is False
+        assert fig.layout.yaxis.zeroline is False
+        assert fig.layout.yaxis.showticklabels is False
+
+    def test_create_network_visualization_empty_graph_passes_message_and_title(
+        self,
+    ):
+        """Empty-graph path should pass explicit message/title to helper."""
+        G = nx.Graph()
+
+        with patch(
+            "visualization.network_graph.create_empty_figure"
+        ) as mock_empty:
+            sentinel = object()
+            mock_empty.return_value = sentinel
+
+            result = create_network_visualization(
+                G, communities=[], title="Chosen Title"
+            )
+
+        assert result is sentinel
+        mock_empty.assert_called_once_with(
+            message="No data available for the selected time period",
+            title="Chosen Title",
+        )
 
 
 if __name__ == "__main__":
