@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Classify mutation-testing gaps and highlight next test targets.
+
+Maps target mutant statuses to existing tests and labels likely gap types such
+as untested functions, sparse tests, or weak assertions.
+"""
 from __future__ import annotations
 
 import argparse

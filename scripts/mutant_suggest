@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Suggest concrete tests for high-priority mutant targets.
+
+Produces ranked targets plus candidate test file names, suggested test names,
+and assertion ideas based on function naming heuristics.
+"""
 from __future__ import annotations
 
 import argparse

@@ -1,3 +1,8 @@
+"""Shared models and helpers for mutmut analysis scripts in `scripts/`.
+
+This module centralizes artifact discovery, mutant parsing, grouping, and
+status weighting so command scripts can share one implementation.
+"""
 from __future__ import annotations
 
 import json

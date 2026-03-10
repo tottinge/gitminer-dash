@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Rank high-value mutant targets to prioritize test-writing effort.
+
+This script scores functions and modules by target statuses (default:
+`no_tests`, `survived`, `timeout`) to surface where new tests will help most.
+"""
 from __future__ import annotations
 
 import argparse

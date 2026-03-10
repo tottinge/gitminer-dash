@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Discover mutmut artifacts in a repo and summarize mutation status counts.
+
+Use this for a quick inventory of `*.py.meta` and `mutmut-stats.json` files
+and to see which modules currently have the most mutant activity.
+"""
 from __future__ import annotations
 
 import argparse

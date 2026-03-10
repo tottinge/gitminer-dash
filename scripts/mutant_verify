@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Verify mutant-status changes against a baseline snapshot.
+
+Supports snapshot-only reporting, optional baseline comparison, focused key
+filtering, and an optional pre-collection command.
+"""
 from __future__ import annotations
 
 import argparse
