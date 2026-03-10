@@ -1,6 +1,7 @@
 """Tests for `algorithms/commit_frequency.py`."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -205,6 +206,35 @@ def test_calculate_file_commit_frequency_missing_file_stats(
             avg_changes=10.5,
             total_change=100,
             percent_change=25.3,
+
+
+def _mock_commit(files: list[str]) -> MagicMock:
+    commit = MagicMock()
+    commit.stats.files = {path: {} for path in files}
+    return commit
+
+
+def test_calculate_file_commit_frequency_aggregates_and_rounds_metrics():
+    begin = datetime(2025, 1, 1, tzinfo=timezone.utc)
+    end = datetime(2025, 1, 31, tzinfo=timezone.utc)
+    repo = MagicMock()
+
+    commits = [
+        _mock_commit(["a.py", "b.py"]),
+        _mock_commit(["a.py"]),
+        _mock_commit(["c.py"]),
+    ]
+
+    stats_by_file = {
+        "a.py": SimpleNamespace(
+            avg_changes=3.4567,
+            total_change=22,
+            percent_change=12.3456,
+        ),
+        "b.py": SimpleNamespace(
+            avg_changes=0.124,
+            total_change=5,
+            percent_change=-1.236,
         ),
     }
 
@@ -520,3 +550,97 @@ def test_calculate_file_commit_frequency_commit_with_no_files(mock_repo):
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])
+=======
+        return_value=stats_by_file,
+    ) as mock_changes:
+        result = calculate_file_commit_frequency(
+            commits_data=commits,
+            repo=repo,
+            begin=begin,
+            end=end,
+            top_n=2,
+        )
+
+    assert result == [
+        {
+            "filename": "a.py",
+            "count": 2,
+            "avg_changes": 3.46,
+            "total_change": 22,
+            "percent_change": 12.35,
+        },
+        {
+            "filename": "b.py",
+            "count": 1,
+            "avg_changes": 0.12,
+            "total_change": 5,
+            "percent_change": -1.24,
+        },
+    ]
+    mock_changes.assert_called_once_with(["a.py", "b.py"], begin, end, repo)
+
+
+def test_calculate_file_commit_frequency_uses_zero_defaults_when_missing_stats():
+    begin = datetime(2025, 2, 1, tzinfo=timezone.utc)
+    end = datetime(2025, 2, 28, tzinfo=timezone.utc)
+    repo = MagicMock()
+    commits = [_mock_commit(["x.py", "y.py"]), _mock_commit(["x.py"])]
+
+    with patch(
+        "algorithms.file_changes.files_changes_over_period",
+        return_value={
+            "x.py": SimpleNamespace(
+                avg_changes=8.0,
+                total_change=100,
+                percent_change=25.0,
+            )
+        },
+    ):
+        result = calculate_file_commit_frequency(
+            commits_data=commits,
+            repo=repo,
+            begin=begin,
+            end=end,
+            top_n=5,
+        )
+
+    assert result == [
+        {
+            "filename": "x.py",
+            "count": 2,
+            "avg_changes": 8.0,
+            "total_change": 100,
+            "percent_change": 25.0,
+        },
+        {
+            "filename": "y.py",
+            "count": 1,
+            "avg_changes": 0.0,
+            "total_change": 0,
+            "percent_change": 0.0,
+        },
+    ]
+
+
+def test_calculate_file_commit_frequency_reraises_value_error():
+    begin = datetime(2025, 3, 1, tzinfo=timezone.utc)
+    end = datetime(2025, 3, 2, tzinfo=timezone.utc)
+    repo = MagicMock()
+
+    commit = MagicMock()
+    files = MagicMock()
+    files.keys.side_effect = ValueError("bad stats")
+    commit.stats.files = files
+
+    with  (
+        pytest.raises(ValueError), 
+        patch("algorithms.file_changes.files_changes_over_period") as mock_changes
+        ):
+            calculate_file_commit_frequency(
+                commits_data=[commit],
+                repo=repo,
+                begin=begin,
+                end=end,
+            )
+
+    mock_changes.assert_not_called()
