@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from mutant_common import collect_mutants, weight_for_status
+
+DEFAULT_TARGET_STATUSES = {"no_tests", "survived", "timeout"}
+
+
+def parse_statuses(raw: str | None, include_crash: bool) -> set[str]:
+    if raw:
+        statuses = {value.strip() for value in raw.split(",") if value.strip()}
+    else:
+        statuses = set(DEFAULT_TARGET_STATUSES)
+    if include_crash:
+        statuses.add("crash")
+    return statuses
+
+
+def rank_by_function(
+    records, target_statuses: set[str]
+) -> list[dict[str, object]]:
+    grouped_score: dict[str, int] = defaultdict(int)
+    grouped_counts: dict[str, Counter] = defaultdict(Counter)
+    source_by_key: dict[str, str] = {}
+
+    for record in records:
+        if record.status not in target_statuses:
+            continue
+        grouped_score[record.base_key] += weight_for_status(record.status)
+        grouped_counts[record.base_key][record.status] += 1
+        source_by_key[record.base_key] = str(record.source_path)
+
+    ranked = []
+    for key, score in grouped_score.items():
+        counts = grouped_counts[key]
+        ranked.append(
+            {
+                "key": key,
+                "source_file": source_by_key.get(key, ""),
+                "score": score,
+                "total_targets": sum(counts.values()),
+                "status_counts": dict(counts),
+            }
+        )
+
+    return sorted(
+        ranked,
+        key=lambda row: (row["score"], row["total_targets"], row["key"]),
+        reverse=True,
+    )
+
+
+def rank_by_module(
+    records, target_statuses: set[str]
+) -> list[dict[str, object]]:
+    grouped_score: dict[str, int] = defaultdict(int)
+    grouped_counts: dict[str, Counter] = defaultdict(Counter)
+
+    for record in records:
+        if record.status not in target_statuses:
+            continue
+        grouped_score[record.module] += weight_for_status(record.status)
+        grouped_counts[record.module][record.status] += 1
+
+    ranked = []
+    for module, score in grouped_score.items():
+        counts = grouped_counts[module]
+        ranked.append(
+            {
+                "module": module,
+                "score": score,
+                "total_targets": sum(counts.values()),
+                "status_counts": dict(counts),
+            }
+        )
+
+    return sorted(
+        ranked,
+        key=lambda row: (row["score"], row["total_targets"], row["module"]),
+        reverse=True,
+    )
+
+
+def print_text_result(
+    function_rows: list[dict[str, object]],
+    module_rows: list[dict[str, object]],
+    scope: str,
+    top: int,
+) -> None:
+    if scope in {"function", "both"}:
+        print("Top functions:")
+        for row in function_rows[:top]:
+            print(
+                f"  - {row['key']} | score={row['score']} | "
+                f"targets={row['total_targets']} | statuses={row['status_counts']}"
+            )
+        print("")
+
+    if scope in {"module", "both"}:
+        print("Top modules:")
+        for row in module_rows[:top]:
+            print(
+                f"  - {row['module']} | score={row['score']} | "
+                f"targets={row['total_targets']} | statuses={row['status_counts']}"
+            )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Rank high-value mutant-killing targets."
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=10,
+        help="Number of rows to show per ranking (default: 10).",
+    )
+    parser.add_argument(
+        "--scope",
+        choices=["function", "module", "both"],
+        default="both",
+        help="Ranking scope (default: both).",
+    )
+    parser.add_argument(
+        "--statuses",
+        default=None,
+        help=(
+            "Comma-separated statuses to target. "
+            "Default: no_tests,survived,timeout."
+        ),
+    )
+    parser.add_argument(
+        "--include-crash",
+        action="store_true",
+        help="Include crash mutants in ranking with low priority weight.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON output.",
+    )
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    records = collect_mutants(root)
+    target_statuses = parse_statuses(args.statuses, args.include_crash)
+
+    function_rows = rank_by_function(records, target_statuses)
+    module_rows = rank_by_module(records, target_statuses)
+
+    result = {
+        "root": str(root),
+        "target_statuses": sorted(target_statuses),
+        "function_ranking": function_rows[: args.top],
+        "module_ranking": module_rows[: args.top],
+    }
+
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print_text_result(function_rows, module_rows, args.scope, args.top)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from mutant_common import collect_mutants, load_tests_by_function, weight_for_status
+
+DEFAULT_TARGET_STATUSES = {"no_tests", "survived", "timeout"}
+
+
+def parse_statuses(raw: str | None) -> set[str]:
+    if raw:
+        return {value.strip() for value in raw.split(",") if value.strip()}
+    return set(DEFAULT_TARGET_STATUSES)
+
+
+def classify_gap(status_counts: Counter, test_count: int) -> str:
+    if status_counts.get("no_tests", 0) and test_count == 0:
+        return "untested-function"
+    if status_counts.get("no_tests", 0) and test_count > 0:
+        return "mapping-or-invocation-gap"
+    if test_count <= 2:
+        return "sparse-tests"
+    if status_counts.get("survived", 0):
+        return "weak-assertions-or-missing-edge-cases"
+    return "investigate"
+
+
+def candidate_test_file(module_name: str) -> str:
+    return f"tests/test_{module_name.split('.')[-1]}.py"
+
+
+def focus_hints(function_key: str) -> list[str]:
+    lower = function_key.lower()
+    hints: list[str] = []
+
+    if any(token in lower for token in ("normalize", "parse", "format")):
+        hints.append("Add canonicalization and invalid-input assertions.")
+    if any(token in lower for token in ("calculate", "count", "average")):
+        hints.append("Add exact numeric assertions for 0/1/boundary values.")
+    if any(token in lower for token in ("sort", "most_recent", "top_")):
+        hints.append("Assert ordering and tie-breaking behavior explicitly.")
+    if any(token in lower for token in ("get_", "fetch", "load")):
+        hints.append("Cover empty results, missing data, and fallback behavior.")
+    if not hints:
+        hints.append("Add happy-path, edge-case, and failure-path assertions.")
+    return hints
+
+
+def build_gap_report(root: Path, top: int, target_statuses: set[str]) -> list[dict]:
+    records = collect_mutants(root)
+    tests_by_function = load_tests_by_function(root)
+
+    score_by_key: dict[str, int] = defaultdict(int)
+    status_counts_by_key: dict[str, Counter] = defaultdict(Counter)
+    module_by_key: dict[str, str] = {}
+    source_by_key: dict[str, str] = {}
+
+    for record in records:
+        if record.status not in target_statuses:
+            continue
+        key = record.base_key
+        score_by_key[key] += weight_for_status(record.status)
+        status_counts_by_key[key][record.status] += 1
+        module_by_key[key] = record.module
+        source_by_key[key] = str(record.source_path)
+
+    rows = []
+    for key, score in score_by_key.items():
+        test_names = tests_by_function.get(key, [])
+        status_counts = status_counts_by_key[key]
+        rows.append(
+            {
+                "key": key,
+                "module": module_by_key[key],
+                "source_file": source_by_key[key],
+                "suggested_test_file": candidate_test_file(module_by_key[key]),
+                "priority_score": score,
+                "target_mutants": sum(status_counts.values()),
+                "status_counts": dict(status_counts),
+                "test_count": len(test_names),
+                "sample_tests": test_names[:5],
+                "gap_type": classify_gap(status_counts, len(test_names)),
+                "focus_hints": focus_hints(key),
+            }
+        )
+
+    return sorted(
+        rows,
+        key=lambda row: (
+            row["priority_score"],
+            row["target_mutants"],
+            -row["test_count"],
+            row["key"],
+        ),
+        reverse=True,
+    )[:top]
+
+
+def print_text(rows: list[dict]) -> None:
+    if not rows:
+        print("No matching mutant targets found.")
+        return
+
+    for index, row in enumerate(rows, start=1):
+        print(
+            f"{index}. {row['key']} | score={row['priority_score']} | "
+            f"targets={row['target_mutants']} | gap={row['gap_type']}"
+        )
+        print(f"   source: {row['source_file']}")
+        print(f"   suggested test file: {row['suggested_test_file']}")
+        print(f"   status counts: {row['status_counts']}")
+        print(f"   mapped tests: {row['test_count']}")
+        if row["sample_tests"]:
+            print(f"   sample tests: {row['sample_tests']}")
+        for hint in row["focus_hints"]:
+            print(f"   hint: {hint}")
+        print("")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Map mutant targets to tests and classify test gaps."
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=10,
+        help="Number of targets to return (default: 10).",
+    )
+    parser.add_argument(
+        "--statuses",
+        default=None,
+        help=(
+            "Comma-separated target statuses. "
+            "Default: no_tests,survived,timeout."
+        ),
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON output.",
+    )
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    target_statuses = parse_statuses(args.statuses)
+    rows = build_gap_report(root, args.top, target_statuses)
+
+    payload = {
+        "root": str(root),
+        "target_statuses": sorted(target_statuses),
+        "targets": rows,
+    }
+
+    if args.json:
+        print(json.dumps(payload, indent=2))
+    else:
+        print_text(rows)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

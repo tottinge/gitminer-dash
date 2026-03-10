@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import Counter
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from mutant_common import collect_mutants, find_meta_files, find_stats_files
+
+
+def build_report(root: Path, top: int) -> dict:
+    records = collect_mutants(root)
+    status_counts = Counter(record.status for record in records)
+    module_counts = Counter(record.module for record in records)
+
+    return {
+        "root": str(root),
+        "meta_files": [str(path) for path in find_meta_files(root)],
+        "stats_files": [str(path) for path in find_stats_files(root)],
+        "mutant_count": len(records),
+        "status_counts": dict(status_counts.most_common()),
+        "top_modules": [
+            {"module": module, "count": count}
+            for module, count in module_counts.most_common(top)
+        ],
+    }
+
+
+def print_text_report(report: dict) -> None:
+    print(f"Root: {report['root']}")
+    print(f"Meta files: {len(report['meta_files'])}")
+    print(f"Stats files: {len(report['stats_files'])}")
+    print(f"Mutants discovered: {report['mutant_count']}")
+    print("")
+    print("Status counts:")
+    for status, count in report["status_counts"].items():
+        print(f"  - {status}: {count}")
+    print("")
+    print("Top modules by mutant count:")
+    for entry in report["top_modules"]:
+        print(f"  - {entry['module']}: {entry['count']}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Discover mutmut artifacts and summarize mutant status."
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=10,
+        help="Number of top modules to show (default: 10).",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON instead of a text report.",
+    )
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    report = build_report(root=root, top=args.top)
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print_text_report(report)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

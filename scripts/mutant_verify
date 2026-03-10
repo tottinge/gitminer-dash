@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from collections import Counter
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from mutant_common import collect_mutants, severity_for_status
+
+
+def snapshot_status(root: Path) -> dict[str, str]:
+    return {record.key: record.status for record in collect_mutants(root)}
+
+
+def normalize_snapshot_payload(payload: object) -> dict[str, str]:
+    if isinstance(payload, dict):
+        if "status_by_key" in payload and isinstance(
+            payload["status_by_key"], dict
+        ):
+            return {
+                str(key): str(value)
+                for key, value in payload["status_by_key"].items()
+            }
+        return {str(key): str(value) for key, value in payload.items()}
+    return {}
+
+
+def load_snapshot(path: Path) -> dict[str, str]:
+    payload = json.loads(path.read_text())
+    return normalize_snapshot_payload(payload)
+
+
+def save_snapshot(path: Path, status_by_key: dict[str, str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "status_by_key": status_by_key,
+        "count": len(status_by_key),
+    }
+    path.write_text(json.dumps(payload, indent=2))
+
+
+def apply_focus(status_by_key: dict[str, str], patterns: list[str]) -> dict[str, str]:
+    if not patterns:
+        return status_by_key
+    return {
+        key: status
+        for key, status in status_by_key.items()
+        if any(pattern in key for pattern in patterns)
+    }
+
+
+def compare_snapshots(
+    before: dict[str, str], after: dict[str, str]
+) -> dict[str, object]:
+    all_keys = sorted(set(before) | set(after))
+    changed = []
+    improved = 0
+    regressed = 0
+    unchanged = 0
+
+    for key in all_keys:
+        old_status = before.get(key, "missing")
+        new_status = after.get(key, "missing")
+        if old_status == new_status:
+            unchanged += 1
+            continue
+
+        old_severity = severity_for_status(old_status)
+        new_severity = severity_for_status(new_status)
+        if new_severity < old_severity:
+            trend = "improved"
+            improved += 1
+        elif new_severity > old_severity:
+            trend = "regressed"
+            regressed += 1
+        else:
+            trend = "changed"
+        changed.append(
+            {
+                "key": key,
+                "before": old_status,
+                "after": new_status,
+                "trend": trend,
+                "severity_delta": new_severity - old_severity,
+            }
+        )
+
+    return {
+        "summary": {
+            "total_compared": len(all_keys),
+            "improved": improved,
+            "regressed": regressed,
+            "unchanged": unchanged,
+            "changed": len(changed),
+        },
+        "baseline_status_counts": dict(Counter(before.values())),
+        "current_status_counts": dict(Counter(after.values())),
+        "changed": changed,
+    }
+
+
+def print_text_result(result: dict[str, object], top_changes: int) -> None:
+    summary = result["summary"]
+    print("Verification summary:")
+    print(f"  - compared: {summary['total_compared']}")
+    print(f"  - improved: {summary['improved']}")
+    print(f"  - regressed: {summary['regressed']}")
+    print(f"  - unchanged: {summary['unchanged']}")
+    print("")
+    print(f"Baseline counts: {result['baseline_status_counts']}")
+    print(f"Current counts:  {result['current_status_counts']}")
+    print("")
+
+    changed = result["changed"][:top_changes]
+    if not changed:
+        print("No status changes detected.")
+        return
+
+    print("Top changes:")
+    for row in changed:
+        print(
+            f"  - {row['key']}: {row['before']} -> {row['after']} "
+            f"({row['trend']})"
+        )
+
+
+def maybe_run_command(command: str | None) -> int:
+    if not command:
+        return 0
+    process = subprocess.run(command, shell=True, check=False)
+    return process.returncode
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Verify mutant status deltas against a baseline snapshot."
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=None,
+        help="Path to baseline snapshot JSON.",
+    )
+    parser.add_argument(
+        "--save-snapshot",
+        type=Path,
+        default=None,
+        help="Write current status snapshot to this file.",
+    )
+    parser.add_argument(
+        "--run-cmd",
+        default=None,
+        help="Optional command to run before collecting current statuses.",
+    )
+    parser.add_argument(
+        "--focus",
+        action="append",
+        default=[],
+        help="Only include mutant keys containing this substring.",
+    )
+    parser.add_argument(
+        "--top-changes",
+        type=int,
+        default=25,
+        help="Maximum changed keys to print in text mode (default: 25).",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON output.",
+    )
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    return_code = maybe_run_command(args.run_cmd)
+    if args.run_cmd and return_code != 0:
+        print(f"Warning: run command exited with code {return_code}")
+
+    current = apply_focus(snapshot_status(root), args.focus)
+
+    if args.save_snapshot:
+        save_snapshot(args.save_snapshot.resolve(), current)
+
+    if not args.baseline:
+        payload = {
+            "root": str(root),
+            "current_status_counts": dict(Counter(current.values())),
+            "count": len(current),
+            "note": "No baseline provided; snapshot-only mode.",
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print("Snapshot-only mode (no baseline comparison).")
+            print(f"Mutants included: {payload['count']}")
+            print(f"Current counts: {payload['current_status_counts']}")
+        return 0
+
+    baseline = apply_focus(load_snapshot(args.baseline.resolve()), args.focus)
+    result = compare_snapshots(baseline, current)
+    result["root"] = str(root)
+    result["focus"] = args.focus
+
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print_text_result(result, args.top_changes)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

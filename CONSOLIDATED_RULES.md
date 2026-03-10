@@ -1,0 +1,122 @@
+# Consolidated Warp Rules
+This file consolidates the current **global (personal)** rules plus the **project-specific** rules discovered in this repository.
+
+## Rule precedence (as provided)
+- The rules below are listed in **ASCENDING ORDER OF PRECEDENCE**.
+- Rules that appear **LATER** in the list take precedence over rules that appear **EARLIER**.
+- Project rules (those with file paths as names) take precedence over personal rules.
+- When multiple project rules conflict, prefer rules from subdirectory over the parent directory.
+
+## Global (personal) rules
+### 1) Prefer running tests after every change
+User prefers that tests are run after every change rather than running tests once after all changes are made.
+
+### 2) Conventional commit format
+Use conventional commit format
+Keep messages concise  and to one line when possible
+Avoid comprehensive multi-line commit messages
+
+### 3) Tests must pass
+No task is considered complete until all the tests pass successfully.
+
+### 4) TAP test configuration preference
+The test configuration runs all tests and conforms to the TAP format, providing a clear tree of results. This setup is preferred for future uv projects, especially when using PyCharm as the IDE.
+
+### 5) Unit tests required before commit
+unit tests must be written and pass for all custom  code.  These test must be running before we can commit.
+
+### 6) Keep workload small between commits
+We will be keeping our workload small - making only small changes between commits.
+If the scope of change becomes large, we will recommend doing a hard reset and starting over with smaller units of work.
+
+### 7) Prefer `./run_tests` (no permission needed)
+It is always best to use ./run_tests to check for pass/fail tests and to ensure new tests are included, and it is not necessary to get permission to use ./run_tests.
+
+The same is true of running focused tests on specific files -- testing is always free and welcome in this project, no permission necessary.
+
+### 8) Cannot commit unless tests are passing
+We cannot commit unless all tests are running and reporting success.
+
+### 9) UI components built in Storybook first
+Every ui component is built first in Storybook  with state and interaction testing,  before it is integrated with  the application as a whole.
+
+All interaction tests are run from the 'test' script before any commit.
+
+UI components and  tests are not automatically committed.
+
+## Project rules
+### Source: `WARP.md`
+# Warp agent coding rules (7 Code Virtues + FIRST unit tests)
+Apply these rules whenever you edit, create, or refactor code in this repo.
+
+## 1) Prefer virtuous code (Industrial Logic: 7 Code Virtues)
+Treat these as an order of operations. Earlier virtues are prerequisites for later ones.
+
+### Working (as opposed to incomplete)
+- Keep the codebase in a working state at all times.
+- Prove it works *recently* via automated tests; do not rely on “it should work.”
+- Treat lint/format/security checks as part of “Working”, not optional polish.
+- Before proposing a commit/PR, run `./check` and `./run_tests`.
+- If `ruff` (or any check) fails, fix it immediately and re-run `./run_tests` after the fix.
+- If you break something, stop and fix it before continuing.
+
+### Unique (as opposed to duplicated)
+- Preserve a Single Point of Truth (SPOT): each fact/algorithm should have one authoritative definition.
+- Remove duplication by extracting shared logic (functions/modules/helpers) rather than copying.
+- When de-duplicating, keep behavior identical and covered by tests.
+
+### Simple (as opposed to complicated)
+- Reduce local complexity: fewer operations, operands, and execution paths.
+- Prefer small functions with straightforward control flow.
+- When faced with complexity, split responsibilities and name intermediate concepts.
+
+### Clear (as opposed to puzzling)
+- Optimize for the next maintainer: readable names, idiomatic patterns, and consistent style.
+- Make intent obvious; avoid cleverness.
+- Keep related concepts together; avoid “reverse engineering” requirements.
+
+### Easy (as opposed to difficult)
+- Optimize for change: structure code so new features and fixes are easy to introduce.
+- Prefer designs that localize changes and minimize ripple effects.
+- Reduce incidental coupling; inject/stub dependencies to enable safe modification.
+
+### Developed (as opposed to primitive)
+- Avoid primitive obsession: introduce domain-focused types/abstractions where they simplify usage.
+- Move operations to the place they belong (data + behavior together when appropriate).
+- Create a small, expressive “DSL” for the problem domain when it improves clarity and ease.
+
+### Brief (as opposed to chatty)
+- Prefer concise, high signal-to-noise code.
+- Remove unnecessary ceremony, repetition, and boilerplate.
+- Do not sacrifice clarity for brevity; “brief” must not become “cryptic.”
+
+## 2) Tests must be FIRST (Pragmatic Programmers)
+Write and maintain micro/unit tests so they are:
+
+### Fast
+- Keep unit tests blazing fast so they can run constantly.
+- Avoid network, disk, real databases, sleeps, and heavy startup.
+- Stub/mock external boundaries and slow collaborators.
+
+### Isolated
+- Each test should have one clear reason to fail.
+- No order dependence: tests must pass when run alone or in any sequence.
+- Avoid shared state; create/cleanup state within the test.
+
+### Repeatable
+- Deterministic results across machines and environments.
+- Control time, randomness, locales, and concurrency.
+- Prevent flakiness by removing volatile external dependencies.
+
+### Self-verifying
+- Tests must assert outcomes automatically (pass/fail) with no manual inspection.
+- Avoid “tests” that only exercise code without checking results.
+
+### Timely
+- Prefer writing tests first (TDD) or at least alongside the production code change.
+- Treat tests as “specifications by example” that document behavior.
+- Let tests shape better APIs (names, parameter lists, seams for dependencies).
+
+## 3) Refactoring safety rule
+- Refactor only with a passing test baseline.
+- After each small refactor, re-run tests to confirm the code remains Working.

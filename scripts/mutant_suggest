@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from mutant_common import collect_mutants, load_tests_by_function, weight_for_status
+
+DEFAULT_TARGET_STATUSES = {"no_tests", "survived", "timeout"}
+
+
+def parse_statuses(raw: str | None) -> set[str]:
+    if raw:
+        return {value.strip() for value in raw.split(",") if value.strip()}
+    return set(DEFAULT_TARGET_STATUSES)
+
+
+def slugify(value: str) -> str:
+    return re.sub(r"[^a-z0-9_]+", "_", value.lower()).strip("_")
+
+
+def candidate_test_file(module_name: str) -> str:
+    return f"tests/test_{module_name.split('.')[-1]}.py"
+
+
+def default_assertion_ideas(function_key: str) -> list[str]:
+    lower = function_key.lower()
+    ideas: list[str] = []
+
+    if any(token in lower for token in ("normalize", "parse", "format")):
+        ideas.extend(
+            [
+                "Assert canonical output for valid variants/casing.",
+                "Assert unknown/invalid input falls back predictably.",
+            ]
+        )
+    if any(token in lower for token in ("calculate", "count", "sum", "avg")):
+        ideas.extend(
+            [
+                "Assert exact values for zero, one, and boundary inputs.",
+                "Assert rounding/precision behavior explicitly.",
+            ]
+        )
+    if any(token in lower for token in ("get_", "fetch", "load", "most_recent")):
+        ideas.extend(
+            [
+                "Assert empty input returns empty/default output.",
+                "Assert deterministic ordering/tie-break behavior.",
+            ]
+        )
+    if not ideas:
+        ideas.extend(
+            [
+                "Assert happy path output shape and key field values.",
+                "Assert edge-case and failure-path behavior.",
+            ]
+        )
+    return ideas[:4]
+
+
+def suggested_test_names(function_key: str) -> list[str]:
+    function_name = function_key.rsplit(".", 1)[-1]
+    if function_name.startswith("x_"):
+        function_name = function_name[2:]
+    slug = slugify(function_name)
+    return [
+        f"test_{slug}_happy_path",
+        f"test_{slug}_edge_cases",
+        f"test_{slug}_invalid_input",
+    ]
+
+
+def top_targets(root: Path, top: int, statuses: set[str]) -> list[dict]:
+    records = collect_mutants(root)
+    tests_by_function = load_tests_by_function(root)
+
+    score_by_key: dict[str, int] = defaultdict(int)
+    status_counts_by_key: dict[str, Counter] = defaultdict(Counter)
+    module_by_key: dict[str, str] = {}
+    source_by_key: dict[str, str] = {}
+
+    for record in records:
+        if record.status not in statuses:
+            continue
+        key = record.base_key
+        score_by_key[key] += weight_for_status(record.status)
+        status_counts_by_key[key][record.status] += 1
+        module_by_key[key] = record.module
+        source_by_key[key] = str(record.source_path)
+
+    ranked: list[dict] = []
+    for key, score in score_by_key.items():
+        mapped_tests = tests_by_function.get(key, [])
+        ranked.append(
+            {
+                "key": key,
+                "module": module_by_key[key],
+                "source_file": source_by_key[key],
+                "suggested_test_file": candidate_test_file(module_by_key[key]),
+                "priority_score": score,
+                "status_counts": dict(status_counts_by_key[key]),
+                "mapped_test_count": len(mapped_tests),
+                "existing_tests": mapped_tests[:5],
+                "suggested_test_names": suggested_test_names(key),
+                "assertion_ideas": default_assertion_ideas(key),
+            }
+        )
+
+    return sorted(
+        ranked,
+        key=lambda row: (
+            row["priority_score"],
+            sum(row["status_counts"].values()),
+            -row["mapped_test_count"],
+            row["key"],
+        ),
+        reverse=True,
+    )[:top]
+
+
+def print_text_suggestions(rows: list[dict]) -> None:
+    if not rows:
+        print("No matching targets found.")
+        return
+
+    for index, row in enumerate(rows, start=1):
+        print(
+            f"{index}. {row['key']} | score={row['priority_score']} | "
+            f"statuses={row['status_counts']}"
+        )
+        print(f"   source: {row['source_file']}")
+        print(f"   target test file: {row['suggested_test_file']}")
+        if row["existing_tests"]:
+            print(f"   existing tests: {row['existing_tests']}")
+        print(f"   suggested test names: {row['suggested_test_names']}")
+        for idea in row["assertion_ideas"]:
+            print(f"   assertion idea: {idea}")
+        print("")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Suggest concrete test additions for mutant targets."
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=10,
+        help="Number of targets to suggest (default: 10).",
+    )
+    parser.add_argument(
+        "--statuses",
+        default=None,
+        help=(
+            "Comma-separated statuses to prioritize. "
+            "Default: no_tests,survived,timeout."
+        ),
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON output.",
+    )
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    statuses = parse_statuses(args.statuses)
+    suggestions = top_targets(root, args.top, statuses)
+
+    payload = {
+        "root": str(root),
+        "target_statuses": sorted(statuses),
+        "suggestions": suggestions,
+    }
+
+    if args.json:
+        print(json.dumps(payload, indent=2))
+    else:
+        print_text_suggestions(suggestions)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
