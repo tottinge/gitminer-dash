@@ -97,3 +97,15 @@ Write and maintain micro/unit tests so they are:
 - Do not replace `./check` with separate ad-hoc tool calls for standard validation.
 - Prefer wrapper scripts to preserve project flags, behavior, and conventions.
 - After each change, run `./run_tests`; before commit/PR, run both `./check` and `./run_tests`.
+
+## 6) Mutation-analysis helpers (`scripts/mutant*`)
+- Prefer `scripts/mutant_*` helpers over ad-hoc parsing of `*.py.meta` and `mutmut-stats.json`.
+- Mutation-analysis workflow:
+  1. Run `./mutate` to refresh artifacts.
+  2. Run `./scripts/mutant_discover` for inventory/status counts.
+  3. Run `./scripts/mutant_rank` to prioritize by target statuses.
+  4. Run `./scripts/mutant_test_gap` to classify likely gaps.
+  5. Run `./scripts/mutant_suggest` for concrete test additions.
+  6. Run `./scripts/mutant_verify` with snapshots to confirm improvement/regression.
+- Default priority statuses for triage are `no_tests,survived,timeout`; include `crash` only when explicitly needed.
+- `scripts/mutant_common.py` is shared library code for these scripts and should not be treated as a CLI entrypoint.

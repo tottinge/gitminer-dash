@@ -1,0 +1,68 @@
+Mutant Scripts Quick Reference
+==============================
+
+Purpose
+-------
+These scripts help triage mutmut output quickly without manual JSON/meta parsing.
+They read mutation artifacts (`*.py.meta` and `mutmut-stats.json`) and prioritize
+what tests to write next.
+
+Prerequisite
+------------
+Generate/update mutation artifacts first:
+  ./mutate
+
+Recommended flow
+----------------
+1) Inventory artifacts and status counts:
+   ./scripts/mutant_discover --top 10
+
+2) Rank where to focus next:
+   ./scripts/mutant_rank --top 10
+
+3) Identify likely test gaps:
+   ./scripts/mutant_test_gap --top 10
+
+4) Get concrete test suggestions:
+   ./scripts/mutant_suggest --top 10
+
+5) Track progress over time:
+   ./scripts/mutant_verify --save-snapshot .tmp/mutant-baseline.json
+   # ... make test improvements ...
+   ./scripts/mutant_verify --baseline .tmp/mutant-baseline.json --top-changes 25
+
+Script details
+--------------
+./scripts/mutant_discover
+  - What it does: finds mutant artifacts and summarizes status counts + top modules.
+  - Best for: quick health snapshot.
+  - Useful flags: --root, --top, --json
+
+./scripts/mutant_rank
+  - What it does: ranks functions/modules by high-priority statuses.
+  - Default target statuses: no_tests,survived,timeout
+  - Best for: deciding where test effort pays off most.
+  - Useful flags: --scope function|module|both, --statuses, --include-crash, --top, --json
+
+./scripts/mutant_test_gap
+  - What it does: maps mutant targets to existing tests and classifies gap type.
+  - Gap types include: untested-function, mapping-or-invocation-gap, sparse-tests,
+    weak-assertions-or-missing-edge-cases, investigate.
+  - Best for: deciding whether to add new tests vs strengthen assertions.
+  - Useful flags: --statuses, --top, --json
+
+./scripts/mutant_suggest
+  - What it does: suggests target test file, candidate test names, and assertion ideas.
+  - Best for: turning mutation results into immediate TDD tasks.
+  - Useful flags: --statuses, --top, --json
+
+./scripts/mutant_verify
+  - What it does: compares current mutant statuses to a baseline snapshot.
+  - Best for: proving improvements/regressions after test changes.
+  - Useful flags: --baseline, --save-snapshot, --focus, --top-changes, --run-cmd, --json
+
+Internal helper
+---------------
+scripts/mutant_common.py
+  Shared parsing/grouping/status-weight logic used by all mutant scripts.
+  Import it in script code; do not run it as a standalone command.
