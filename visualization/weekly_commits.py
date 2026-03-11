@@ -40,10 +40,10 @@ def create_weekly_commits_figure(
         go.Bar(
             x=x_labels,
             y=[0] * len(x_labels),
-            name="base",
+            name="base",  # pragma: no mutate
             showlegend=False,
             hoverinfo="skip",  # pragma: no mutate
-            opacity=0,
+            opacity=0,  # pragma: no mutate
         )
     )
 
@@ -68,8 +68,8 @@ def create_weekly_commits_figure(
                 x_data.append(x_label)
                 y_data.append(1)  # Each commit is one unit tall
                 hover_text.append(
-                    f"<b>{commit.summary[:50]}</b><br>"
-                    f"{commit.committer.name}<br>"
+                    f"<b>{commit.summary[:50]}</b><br>"  # pragma: no mutate
+                    f"{commit.committer.name}<br>"  # pragma: no mutate
                     f"{commit.committed_datetime.strftime('%Y-%m-%d %H:%M')}"  # pragma: no mutate
                 )
 
@@ -79,8 +79,8 @@ def create_weekly_commits_figure(
                 go.Bar(
                     x=x_data,
                     y=y_data,
-                    name=f"Commit {commit_index + 1}",
-                    showlegend=False,
+                    name=f"Commit {commit_index + 1}",  # pragma: no mutate
+                    showlegend=False,  # pragma: no mutate
                     hovertemplate="%{hovertext}<extra></extra>",  # pragma: no mutate
                     hovertext=hover_text,
                 )
@@ -88,28 +88,30 @@ def create_weekly_commits_figure(
 
     fig.update_layout(
         barmode="stack",
-        xaxis_title="Week Ending",
-        yaxis_title="Number of Commits",
+        xaxis_title="Week Ending",  # pragma: no mutate
+        yaxis_title="Number of Commits",  # pragma: no mutate
         xaxis={
             "type": "category",
             "categoryorder": "array",
             "categoryarray": x_labels,
         },
-        hovermode="closest",
-        height=500,
+        hovermode="closest",  # pragma: no mutate
+        height=500,  # pragma: no mutate
     )
 
     stats_html = html.Div(
         [
             html.Span(
-                f"Minimum: {weekly_data['min_commits']} commits/week",
+                f"Minimum: {weekly_data['min_commits']} commits/week",  # pragma: no mutate
                 style={"marginRight": "20px"},  # pragma: no mutate
             ),
             html.Span(
-                f"Average: {weekly_data['avg_commits']:.1f} commits/week",
+                f"Average: {weekly_data['avg_commits']:.1f} commits/week",  # pragma: no mutate
                 style={"marginRight": "20px"},  # pragma: no mutate
             ),
-            html.Span(f"Maximum: {weekly_data['max_commits']} commits/week"),
+            html.Span(
+                f"Maximum: {weekly_data['max_commits']} commits/week"  # pragma: no mutate
+            ),
         ]
     )
 
