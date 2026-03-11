@@ -134,11 +134,6 @@ def _cached_layout(hash_key: str) -> dict:
     raise RuntimeError("_cached_layout should not be called directly")
 
 
-def _compute_layout(G: nx.Graph, iterations: int = 40) -> dict:
-    """Compute a spring layout with tuned iteration count."""
-    return nx.spring_layout(G, seed=42, iterations=iterations)
-
-
 def create_network_visualization(
     # Default title is cosmetic; keep it out of mutation testing noise.
     G: nx.Graph,

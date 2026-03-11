@@ -3,6 +3,7 @@
 This module centralizes artifact discovery, mutant parsing, grouping, and
 status weighting so command scripts can share one implementation.
 """
+
 from __future__ import annotations
 
 import json
@@ -147,7 +148,9 @@ def group_by_function(
     return dict(grouped)
 
 
-def group_by_module(records: list[MutantRecord]) -> dict[str, list[MutantRecord]]:
+def group_by_module(
+    records: list[MutantRecord],
+) -> dict[str, list[MutantRecord]]:
     grouped: dict[str, list[MutantRecord]] = defaultdict(list)
     for record in records:
         grouped[record.module].append(record)
@@ -171,3 +174,60 @@ def load_tests_by_function(root: Path) -> dict[str, list[str]]:
                     merged[function_key].append(test_name)
                     seen[function_key].add(test_name)
     return dict(merged)
+
+
+def relative_path_str(path: Path, root: Path) -> str:
+    root_abs = root.resolve()
+    path_abs = path.resolve()
+    try:
+        return path_abs.relative_to(root_abs).as_posix()
+    except ValueError:
+        return path_abs.as_posix()
+
+
+def normalize_source_query(source_query: str) -> str:
+    return source_query.strip().replace("\\", "/")
+
+
+def source_matches_query(
+    source_path: Path, root: Path, source_query: str
+) -> bool:
+    query = normalize_source_query(source_query)
+    if not query:
+        return False
+
+    source_rel = relative_path_str(source_path, root)
+    source_name = Path(source_rel).name
+    query_path = Path(query)
+    query_name = query_path.name
+
+    if query_path.is_absolute():
+        return source_path.resolve() == query_path.resolve()
+
+    normalized_query = query.lstrip("./")
+    if "/" in normalized_query:
+        return source_rel == normalized_query or source_rel.endswith(
+            f"/{normalized_query}"
+        )
+
+    return source_name == query_name or source_rel == normalized_query
+
+
+def filter_mutants_for_source(
+    records: list[MutantRecord], root: Path, source_query: str
+) -> list[MutantRecord]:
+    return [
+        record
+        for record in records
+        if source_matches_query(record.source_path, root, source_query)
+    ]
+
+
+def surviving_mutants_for_source(
+    records: list[MutantRecord], root: Path, source_query: str
+) -> list[MutantRecord]:
+    return [
+        record
+        for record in filter_mutants_for_source(records, root, source_query)
+        if record.status == "survived"
+    ]

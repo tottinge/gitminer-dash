@@ -65,12 +65,15 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "scripts: tests for scripts/ helpers",
+]
 # Exclude mutation testing directory to avoid conftest conflicts
 norecursedirs = ["mutants", ".git", ".pytest_cache", "__pycache__", "*.egg-info"]
 
 [tool.mutmut]
 paths_to_mutate = ["algorithms/", "pages/", "visualization/", "utils/"]
 also_copy = ["data.py", "config.py"]
-runner = "PYTHONPATH=.. uv run pytest"
+runner = "PYTHONPATH=.. uv run pytest --ignore=tests/test_mutants_for.py -m \"not scripts\""
 tests_dir = ["tests/"]
 

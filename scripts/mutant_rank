@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Rank high-value mutant targets to prioritize test-writing effort.
 
-This script scores functions and modules by target statuses (default:
-`no_tests`, `survived`, `timeout`) to surface where new tests will help most.
+This script scores functions and source files by target statuses (default:
+`survived`) to surface where test remediation should focus next.
 """
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from mutant_common import collect_mutants, weight_for_status
+from mutant_common import collect_mutants, relative_path_str, weight_for_status
 
-DEFAULT_TARGET_STATUSES = {"no_tests", "survived", "timeout"}
+DEFAULT_TARGET_STATUSES = {"survived"}
 
 
 def parse_statuses(raw: str | None, include_crash: bool) -> set[str]:
@@ -32,7 +32,7 @@ def parse_statuses(raw: str | None, include_crash: bool) -> set[str]:
 
 
 def rank_by_function(
-    records, target_statuses: set[str]
+    records, target_statuses: set[str], root: Path
 ) -> list[dict[str, object]]:
     grouped_score: dict[str, int] = defaultdict(int)
     grouped_counts: dict[str, Counter] = defaultdict(Counter)
@@ -43,7 +43,9 @@ def rank_by_function(
             continue
         grouped_score[record.base_key] += weight_for_status(record.status)
         grouped_counts[record.base_key][record.status] += 1
-        source_by_key[record.base_key] = str(record.source_path)
+        source_by_key[record.base_key] = relative_path_str(
+            record.source_path, root
+        )
 
     ranked = []
     for key, score in grouped_score.items():
@@ -66,23 +68,27 @@ def rank_by_function(
 
 
 def rank_by_module(
-    records, target_statuses: set[str]
+    records, target_statuses: set[str], root: Path
 ) -> list[dict[str, object]]:
     grouped_score: dict[str, int] = defaultdict(int)
     grouped_counts: dict[str, Counter] = defaultdict(Counter)
+    modules_by_source: dict[str, set[str]] = defaultdict(set)
 
     for record in records:
         if record.status not in target_statuses:
             continue
-        grouped_score[record.module] += weight_for_status(record.status)
-        grouped_counts[record.module][record.status] += 1
+        source_file = relative_path_str(record.source_path, root)
+        grouped_score[source_file] += weight_for_status(record.status)
+        grouped_counts[source_file][record.status] += 1
+        modules_by_source[source_file].add(record.module)
 
     ranked = []
-    for module, score in grouped_score.items():
-        counts = grouped_counts[module]
+    for source_file, score in grouped_score.items():
+        counts = grouped_counts[source_file]
         ranked.append(
             {
-                "module": module,
+                "source_file": source_file,
+                "modules": sorted(modules_by_source[source_file]),
                 "score": score,
                 "total_targets": sum(counts.values()),
                 "status_counts": dict(counts),
@@ -91,7 +97,11 @@ def rank_by_module(
 
     return sorted(
         ranked,
-        key=lambda row: (row["score"], row["total_targets"], row["module"]),
+        key=lambda row: (
+            row["score"],
+            row["total_targets"],
+            row["source_file"],
+        ),
         reverse=True,
     )
 
@@ -112,10 +122,10 @@ def print_text_result(
         print("")
 
     if scope in {"module", "both"}:
-        print("Top modules:")
+        print("Top source files:")
         for row in module_rows[:top]:
             print(
-                f"  - {row['module']} | score={row['score']} | "
+                f"  - {row['source_file']} | score={row['score']} | "
                 f"targets={row['total_targets']} | statuses={row['status_counts']}"
             )
 
@@ -147,7 +157,7 @@ def main() -> int:
         default=None,
         help=(
             "Comma-separated statuses to target. "
-            "Default: no_tests,survived,timeout."
+            "Default: survived."
         ),
     )
     parser.add_argument(
@@ -166,8 +176,8 @@ def main() -> int:
     records = collect_mutants(root)
     target_statuses = parse_statuses(args.statuses, args.include_crash)
 
-    function_rows = rank_by_function(records, target_statuses)
-    module_rows = rank_by_module(records, target_statuses)
+    function_rows = rank_by_function(records, target_statuses, root)
+    module_rows = rank_by_module(records, target_statuses, root)
 
     result = {
         "root": str(root),

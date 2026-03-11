@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Show surviving mutants for a specified source file/path query."""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from mutant_common import (
+    collect_mutants,
+    filter_mutants_for_source,
+    relative_path_str,
+    surviving_mutants_for_source,
+)
+
+
+def build_report(root: Path, source_query: str) -> dict:
+    records = collect_mutants(root)
+    matched_records = filter_mutants_for_source(records, root, source_query)
+    surviving_records = surviving_mutants_for_source(
+        records, root, source_query
+    )
+
+    matched_source_files = sorted(
+        {
+            relative_path_str(record.source_path, root)
+            for record in matched_records
+        }
+    )
+
+    return {
+        "root": str(root),
+        "query": source_query,
+        "mutant_count": len(records),
+        "matched_count": len(matched_records),
+        "matched_source_files": matched_source_files,
+        "surviving_count": len(surviving_records),
+        "survivors": [
+            {
+                "key": record.key,
+                "module": record.module,
+                "function": record.function,
+                "status": record.status,
+                "source_file": relative_path_str(record.source_path, root),
+                "meta_file": relative_path_str(record.meta_path, root),
+            }
+            for record in surviving_records
+        ],
+    }
+
+
+def print_text_report(report: dict) -> None:
+    print(f"Source query: {report['query']}")
+    print(f"Mutants scanned: {report['mutant_count']}")
+    print(f"Matched mutants: {report['matched_count']}")
+    print(f"Surviving mutants: {report['surviving_count']}")
+    print("")
+
+    if report["matched_source_files"]:
+        print("Matched source files:")
+        for source_file in report["matched_source_files"]:
+            print(f"  - {source_file}")
+        print("")
+
+    if not report["survivors"]:
+        if report["mutant_count"] == 0:
+            print("No mutmut artifacts found. Run ./mutate first.")
+        else:
+            print("No surviving mutants found for that source query.")
+        return
+
+    print("Surviving mutants:")
+    for row in report["survivors"]:
+        print(f"  - {row['key']}")
+        print(f"    source: {row['source_file']}")
+        print(f"    meta:   {row['meta_file']}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Show surviving mutants for a source file/path from existing "
+            "mutmut artifacts."
+        )
+    )
+    parser.add_argument(
+        "source",
+        help=("Source file query (basename, relative path, or absolute path)."),
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON instead of text.",
+    )
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    report = build_report(root=root, source_query=args.source)
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print_text_report(report)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

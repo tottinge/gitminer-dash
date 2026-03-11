@@ -86,6 +86,7 @@ Write and maintain micro/unit tests so they are:
 - `./run_tests`: standard full test run for this repo.
 - `./check`: lint/format/security checks for repo readiness.
 - `./mutate`: mutation testing for test-suite quality.
+- `./scripts/mutants_for <source-file-path>`: show surviving mutants for one source file using existing mutation artifacts.
 - `./run <path-to-git-repository>`: run the app against a target local git repo.
 - `./run_with_coverage.sh <args>`: run app with coverage and generate reports.
 - `./annotate`: collect and apply runtime-guided type annotations.
@@ -103,9 +104,10 @@ Write and maintain micro/unit tests so they are:
 - Mutation-analysis workflow:
   1. Run `./mutate` to refresh artifacts.
   2. Run `./scripts/mutant_discover` for inventory/status counts.
-  3. Run `./scripts/mutant_rank` to prioritize by target statuses.
-  4. Run `./scripts/mutant_test_gap` to classify likely gaps.
-  5. Run `./scripts/mutant_suggest` for concrete test additions.
-  6. Run `./scripts/mutant_verify` with snapshots to confirm improvement/regression.
+  3. Run `./scripts/mutants_for <source-file-path>` to inspect surviving mutants for a specific file.
+  4. Run `./scripts/mutant_rank` to prioritize by target statuses.
+  5. Run `./scripts/mutant_test_gap` to classify likely gaps.
+  6. Run `./scripts/mutant_suggest` for concrete test additions.
+  7. Run `./scripts/mutant_verify` with snapshots to confirm improvement/regression.
 - Default priority statuses for triage are `no_tests,survived,timeout`; include `crash` only when explicitly needed.
 - `scripts/mutant_common.py` is shared library code for these scripts and should not be treated as a CLI entrypoint.

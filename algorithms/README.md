@@ -70,3 +70,16 @@ The `change_series.py` module provides a function for generating a series of cha
 ### sorted_tags
 
 The `sorted_tags.py` module provides a function for retrieving the most recent tags from a Git repository.
+## Mutation helper for algorithm files
+
+After running mutation analysis (`./mutate` from repository root), you can inspect surviving mutants for a specific algorithm file with:
+
+`./scripts/mutants_for algorithms/<file>.py`
+
+Example:
+
+`./scripts/mutants_for algorithms/file_changes.py`
+
+Use `--json` for structured output:
+
+`./scripts/mutants_for --json algorithms/file_changes.py`
