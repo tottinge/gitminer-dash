@@ -56,8 +56,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--top",
         type=int,
-        default=3,
-        help="Number of hotspots to return (default: 3).",
+        default=5,
+        help="Number of hotspots to return (default: 5).",
     )
     parser.add_argument(
         "--save-snapshot",

@@ -68,6 +68,35 @@ def test_main_emits_report_json_and_passes_top_n(capsys):
     mock_build_report.assert_called_once_with(snapshot=snapshot, top_n=4)
 
 
+def test_main_defaults_to_top_five_when_top_omitted(capsys):
+    snapshot = MagicMock()
+    report = InsightReport(
+        schema_version="1.0.0",
+        repo_path="/example/repo",
+        period_start="2026-01-01T00:00:00+00:00",
+        period_end="2026-01-31T23:59:59+00:00",
+        total_commits=3,
+        hotspots=[],
+    )
+
+    with (
+        patch("insights.cli.Repo"),
+        patch(
+            "insights.cli.build_analysis_snapshot",
+            return_value=snapshot,
+        ),
+        patch(
+            "insights.cli.build_insight_report",
+            return_value=report,
+        ) as mock_build_report,
+    ):
+        exit_code = main([".", "--from", "2026-01-01", "--to", "2026-01-31"])
+
+    assert exit_code == 0
+    assert capsys.readouterr().out
+    mock_build_report.assert_called_once_with(snapshot=snapshot, top_n=5)
+
+
 def test_main_rejects_invalid_period_order():
     with pytest.raises(SystemExit) as caught:
         main(
@@ -133,7 +162,7 @@ def test_main_reuses_saved_snapshot_when_available(capsys):
     mock_load.assert_called_once()
     mock_build.assert_not_called()
     mock_save.assert_not_called()
-    mock_build_report.assert_called_once_with(snapshot=loaded_snapshot, top_n=3)
+    mock_build_report.assert_called_once_with(snapshot=loaded_snapshot, top_n=5)
 
 
 def test_main_saves_snapshot_when_missing(capsys):

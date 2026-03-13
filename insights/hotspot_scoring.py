@@ -6,7 +6,7 @@ from insights.models import AnalysisSnapshot, EvidenceRef, HotspotCandidate
 
 
 def rank_hotspots(
-    snapshot: AnalysisSnapshot, top_n: int = 3
+    snapshot: AnalysisSnapshot, top_n: int = 5
 ) -> list[HotspotCandidate]:
     """Rank hotspot candidates from commit-frequency signal."""
     if top_n <= 0:

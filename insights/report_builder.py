@@ -7,7 +7,7 @@ from insights.models import AnalysisSnapshot, InsightReport
 
 
 def build_insight_report(
-    snapshot: AnalysisSnapshot, top_n: int = 3
+    snapshot: AnalysisSnapshot, top_n: int = 5
 ) -> InsightReport:
     """Build deterministic report contract for delivery surfaces."""
     return InsightReport(

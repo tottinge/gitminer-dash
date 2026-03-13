@@ -40,3 +40,40 @@ def test_rank_hotspots_returns_empty_for_non_positive_top_n():
     )
 
     assert rank_hotspots(snapshot=snapshot, top_n=0) == []
+
+
+def test_rank_hotspots_defaults_to_top_five():
+    snapshot = AnalysisSnapshot(
+        schema_version="1.0.0",
+        repo_path="/example/repo",
+        period_start="2026-01-01T00:00:00+00:00",
+        period_end="2026-01-31T00:00:00+00:00",
+        total_commits=7,
+        file_commit_counts={
+            "a.py": 7,
+            "b.py": 6,
+            "c.py": 5,
+            "d.py": 4,
+            "e.py": 3,
+            "f.py": 2,
+        },
+        file_recent_commits={
+            "a.py": ["aaaaaaa"],
+            "b.py": ["bbbbbbb"],
+            "c.py": ["ccccccc"],
+            "d.py": ["ddddddd"],
+            "e.py": ["eeeeeee"],
+            "f.py": ["fffffff"],
+        },
+    )
+
+    hotspots = rank_hotspots(snapshot=snapshot)
+
+    assert len(hotspots) == 5
+    assert [item.file_path for item in hotspots] == [
+        "a.py",
+        "b.py",
+        "c.py",
+        "d.py",
+        "e.py",
+    ]
