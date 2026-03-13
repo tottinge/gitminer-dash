@@ -13,6 +13,18 @@ from datetime import datetime
 from git import Commit, Repo
 
 
+def count_file_commits(commits_data: Iterable[Commit]) -> Counter[str]:
+    """Count how many commits touched each file path."""
+    counter = Counter()
+    for commit in commits_data:
+        try:
+            counter.update(commit.stats.files.keys())
+        except ValueError:
+            logging.getLogger(__name__).exception("Error processing commit")
+            raise
+    return counter
+
+
 def calculate_file_commit_frequency(
     commits_data: Iterable[Commit],
     repo: Repo,
@@ -33,14 +45,7 @@ def calculate_file_commit_frequency(
     """
     from algorithms.file_changes import files_changes_over_period
 
-    counter = Counter()
-    for commit in commits_data:
-        try:
-            files = commit.stats.files.keys()
-            counter.update(files)
-        except ValueError:
-            logging.getLogger(__name__).exception("Error processing commit")
-            raise
+    counter = count_file_commits(commits_data)
     most_common_files = counter.most_common(top_n)
 
     # Extract just the filenames

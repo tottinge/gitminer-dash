@@ -48,6 +48,14 @@ def commits_in_period(
     beginning: datetime, ending: datetime
 ) -> Iterable[Commit]:
     repo_path = repository_path()
+    yield from commits_in_period_for_repo_path(
+        repo_path=repo_path, beginning=beginning, ending=ending
+    )
+
+
+def commits_in_period_for_repo_path(
+    repo_path: str, beginning: datetime, ending: datetime
+) -> Iterable[Commit]:
     begin_key = _dt_key(beginning)
     end_key = _dt_key(ending)
     yield from _cached_commits(repo_path, begin_key, end_key)

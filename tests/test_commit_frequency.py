@@ -518,6 +518,7 @@ def test_calculate_file_commit_frequency_commit_with_no_files(mock_repo):
 
     assert len(result) == 0
 
+
 def _mock_commit(files: list[str]) -> MagicMock:
     commit = MagicMock()
     commit.stats.files = {path: {} for path in files}
@@ -633,7 +634,9 @@ def test_calculate_file_commit_frequency_reraises_value_error():
 
     with (
         pytest.raises(ValueError),
-        patch("algorithms.file_changes.files_changes_over_period") as mock_changes,
+        patch(
+            "algorithms.file_changes.files_changes_over_period"
+        ) as mock_changes,
     ):
         calculate_file_commit_frequency(
             commits_data=[commit],
