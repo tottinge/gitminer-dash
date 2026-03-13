@@ -34,7 +34,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate deterministic, evidence-backed repo hotspots."
     )
-    parser.add_argument("--repo", default=".", help="Path to git repository.")
+    parser.add_argument("repo", help="Path to git repository.")
     parser.add_argument(
         "--from",
         dest="period_start",

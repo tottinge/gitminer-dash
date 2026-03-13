@@ -32,7 +32,7 @@ def test_main_defaults_period_end_when_to_is_omitted(capsys):
         ),
         patch("insights.cli._default_period_end", return_value=default_end),
     ):
-        exit_code = main(["--repo", ".", "--from", "2026-01-01"])
+        exit_code = main([".", "--from", "2026-01-01"])
 
     assert exit_code == 0
     assert capsys.readouterr().out
@@ -67,7 +67,7 @@ def test_main_defaults_period_start_when_from_is_omitted(capsys):
         patch("insights.cli._default_period_start", return_value=default_start),
         patch("insights.cli._default_period_end", return_value=default_end),
     ):
-        exit_code = main(["--repo", "."])
+        exit_code = main(["."])
 
     assert exit_code == 0
     assert capsys.readouterr().out

@@ -42,7 +42,6 @@ def test_main_emits_report_json_and_passes_top_n(capsys):
     ):
         exit_code = main(
             [
-                "--repo",
                 ".",
                 "--from",
                 "2026-01-01",
@@ -68,7 +67,6 @@ def test_main_rejects_invalid_period_order():
     with pytest.raises(SystemExit) as caught:
         main(
             [
-                "--repo",
                 ".",
                 "--from",
                 "2026-02-01",
