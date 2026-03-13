@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from git import Repo
 
 from insights.report_builder import build_insight_report
 from insights.snapshot_builder import build_analysis_snapshot
+from insights.snapshot_store import load_snapshot, save_snapshot
 from utils import date_utils
 
 
@@ -57,6 +59,21 @@ def _parser() -> argparse.ArgumentParser:
         default=3,
         help="Number of hotspots to return (default: 3).",
     )
+    parser.add_argument(
+        "--save-snapshot",
+        action="store_true",
+        help=(
+            "Persist and reuse a versioned snapshot artifact for identical "
+            "repo/date/schema inputs."
+        ),
+    )
+    parser.add_argument(
+        "--snapshot-dir",
+        help=(
+            "Optional directory for snapshot artifacts. Defaults to "
+            "<repo>/.gitminer-dash/snapshots."
+        ),
+    )
     return parser
 
 
@@ -77,9 +94,28 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--from must be earlier than or equal to --to.")
 
     repo = Repo(args.repo)
-    snapshot = build_analysis_snapshot(
-        repo=repo, period_start=period_start, period_end=period_end
+    repo_path = repo.working_tree_dir or args.repo
+    snapshot_dir = (
+        Path(args.snapshot_dir)
+        if args.snapshot_dir
+        else Path(repo_path) / ".gitminer-dash" / "snapshots"
     )
+
+    snapshot = None
+    if args.save_snapshot:
+        snapshot = load_snapshot(
+            snapshot_dir=snapshot_dir,
+            repo_path=repo_path,
+            period_start=period_start,
+            period_end=period_end,
+        )
+
+    if snapshot is None:
+        snapshot = build_analysis_snapshot(
+            repo=repo, period_start=period_start, period_end=period_end
+        )
+        if args.save_snapshot:
+            save_snapshot(snapshot=snapshot, snapshot_dir=snapshot_dir)
     report = build_insight_report(snapshot=snapshot, top_n=args.top)
     print(json.dumps(report.to_dict(), indent=2))
     return 0

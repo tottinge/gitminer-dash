@@ -179,6 +179,7 @@ test_data/*.html
 
 # Local temp dir for prepare
 .tmp/
+.gitminer-dash/
 
 # Mutation testing artifacts
 mutants/
