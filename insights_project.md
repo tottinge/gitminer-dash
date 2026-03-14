@@ -1,76 +1,56 @@
-# Evidence-Backed AI Insights: Feature and Architecture
-## Problem statement
-`gitminer-dash` computes useful repository metrics, but most outputs are page-specific visualizations. This makes it difficult for an LLM agent to generate reliable, evidence-backed insights without scraping UI state or reconstructing context.
-## Thin-slice end-to-end user story (v1)
-As a repo maintainer, I choose a date range and request AI insights. The system returns the top 5 risky change hotspots with a score, a concise explanation, explicit evidence (files, affinity pairs, commit SHAs, metric values), and suggested next actions.
-## Scope
-### In scope (v1)
-* Produce one normalized, versioned analysis snapshot from existing algorithms.
-* Rank deterministic hotspot candidates from snapshot signals.
-* Attach auditable evidence references to each hotspot.
-* Optionally generate LLM narrative text constrained to cited evidence.
-* Expose results through one CLI command and one Dash page.
-### Out of scope (v1)
-* Autonomous code remediation or PR generation.
-* Full code-content RAG.
-* Cross-repository portfolio analytics.
-## Acceptance criteria (v1)
-* For a repo and date range, the system emits a versioned snapshot artifact.
-* Insight output includes at least 5 ranked hotspots.
-* Each hotspot includes at least 2 concrete evidence references.
-* Re-running with the same inputs yields reproducible ranking and evidence.
-* Dash and CLI both consume the same report contract.
-## Architectural layout
-### Domain contracts
-- [x] Create `insights/models.py` to define typed contracts:
-  - [x] `AnalysisSnapshot`
-  - [x] `HotspotCandidate`
-  - [x] `EvidenceRef`
-  - [x] `InsightReport`
-- [x] Include `schema_version` on top-level contracts.
-- [x] Create `insights/schema_version.py` for schema constants and migration hooks.
-### Snapshot assembly
-- [x] Create `insights/snapshot_builder.py` to assemble a canonical snapshot from existing algorithms and commit streams.
-- [x] Reuse current logic from:
-  - [x] `algorithms/commit_frequency.py`
-  - [x] `algorithms/diff_analysis.py`
-  - [x] `algorithms/affinity_calculator.py`
-  - [x] `algorithms/commit_graph.py`
-  - [x] `algorithms/chain_analyzer.py`
-- [x] Create `insights/snapshot_store.py` for snapshot save/load and local cache behavior.
-### Deterministic insight engine
-- [x] Create `insights/hotspot_scoring.py` to compute hotspot risk from churn, coupling, and recurrence signals.
-- [x] Create `insights/evidence_builder.py` to attach concrete metric and commit/file evidence to each candidate.
-- [x] Create `insights/report_builder.py` to build deterministic, non-LLM insight reports.
-### Optional LLM narrative layer
-- [ ] Create `insights/llm_client.py` behind a provider-agnostic interface.
-- [ ] Create `insights/prompt_builder.py` to transform structured insights into compact prompt payloads.
-- [ ] Create `insights/citation_guard.py` to ensure generated claims are backed by existing evidence references.
-### Delivery surfaces
-- [x] Create `pages/ai_insights.py` as a Dash view for ranked hotspots and evidence drill-down.
-- [x] Create `scripts/generate_insights` as a CLI entrypoint for local and automation usage.
-- [ ] Optionally add `scripts/export_snapshot` later for offline agent workflows.
-### Testing strategy
-- [x] Add tests:
+# Evidence-Backed AI Insights
+## Current status (done)
+- [x] Deterministic insights pipeline is working end-to-end (snapshot → scoring → evidence → report).
+- [x] Shared contracts and schema versioning are implemented (`insights/models.py`, `insights/schema_version.py`).
+- [x] Snapshot assembly and storage are implemented (`insights/snapshot_builder.py`, `insights/snapshot_store.py`).
+- [x] Deterministic scoring and evidence attachment are implemented (`insights/hotspot_scoring.py`, `insights/evidence_builder.py`, `insights/report_builder.py`).
+- [x] Delivery surfaces are implemented (`scripts/generate_insights`, `pages/ai_insights.py`).
+- [x] Core deterministic tests are in place and passing:
   - [x] `tests/test_snapshot_builder.py`
   - [x] `tests/test_hotspot_scoring.py`
   - [x] `tests/test_evidence_builder.py`
   - [x] `tests/test_report_builder.py`
   - [x] `tests/test_ai_insights_page.py`
-Use fixtures to keep the same repo/date input deterministic and assert evidence coverage constraints.
-## Data flow
-1. `data.commits_in_period` provides commit stream for a selected range.
-2. `insights/snapshot_builder.py` creates `AnalysisSnapshot`.
-3. `insights/hotspot_scoring.py` ranks hotspot candidates.
-4. `insights/evidence_builder.py` enriches candidates with evidence references.
-5. `insights/report_builder.py` produces `InsightReport`.
-6. Optional LLM layer rewrites for readability without introducing uncited claims.
-7. Dash page and CLI render the same report contract.
-## First implementation increment
-Implement only these components first:
-- [x] `insights/models.py`
-- [x] `insights/snapshot_builder.py`
-- [x] `insights/hotspot_scoring.py`
-- [x] `scripts/generate_insights`
-- [x] minimal `pages/ai_insights.py`
-This yields a small, testable, end-to-end path from commit data to evidence-backed hotspot insights.
+
+## Next wave stories (user POV slices)
+### [ ] Slice 1 — Export snapshot artifact for reuse
+- **User invokes:** `./scripts/export_snapshot . --from <YYYY-MM-DD> --to <YYYY-MM-DD>`
+- **User uses result:** gets a versioned snapshot artifact they can archive, diff, and reuse in offline/automation workflows.
+- **Acceptance checks:**
+  - [ ] command writes a valid snapshot artifact with schema/version
+  - [ ] output reflects selected repo + date range
+  - [ ] rerun with same inputs is deterministic
+- **Not yet in this slice:** LLM narrative generation and citation validation
+
+### [ ] Slice 2 — Build prompt payload from deterministic report
+- **User invokes:** `./scripts/generate_insights . --from <YYYY-MM-DD> --to <YYYY-MM-DD> --prompt-payload`
+- **User uses result:** gets a compact, provider-agnostic prompt payload based only on report data + evidence refs.
+- **Acceptance checks:**
+  - [ ] payload includes ranked hotspots and explicit evidence refs
+  - [ ] payload order is deterministic
+  - [ ] payload excludes uncited/generated claims
+- **Not yet in this slice:** external provider calls
+
+### [ ] Slice 3 — Enforce citation guard on narrative claims
+- **User invokes:** `./scripts/generate_insights ... --narrative-file <path> --validate-citations`
+- **User uses result:** sees a clear pass/fail result showing whether narrative claims are backed by known evidence refs.
+- **Acceptance checks:**
+  - [ ] invalid or uncited claims are reported with reasons
+  - [ ] valid claims pass without false failures
+  - [ ] validation checks only report-backed evidence
+- **Not yet in this slice:** generating narrative text
+
+### [ ] Slice 4 — Optional strict-citation narrative generation
+- **User invokes:** `./scripts/generate_insights . --from <YYYY-MM-DD> --to <YYYY-MM-DD> --narrative --strict-citations`
+- **User uses result:** receives readable narrative text only when citation validation passes.
+- **Acceptance checks:**
+  - [ ] provider-agnostic `llm_client` interface is used
+  - [ ] narrative output includes citations tied to evidence refs
+  - [ ] deterministic report still returns if narrative fails
+- **Not yet in this slice:** multi-provider tuning and optimization
+
+## Done criteria per slice
+- [ ] slice tests added/updated and passing
+- [ ] `./run_tests` passes
+- [ ] `./check` passes
+- [ ] this file updated with completion markers
