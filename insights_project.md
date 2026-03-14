@@ -40,7 +40,7 @@ As a repo maintainer, I choose a date range and request AI insights. The system 
 - [x] Create `insights/snapshot_store.py` for snapshot save/load and local cache behavior.
 ### Deterministic insight engine
 - [x] Create `insights/hotspot_scoring.py` to compute hotspot risk from churn, coupling, and recurrence signals.
-- [ ] Create `insights/evidence_builder.py` to attach concrete metric and commit/file evidence to each candidate.
+- [x] Create `insights/evidence_builder.py` to attach concrete metric and commit/file evidence to each candidate.
 - [x] Create `insights/report_builder.py` to build deterministic, non-LLM insight reports.
 ### Optional LLM narrative layer
 - [ ] Create `insights/llm_client.py` behind a provider-agnostic interface.
@@ -54,7 +54,7 @@ As a repo maintainer, I choose a date range and request AI insights. The system 
 - [x] Add tests:
   - [x] `tests/test_snapshot_builder.py`
   - [x] `tests/test_hotspot_scoring.py`
-  - [ ] `tests/test_evidence_builder.py`
+  - [x] `tests/test_evidence_builder.py`
   - [x] `tests/test_report_builder.py`
   - [x] `tests/test_ai_insights_page.py`
 Use fixtures to keep the same repo/date input deterministic and assert evidence coverage constraints.

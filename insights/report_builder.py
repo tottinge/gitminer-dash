@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from insights.evidence_builder import attach_evidence_refs
 from insights.hotspot_scoring import rank_hotspots
 from insights.models import AnalysisSnapshot, InsightReport
 
@@ -13,9 +14,12 @@ def build_insight_report(
 ) -> InsightReport:
     """Build deterministic report contract for delivery surfaces."""
     ranked_hotspots = rank_hotspots(snapshot=snapshot, top_n=top_n)
+    evidenced_hotspots = attach_evidence_refs(
+        snapshot=snapshot, hotspots=ranked_hotspots
+    )
     vetted_hotspots = [
         hotspot
-        for hotspot in ranked_hotspots
+        for hotspot in evidenced_hotspots
         if len(hotspot.evidence) >= min_evidence_refs
     ]
     return InsightReport(
