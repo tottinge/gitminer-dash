@@ -15,12 +15,19 @@ dependencies = [
     "pytest>=8.3.5",
     "python-box>=7.3.2",
     "python-dateutil>=2.9.0.post0",
-    "ruff>=0.14.2",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "ruff>=0.6.0",
+    "bandit>=1.8.6",
+    "black>=25.9.0",
+    "coverage>=7.11.0",
+    "mutmut>=3.4.0",
+    "mypy>=1.18.2",
+    "pylint>=4.0.2",
+    "pytest-random-order>=1.2.0",
+    "pyupgrade>=3.21.0",
+    "ruff>=0.14.2",
 ]
 
 [tool.ruff]
@@ -47,18 +54,6 @@ ignore = [
 # Allow assert in tests
 "tests/**/*.py" = ["S101", "S110", "S112", "E402", "F841", "F541"]
 
-[dependency-groups]
-dev = [
-    "bandit>=1.8.6",
-    "black>=25.9.0",
-    "coverage>=7.11.0",
-    "mutmut>=3.4.0",
-    "mypy>=1.18.2",
-    "pylint>=4.0.2",
-    "pytest-random-order>=1.2.0",
-    "pyupgrade>=3.21.0",
-    "ruff>=0.14.2",
-]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

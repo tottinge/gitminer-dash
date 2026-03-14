@@ -396,12 +396,6 @@ dependencies = [
     { name = "pytest" },
     { name = "python-box" },
     { name = "python-dateutil" },
-    { name = "ruff" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "ruff" },
 ]
 
 [package.dev-dependencies]
@@ -429,10 +423,7 @@ requires-dist = [
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "python-box", specifier = ">=7.3.2" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
-    { name = "ruff", specifier = ">=0.14.2" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.0" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
