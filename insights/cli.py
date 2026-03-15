@@ -10,6 +10,7 @@ from pathlib import Path
 from git import Repo
 
 from insights.citation_guard import validate_narrative_citations
+from insights.llm_client import get_llm_client
 from insights.prompt_builder import build_prompt_payload
 from insights.report_builder import build_insight_report
 from insights.snapshot_builder import build_analysis_snapshot
@@ -79,6 +80,22 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--narrative",
+        action="store_true",
+        help=(
+            "Generate narrative summary using provider-agnostic llm_client "
+            "interface."
+        ),
+    )
+    parser.add_argument(
+        "--strict-citations",
+        action="store_true",
+        help=(
+            "Require generated narrative citations to validate against "
+            "report-backed evidence refs."
+        ),
+    )
+    parser.add_argument(
         "--narrative-file",
         help=(
             "Path to narrative text where each non-empty line is a claim and "
@@ -110,6 +127,100 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _validate_args(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+    period_start: datetime,
+    period_end: datetime,
+) -> None:
+    if period_start > period_end:
+        parser.error("--from must be earlier than or equal to --to.")
+    if args.narrative_file and not args.validate_citations:
+        parser.error("--narrative-file requires --validate-citations.")
+    if args.validate_citations and not args.narrative_file:
+        parser.error("--validate-citations requires --narrative-file.")
+    if args.validate_citations and args.narrative:
+        parser.error(
+            "--validate-citations cannot be combined with --narrative."
+        )
+    if args.strict_citations and not args.narrative:
+        parser.error("--strict-citations requires --narrative.")
+
+
+def _load_or_build_snapshot(
+    repo: Repo,
+    repo_path: str,
+    snapshot_dir: Path,
+    period_start: datetime,
+    period_end: datetime,
+    save_snapshot_enabled: bool,
+):
+    snapshot = None
+    if save_snapshot_enabled:
+        snapshot = load_snapshot(
+            snapshot_dir=snapshot_dir,
+            repo_path=repo_path,
+            period_start=period_start,
+            period_end=period_end,
+        )
+
+    if snapshot is None:
+        snapshot = build_analysis_snapshot(
+            repo=repo, period_start=period_start, period_end=period_end
+        )
+        if save_snapshot_enabled:
+            save_snapshot(snapshot=snapshot, snapshot_dir=snapshot_dir)
+    return snapshot
+
+
+def _citation_validation_payload(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+    report,
+) -> dict[str, object]:
+    narrative_text = _read_narrative_text(
+        parser=parser, narrative_file=args.narrative_file
+    )
+    return {
+        "schema_version": report.schema_version,
+        "repo_path": report.repo_path,
+        "period_start": report.period_start,
+        "period_end": report.period_end,
+        "total_commits": report.total_commits,
+        "citation_validation": validate_narrative_citations(
+            report=report, narrative_text=narrative_text
+        ),
+    }
+
+
+def _narrative_output_payload(
+    report, strict_citations: bool
+) -> dict[str, object]:
+    prompt_payload = build_prompt_payload(report=report)
+    narrative_text = get_llm_client().generate_narrative(
+        prompt_payload=prompt_payload
+    )
+    if strict_citations:
+        citation_validation = validate_narrative_citations(
+            report=report, narrative_text=narrative_text
+        )
+        narrative_payload: dict[str, object] = {
+            "status": ("passed" if citation_validation["passed"] else "failed"),
+            "citation_validation": citation_validation,
+        }
+        if citation_validation["passed"]:
+            narrative_payload["text"] = narrative_text
+    else:
+        narrative_payload = {
+            "status": "generated",
+            "text": narrative_text,
+        }
+    return {
+        "report": report.to_dict(),
+        "narrative": narrative_payload,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
@@ -123,10 +234,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.period_end is not None
         else _default_period_end()
     )
-    if period_start > period_end:
-        parser.error("--from must be earlier than or equal to --to.")
-    if args.validate_citations and not args.narrative_file:
-        parser.error("--validate-citations requires --narrative-file.")
+    _validate_args(
+        parser=parser,
+        args=args,
+        period_start=period_start,
+        period_end=period_end,
+    )
 
     repo = Repo(args.repo)
     repo_path = repo.working_tree_dir or args.repo
@@ -135,40 +248,28 @@ def main(argv: list[str] | None = None) -> int:
         if args.snapshot_dir
         else Path(repo_path) / ".gitminer-dash" / "snapshots"
     )
-
-    snapshot = None
-    if args.save_snapshot:
-        snapshot = load_snapshot(
-            snapshot_dir=snapshot_dir,
-            repo_path=repo_path,
-            period_start=period_start,
-            period_end=period_end,
-        )
-
-    if snapshot is None:
-        snapshot = build_analysis_snapshot(
-            repo=repo, period_start=period_start, period_end=period_end
-        )
-        if args.save_snapshot:
-            save_snapshot(snapshot=snapshot, snapshot_dir=snapshot_dir)
+    snapshot = _load_or_build_snapshot(
+        repo=repo,
+        repo_path=repo_path,
+        snapshot_dir=snapshot_dir,
+        period_start=period_start,
+        period_end=period_end,
+        save_snapshot_enabled=args.save_snapshot,
+    )
     report = build_insight_report(snapshot=snapshot, top_n=args.top)
+
     if args.validate_citations:
-        narrative_text = _read_narrative_text(
-            parser=parser, narrative_file=args.narrative_file
+        payload = _citation_validation_payload(
+            parser=parser, args=args, report=report
         )
-        payload = {
-            "schema_version": report.schema_version,
-            "repo_path": report.repo_path,
-            "period_start": report.period_start,
-            "period_end": report.period_end,
-            "total_commits": report.total_commits,
-            "citation_validation": validate_narrative_citations(
-                report=report, narrative_text=narrative_text
-            ),
-        }
+    elif args.narrative:
+        payload = _narrative_output_payload(
+            report=report, strict_citations=args.strict_citations
+        )
     elif args.prompt_payload:
         payload = build_prompt_payload(report=report)
     else:
         payload = report.to_dict()
+
     print(json.dumps(payload, indent=2))
     return 0

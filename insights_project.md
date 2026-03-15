@@ -40,17 +40,17 @@
   - [x] validation checks only report-backed evidence
 - **Not yet in this slice:** generating narrative text
 
-### [ ] Slice 4 — Optional strict-citation narrative generation
+### [x] Slice 4 — Optional strict-citation narrative generation
 - **User invokes:** `./scripts/generate_insights . --from <YYYY-MM-DD> --to <YYYY-MM-DD> --narrative --strict-citations`
 - **User uses result:** receives readable narrative text only when citation validation passes.
 - **Acceptance checks:**
-  - [ ] provider-agnostic `llm_client` interface is used
-  - [ ] narrative output includes citations tied to evidence refs
-  - [ ] deterministic report still returns if narrative fails
+  - [x] provider-agnostic `llm_client` interface is used
+  - [x] narrative output includes citations tied to evidence refs
+  - [x] deterministic report still returns if narrative fails
 - **Not yet in this slice:** multi-provider tuning and optimization
 
 ## Done criteria per slice
-- [ ] slice tests added/updated and passing
-- [ ] `./run_tests` passes
-- [ ] `./check` passes
-- [ ] this file updated with completion markers
+- [x] slice tests added/updated and passing
+- [x] `./run_tests` passes
+- [x] `./check` passes
+- [x] this file updated with completion markers
