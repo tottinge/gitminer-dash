@@ -22,13 +22,13 @@
   - [x] rerun with same inputs is deterministic
 - **Not yet in this slice:** LLM narrative generation and citation validation
 
-### [ ] Slice 2 — Build prompt payload from deterministic report
+### [x] Slice 2 — Build prompt payload from deterministic report
 - **User invokes:** `./scripts/generate_insights . --from <YYYY-MM-DD> --to <YYYY-MM-DD> --prompt-payload`
 - **User uses result:** gets a compact, provider-agnostic prompt payload based only on report data + evidence refs.
 - **Acceptance checks:**
-  - [ ] payload includes ranked hotspots and explicit evidence refs
-  - [ ] payload order is deterministic
-  - [ ] payload excludes uncited/generated claims
+  - [x] payload includes ranked hotspots and explicit evidence refs
+  - [x] payload order is deterministic
+  - [x] payload excludes uncited/generated claims
 - **Not yet in this slice:** external provider calls
 
 ### [ ] Slice 3 — Enforce citation guard on narrative claims

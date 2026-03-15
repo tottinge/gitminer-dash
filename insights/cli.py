@@ -9,6 +9,7 @@ from pathlib import Path
 
 from git import Repo
 
+from insights.prompt_builder import build_prompt_payload
 from insights.report_builder import build_insight_report
 from insights.snapshot_builder import build_analysis_snapshot
 from insights.snapshot_store import load_snapshot, save_snapshot
@@ -58,6 +59,14 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         default=5,
         help="Number of hotspots to return (default: 5).",
+    )
+    parser.add_argument(
+        "--prompt-payload",
+        action="store_true",
+        help=(
+            "Emit compact provider-agnostic payload based on deterministic "
+            "report data and evidence refs."
+        ),
     )
     parser.add_argument(
         "--save-snapshot",
@@ -117,5 +126,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.save_snapshot:
             save_snapshot(snapshot=snapshot, snapshot_dir=snapshot_dir)
     report = build_insight_report(snapshot=snapshot, top_n=args.top)
-    print(json.dumps(report.to_dict(), indent=2))
+    payload = (
+        build_prompt_payload(report=report)
+        if args.prompt_payload
+        else report.to_dict()
+    )
+    print(json.dumps(payload, indent=2))
     return 0
