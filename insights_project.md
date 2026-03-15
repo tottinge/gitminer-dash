@@ -31,13 +31,13 @@
   - [x] payload excludes uncited/generated claims
 - **Not yet in this slice:** external provider calls
 
-### [ ] Slice 3 — Enforce citation guard on narrative claims
+### [x] Slice 3 — Enforce citation guard on narrative claims
 - **User invokes:** `./scripts/generate_insights ... --narrative-file <path> --validate-citations`
 - **User uses result:** sees a clear pass/fail result showing whether narrative claims are backed by known evidence refs.
 - **Acceptance checks:**
-  - [ ] invalid or uncited claims are reported with reasons
-  - [ ] valid claims pass without false failures
-  - [ ] validation checks only report-backed evidence
+  - [x] invalid or uncited claims are reported with reasons
+  - [x] valid claims pass without false failures
+  - [x] validation checks only report-backed evidence
 - **Not yet in this slice:** generating narrative text
 
 ### [ ] Slice 4 — Optional strict-citation narrative generation

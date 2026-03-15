@@ -9,6 +9,7 @@ from pathlib import Path
 
 from git import Repo
 
+from insights.citation_guard import validate_narrative_citations
 from insights.prompt_builder import build_prompt_payload
 from insights.report_builder import build_insight_report
 from insights.snapshot_builder import build_analysis_snapshot
@@ -31,6 +32,15 @@ def _default_period_end() -> datetime:
 def _default_period_start() -> datetime:
     start, _ = date_utils.calculate_date_range("Last 1 Year")
     return start
+
+
+def _read_narrative_text(
+    parser: argparse.ArgumentParser, narrative_file: str
+) -> str:
+    try:
+        return Path(narrative_file).read_text(encoding="utf-8")
+    except OSError as exc:
+        parser.error(f"--narrative-file could not be read: {exc}")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -69,6 +79,20 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--narrative-file",
+        help=(
+            "Path to narrative text where each non-empty line is a claim and "
+            "citations use [kind:value] tokens."
+        ),
+    )
+    parser.add_argument(
+        "--validate-citations",
+        action="store_true",
+        help=(
+            "Validate narrative-file claims against report-backed evidence refs."
+        ),
+    )
+    parser.add_argument(
         "--save-snapshot",
         action="store_true",
         help=(
@@ -101,6 +125,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     if period_start > period_end:
         parser.error("--from must be earlier than or equal to --to.")
+    if args.validate_citations and not args.narrative_file:
+        parser.error("--validate-citations requires --narrative-file.")
 
     repo = Repo(args.repo)
     repo_path = repo.working_tree_dir or args.repo
@@ -126,10 +152,23 @@ def main(argv: list[str] | None = None) -> int:
         if args.save_snapshot:
             save_snapshot(snapshot=snapshot, snapshot_dir=snapshot_dir)
     report = build_insight_report(snapshot=snapshot, top_n=args.top)
-    payload = (
-        build_prompt_payload(report=report)
-        if args.prompt_payload
-        else report.to_dict()
-    )
+    if args.validate_citations:
+        narrative_text = _read_narrative_text(
+            parser=parser, narrative_file=args.narrative_file
+        )
+        payload = {
+            "schema_version": report.schema_version,
+            "repo_path": report.repo_path,
+            "period_start": report.period_start,
+            "period_end": report.period_end,
+            "total_commits": report.total_commits,
+            "citation_validation": validate_narrative_citations(
+                report=report, narrative_text=narrative_text
+            ),
+        }
+    elif args.prompt_payload:
+        payload = build_prompt_payload(report=report)
+    else:
+        payload = report.to_dict()
     print(json.dumps(payload, indent=2))
     return 0
