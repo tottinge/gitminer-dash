@@ -5,6 +5,13 @@ from dash.dcc import Slider, Store
 import data
 from algorithms.affinity_calculator import calculate_affinities
 from algorithms.commit_filter import get_commits_for_group_files
+from pages.affinity_groups_service import (
+    build_affinity_graph_output,
+    build_graph_data_store,
+    extract_clicked_node_name,
+    files_in_clicked_community,
+    get_or_compute_affinities,
+)
 from utils import date_utils
 from utils.git import ensure_list
 from utils.plotly_utils import create_empty_figure
@@ -23,39 +30,18 @@ register_page(__name__, title="Affinity Groups")
 
 def _get_cached_affinities(starting, ending, commits_data):
     """Get or compute affinities for date range."""
-    cache_key = (starting.isoformat(), ending.isoformat())
-    affinities = _AFFINITY_CACHE.get(cache_key)
-    if affinities is None:
-        affinities = calculate_affinities(commits_data)
-        _AFFINITY_CACHE[cache_key] = affinities
-    return affinities
+    return get_or_compute_affinities(
+        cache=_AFFINITY_CACHE,
+        starting=starting,
+        ending=ending,
+        commits_data=commits_data,
+        calculate_affinities_fn=calculate_affinities,
+    )
 
 
 def _build_graph_data_store(G, communities):
     """Transform graph into serializable store format."""
-    graph_data = {"nodes": {}, "communities": {}}
-
-    for node in G.nodes():
-        node_community = G.nodes[node].get("community", 0)
-        commit_count = G.nodes[node].get("commit_count", 0)
-        degree = G.degree(node)
-
-        connected_communities = set()
-        for neighbor in G.neighbors(node):
-            neighbor_community = G.nodes[neighbor].get("community", 0)
-            connected_communities.add(neighbor_community)
-
-        graph_data["nodes"][node] = {
-            "commit_count": commit_count,
-            "degree": degree,
-            "community": node_community,
-            "connected_communities": sorted(list(connected_communities)),
-        }
-
-    for i, community in enumerate(communities):
-        graph_data["communities"][i] = list(community)
-
-    return graph_data
+    return build_graph_data_store(G, communities)
 
 
 def _create_repo_error_figure():
@@ -181,17 +167,16 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
     affinities = _get_cached_affinities(starting, ending, commits_data)
 
     try:
-        G, communities, stats = create_file_affinity_network(
-            commits_data,
+        figure, graph_data = build_affinity_graph_output(
+            commits_data=commits_data,
             min_affinity=min_affinity,
             max_nodes=max_nodes,
-            precomputed_affinities=affinities,
+            affinities=affinities,
+            create_network_fn=create_file_affinity_network,
+            create_visualization_fn=create_network_visualization,
         )
     except Exception as e:
         return _create_error_figure("Graph generation failed", str(e)), {}
-
-    graph_data = _build_graph_data_store(G, communities)
-    figure = create_network_visualization(G, communities)
 
     return figure, graph_data
 
@@ -216,28 +201,10 @@ def update_node_details_table(click_data, graph_data, date_range_data):
     if not click_data or not graph_data or "nodes" not in graph_data:
         return []
 
-    # Extract the clicked node name
-    point = click_data.get("points", [{}])[0]
-    node_name = point.get("text", "")
-
-    # Parse the tooltip text to get the actual file name
-    # Tooltip format: "File: {node}<br>Commits: {commit_count}<br>Connections: {degree}"
-    if "<br>" in node_name:
-        node_name = node_name.split("<br>")[0].replace("File: ", "")
-
-    if not node_name or node_name not in graph_data["nodes"]:
+    node_name = extract_clicked_node_name(click_data)
+    group_files = files_in_clicked_community(graph_data, node_name)
+    if not group_files:
         return []
-
-    # Get the clicked node's community
-    clicked_node_data = graph_data["nodes"][node_name]
-    node_community = clicked_node_data.get("community", 0)
-
-    # Find all files in the same community
-    group_files = [
-        node
-        for node, node_info in graph_data["nodes"].items()
-        if node_info.get("community", -1) == node_community
-    ]
 
     # Get date range
     starting, ending = date_utils.parse_date_range_from_store(date_range_data)

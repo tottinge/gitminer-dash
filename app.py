@@ -13,6 +13,7 @@ from dash import (
 
 import data
 from utils import date_utils
+from utils.global_date_store import build_store_payload
 
 if len(sys.argv) < 2:
     print("Usage: app.py <repo_name>")
@@ -69,10 +70,7 @@ app.layout = html.Div(
     Input("global-period-dropdown", "value"),
 )
 def compute_store(period_label: str):
-    period = period_label or date_utils.DEFAULT_PERIOD
-    begin, end = date_utils.calculate_date_range(period)
-    payload = {"period": period, **date_utils.to_iso_range(begin, end)}
-    return payload
+    return build_store_payload(period_label)
 
 
 if __name__ == "__main__":
