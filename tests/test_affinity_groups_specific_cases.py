@@ -307,11 +307,17 @@ class TestUpdateFileAffinityGraphExceptionHandling:
         self, mock_parse, mock_commits, mock_network
     ):
         """Test that exceptions during network creation return error figure."""
-        from pages.affinity_groups import update_file_affinity_graph
+        from pages.affinity_groups import (
+            _AFFINITY_CACHE,
+            update_file_affinity_graph,
+        )
 
         # Setup
+        _AFFINITY_CACHE.clear()
         mock_parse.return_value = (datetime(2024, 1, 1), datetime(2024, 1, 31))
-        mock_commits.return_value = [Mock()]
+        mock_commit = Mock()
+        mock_commit.stats.files = {"file1.py": {}, "file2.py": {}}
+        mock_commits.return_value = [mock_commit]
         mock_network.side_effect = RuntimeError(
             "Graph computation failed unexpectedly"
         )
