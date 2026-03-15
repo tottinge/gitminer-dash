@@ -73,6 +73,51 @@ def build_affinity_graph_output(
     return figure, graph_data
 
 
+def generate_affinity_graph_result(
+    store_data,
+    max_nodes: int,
+    min_affinity: float,
+    *,
+    parse_date_range_fn,
+    commits_in_period_fn,
+    ensure_list_fn,
+    get_cached_affinities_fn,
+    create_network_fn,
+    create_visualization_fn,
+    create_repo_error_figure_fn,
+    create_error_figure_fn,
+) -> tuple[go.Figure, dict[str, dict[Any, Any]]]:
+    """Generate affinity graph callback result using injected dependencies."""
+    try:
+        starting, ending = parse_date_range_fn(store_data)
+    except ValueError as error:
+        return create_error_figure_fn("Invalid date range", str(error)), {}
+
+    try:
+        commits_data = ensure_list_fn(commits_in_period_fn(starting, ending))
+    except ValueError as error:
+        if "No repository path provided" in str(error):
+            return create_repo_error_figure_fn(), {}
+        raise
+
+    affinities = get_cached_affinities_fn(starting, ending, commits_data)
+
+    try:
+        return build_affinity_graph_output(
+            commits_data=commits_data,
+            min_affinity=min_affinity,
+            max_nodes=max_nodes,
+            affinities=affinities,
+            create_network_fn=create_network_fn,
+            create_visualization_fn=create_visualization_fn,
+        )
+    except Exception as error:
+        return (
+            create_error_figure_fn("Graph generation failed", str(error)),
+            {},
+        )
+
+
 def extract_clicked_node_name(click_data) -> str:
     """Extract clicked node file path from click payload."""
     if not click_data:

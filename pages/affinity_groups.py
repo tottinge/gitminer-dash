@@ -10,6 +10,7 @@ from pages.affinity_groups_service import (
     build_graph_data_store,
     extract_clicked_node_name,
     files_in_clicked_community,
+    generate_affinity_graph_result,
     get_or_compute_affinities,
 )
 from utils import date_utils
@@ -152,33 +153,19 @@ layout = html.Div(
     ],
 )
 def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
-    try:
-        starting, ending = date_utils.parse_date_range_from_store(store_data)
-    except ValueError as e:
-        return _create_error_figure("Invalid date range", str(e)), {}
-
-    try:
-        commits_data = ensure_list(data.commits_in_period(starting, ending))
-    except ValueError as e:
-        if "No repository path provided" in str(e):
-            return _create_repo_error_figure(), {}
-        raise
-
-    affinities = _get_cached_affinities(starting, ending, commits_data)
-
-    try:
-        figure, graph_data = build_affinity_graph_output(
-            commits_data=commits_data,
-            min_affinity=min_affinity,
-            max_nodes=max_nodes,
-            affinities=affinities,
-            create_network_fn=create_file_affinity_network,
-            create_visualization_fn=create_network_visualization,
-        )
-    except Exception as e:
-        return _create_error_figure("Graph generation failed", str(e)), {}
-
-    return figure, graph_data
+    return generate_affinity_graph_result(
+        store_data=store_data,
+        max_nodes=max_nodes,
+        min_affinity=min_affinity,
+        parse_date_range_fn=date_utils.parse_date_range_from_store,
+        commits_in_period_fn=data.commits_in_period,
+        ensure_list_fn=ensure_list,
+        get_cached_affinities_fn=_get_cached_affinities,
+        create_network_fn=create_file_affinity_network,
+        create_visualization_fn=create_network_visualization,
+        create_repo_error_figure_fn=_create_repo_error_figure,
+        create_error_figure_fn=_create_error_figure,
+    )
 
 
 @callback(
