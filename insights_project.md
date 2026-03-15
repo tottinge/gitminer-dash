@@ -13,13 +13,13 @@
   - [x] `tests/test_ai_insights_page.py`
 
 ## Next wave stories (user POV slices)
-### [ ] Slice 1 — Export snapshot artifact for reuse
+### [x] Slice 1 — Export snapshot artifact for reuse
 - **User invokes:** `./scripts/export_snapshot . --from <YYYY-MM-DD> --to <YYYY-MM-DD>`
 - **User uses result:** gets a versioned snapshot artifact they can archive, diff, and reuse in offline/automation workflows.
 - **Acceptance checks:**
-  - [ ] command writes a valid snapshot artifact with schema/version
-  - [ ] output reflects selected repo + date range
-  - [ ] rerun with same inputs is deterministic
+  - [x] command writes a valid snapshot artifact with schema/version
+  - [x] output reflects selected repo + date range
+  - [x] rerun with same inputs is deterministic
 - **Not yet in this slice:** LLM narrative generation and citation validation
 
 ### [ ] Slice 2 — Build prompt payload from deterministic report
