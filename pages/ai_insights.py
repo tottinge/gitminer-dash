@@ -69,7 +69,6 @@ layout = html.Div(
                             "name": "Suggested action",
                             "id": "suggested_action",
                         },
-                        {"name": "Evidence", "id": "evidence_refs"},
                     ],
                     tooltip_header=INSIGHTS_TABLE_TOOLTIPS,
                     style_table={"maxHeight": "500px", "overflowY": "auto"},
@@ -88,7 +87,6 @@ layout = html.Div(
                             "if": {"column_id": "suggested_action"},
                             "width": "14%",
                         },
-                        {"if": {"column_id": "evidence_refs"}, "width": "22%"},
                     ],
                     data=[],
                 )
