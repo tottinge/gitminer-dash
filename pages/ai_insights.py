@@ -58,6 +58,8 @@ layout = html.Div(
                             "presentation": "markdown",
                         },
                         {"name": "Risk Score", "id": "score"},
+                        {"name": "Δ Score", "id": "score_delta"},
+                        {"name": "Trend", "id": "trend"},
                         {"name": "Commit Count", "id": "commit_count"},
                         {
                             "name": "Latest Commit",
@@ -76,8 +78,10 @@ layout = html.Div(
                     style_cell_conditional=[
                         {"if": {"column_id": "rank"}, "width": "8%"},
                         {"if": {"column_id": "file_link"}, "width": "24%"},
-                        {"if": {"column_id": "score"}, "width": "10%"},
-                        {"if": {"column_id": "commit_count"}, "width": "10%"},
+                        {"if": {"column_id": "score"}, "width": "8%"},
+                        {"if": {"column_id": "score_delta"}, "width": "8%"},
+                        {"if": {"column_id": "trend"}, "width": "8%"},
+                        {"if": {"column_id": "commit_count"}, "width": "8%"},
                         {
                             "if": {"column_id": "latest_commit_link"},
                             "width": "12%",
@@ -220,9 +224,35 @@ def _suggested_action(file_path: str, score: float, commit_count: int) -> str:
     return "monitor_next_period"
 
 
-def _row(rank: int, hotspot, repo, repo_path: str) -> dict[str, object]:
+def _previous_period_bounds(begin, end):
+    duration = end - begin
+    previous_end = begin
+    previous_begin = begin - duration
+    return previous_begin, previous_end
+
+
+def _trend_bucket(current_score: float, previous_score: float) -> str:
+    if previous_score == 0 and current_score > 0:
+        return "new"
+    delta = current_score - previous_score
+    if delta > 0.5:
+        return "rising"
+    if delta < -0.5:
+        return "falling"
+    return "stable"
+
+
+def _row(
+    rank: int,
+    hotspot,
+    repo,
+    repo_path: str,
+    previous_scores: dict[str, float],
+) -> dict[str, object]:
     file_path = hotspot.file_path
     score = round(hotspot.score, 2)
+    previous_score = round(previous_scores.get(file_path, 0.0), 2)
+    score_delta = round(score - previous_score, 2)
     evidence_refs = " | ".join(
         f"{item.kind}:{item.value}" for item in hotspot.evidence
     )
@@ -233,6 +263,8 @@ def _row(rank: int, hotspot, repo, repo_path: str) -> dict[str, object]:
         "file_path": file_path,
         "file_link": _file_markdown_link(file_path, repo_path),
         "score": score,
+        "score_delta": score_delta,
+        "trend": _trend_bucket(score, previous_score),
         "commit_count": commit_count,
         "latest_commit_link": _commit_markdown_link(commit_ref, repo),
         "risk_reason": _risk_reason(file_path, score, commit_count),
@@ -294,6 +326,15 @@ def populate_insights(store_data):
 
     begin, end = date_utils.parse_date_range_from_store(store_data)
     repo = data.get_repo()
+    previous_begin, previous_end = _previous_period_bounds(begin, end)
+    previous_snapshot = build_analysis_snapshot(
+        repo=repo, period_start=previous_begin, period_end=previous_end
+    )
+    previous_report = build_insight_report(snapshot=previous_snapshot)
+    previous_scores = {
+        item.file_path: round(item.score, 2)
+        for item in previous_report.hotspots
+    }
     snapshot = build_analysis_snapshot(
         repo=repo, period_start=begin, period_end=end
     )
@@ -305,6 +346,7 @@ def populate_insights(store_data):
             hotspot=item,
             repo=repo,
             repo_path=report.repo_path,
+            previous_scores=previous_scores,
         )
         for index, item in enumerate(report.hotspots, start=1)
     ]

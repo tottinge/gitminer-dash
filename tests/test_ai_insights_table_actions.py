@@ -62,6 +62,7 @@ def test_row_generates_actionable_links_and_structural_fields(_):
         ),
         repo=repo,
         repo_path="/example/repo",
+        previous_scores={"pages/affinity_groups.py": 20.0},
     )
 
     assert row["rank"] == 1
@@ -69,6 +70,8 @@ def test_row_generates_actionable_links_and_structural_fields(_):
     assert "file:///example/repo/pages/affinity_groups.py" in row["file_link"]
     assert row["commit_count"] == 27
     assert "github.com/acme/example/commit/fadaacb" in row["latest_commit_link"]
+    assert row["score_delta"] == 7.0
+    assert row["trend"] == "rising"
     assert "high_churn" in row["risk_reason"]
     assert "ui_orchestration_surface" in row["risk_reason"]
     assert row["suggested_action"] == "extract_service_boundary"
@@ -88,11 +91,21 @@ def test_row_uses_dependency_workflow_action_for_config_hotspot(_):
         ),
         repo=_Repo(remotes=[]),
         repo_path="/example/repo",
+        previous_scores={},
     )
 
     assert row["commit_count"] == 25
     assert "dependency_or_config_touchpoint" in row["risk_reason"]
     assert row["suggested_action"] == "tighten_dependency_workflow"
+
+
+@patch("dash.register_page")
+def test_trend_bucket_classifies_new_stable_and_falling(_):
+    import pages.ai_insights as module
+
+    assert module._trend_bucket(3.0, 0.0) == "new"
+    assert module._trend_bucket(10.2, 10.0) == "stable"
+    assert module._trend_bucket(3.0, 5.0) == "falling"
 
 
 @pytest.fixture
@@ -105,6 +118,29 @@ def ai_insights_module():
 
 def test_populate_insights_includes_actionable_columns(ai_insights_module):
     module = ai_insights_module
+    current_report = InsightReport(
+        schema_version="1.0.0",
+        repo_path="/example/repo",
+        period_start="2026-01-01T00:00:00+00:00",
+        period_end="2026-01-31T23:59:59+00:00",
+        total_commits=4,
+        hotspots=[
+            _hotspot(
+                file_path="src/a.py",
+                score=4.0,
+                commit_count=4,
+                commit_ref="aaaaaaa",
+            )
+        ],
+    )
+    previous_report = InsightReport(
+        schema_version="1.0.0",
+        repo_path="/example/repo",
+        period_start="2025-12-01T00:00:00+00:00",
+        period_end="2025-12-31T23:59:59+00:00",
+        total_commits=2,
+        hotspots=[],
+    )
 
     with (
         patch.object(module.data, "get_repo", return_value=_Repo(remotes=[])),
@@ -124,21 +160,7 @@ def test_populate_insights_includes_actionable_columns(ai_insights_module):
         patch.object(
             module,
             "build_insight_report",
-            return_value=InsightReport(
-                schema_version="1.0.0",
-                repo_path="/example/repo",
-                period_start="2026-01-01T00:00:00+00:00",
-                period_end="2026-01-31T23:59:59+00:00",
-                total_commits=4,
-                hotspots=[
-                    _hotspot(
-                        file_path="src/a.py",
-                        score=4.0,
-                        commit_count=4,
-                        commit_ref="aaaaaaa",
-                    )
-                ],
-            ),
+            side_effect=[previous_report, current_report],
         ),
     ):
         rows, _status = module.populate_insights(
@@ -153,5 +175,7 @@ def test_populate_insights_includes_actionable_columns(ai_insights_module):
     row = rows[0]
     assert row["commit_count"] == 4
     assert row["latest_commit_link"] == "aaaaaaa"
+    assert row["score_delta"] == 4.0
+    assert row["trend"] == "new"
     assert "risk_reason" in row
     assert "suggested_action" in row
