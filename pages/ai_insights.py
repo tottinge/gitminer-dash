@@ -36,10 +36,73 @@ INSIGHTS_TABLE_TOOLTIPS = {  # pragma: no mutate
     "risk_reason": "Deterministic risk classification based on evidence.",
     "suggested_action": "Deterministic first action from risk class.",
 }
+FILTER_LABEL = "Filters"  # pragma: no mutate
+TOP_N_LABEL = "Top N hotspots"  # pragma: no mutate
+MIN_SCORE_LABEL = "Minimum score"  # pragma: no mutate
+FILTER_EXCLUDE_CONFIG = "exclude_config"
+FILTER_EXCLUDE_TESTS = "exclude_tests"
+FILTER_OPTIONS = [  # pragma: no mutate
+    {"label": "Exclude config/lock files", "value": FILTER_EXCLUDE_CONFIG},
+    {"label": "Exclude test files", "value": FILTER_EXCLUDE_TESTS},
+]
+DRILLDOWN_SECTION_TITLE = "Hotspot Drill-down"  # pragma: no mutate
+DRILLDOWN_EMPTY_STATUS = "No hotspot selected."  # pragma: no mutate
+DRILLDOWN_SELECTED_STATUS = "Selected hotspot details."  # pragma: no mutate
 
 layout = html.Div(
     [
         html.H2("AI Insights", style={"margin": "10px 0"}),
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Label(TOP_N_LABEL),
+                        dcc.Dropdown(
+                            id="id-ai-insights-top-n",
+                            options=[
+                                {"label": "5", "value": 5},
+                                {"label": "10", "value": 10},
+                                {"label": "20", "value": 20},
+                            ],
+                            value=10,
+                            clearable=False,
+                        ),
+                    ],
+                    style={"width": "22%"},
+                ),
+                html.Div(
+                    [
+                        html.Label(MIN_SCORE_LABEL),
+                        dcc.Input(
+                            id="id-ai-insights-min-score",
+                            type="number",
+                            min=0,
+                            step=1,
+                            value=0,
+                        ),
+                    ],
+                    style={"width": "22%"},
+                ),
+                html.Div(
+                    [
+                        html.Label(FILTER_LABEL),
+                        dcc.Checklist(
+                            id="id-ai-insights-filters",
+                            options=FILTER_OPTIONS,
+                            value=[],
+                        ),
+                    ],
+                    style={"width": "50%"},
+                ),
+            ],
+            style={
+                "display": "flex",
+                "justifyContent": "space-between",
+                "alignItems": "flex-start",
+                "gap": "12px",
+                "margin": "8px 0 12px",
+            },
+        ),
         html.P(
             id="id-ai-insights-status",
             style={"fontStyle": "italic", "color": "#666"},
@@ -75,6 +138,7 @@ layout = html.Div(
                     tooltip_header=INSIGHTS_TABLE_TOOLTIPS,
                     style_table={"maxHeight": "500px", "overflowY": "auto"},
                     style_cell={"textAlign": "left", "padding": "8px"},
+                    row_selectable="single",
                     style_cell_conditional=[
                         {"if": {"column_id": "rank"}, "width": "8%"},
                         {"if": {"column_id": "file_link"}, "width": "24%"},
@@ -95,6 +159,34 @@ layout = html.Div(
                     data=[],
                 )
             ],
+        ),
+        html.H3(
+            DRILLDOWN_SECTION_TITLE,
+            style={"margin": "16px 0 8px"},
+        ),
+        html.P(
+            id="id-ai-insights-drilldown-status",
+            style={"fontStyle": "italic", "color": "#666"},
+        ),
+        DataTable(
+            id="id-ai-insights-drilldown-details",
+            columns=[
+                {"name": "Field", "id": "field"},
+                {"name": "Value", "id": "value"},
+            ],
+            style_table={"maxHeight": "180px", "overflowY": "auto"},
+            style_cell={"textAlign": "left", "padding": "8px"},
+            data=[],
+        ),
+        DataTable(
+            id="id-ai-insights-drilldown-evidence",
+            columns=[
+                {"name": "Evidence Kind", "id": "kind"},
+                {"name": "Evidence Value", "id": "value"},
+            ],
+            style_table={"maxHeight": "180px", "overflowY": "auto"},
+            style_cell={"textAlign": "left", "padding": "8px"},
+            data=[],
         ),
         html.H3(
             NARRATIVE_SECTION_TITLE,
@@ -224,6 +316,40 @@ def _suggested_action(file_path: str, score: float, commit_count: int) -> str:
     return "monitor_next_period"
 
 
+def _normalize_top_n(top_n: int | None) -> int:
+    if top_n is None or top_n <= 0:
+        return 10
+    return top_n
+
+
+def _normalize_min_score(min_score: float | int | None) -> float:
+    if min_score is None:
+        return 0.0
+    return max(float(min_score), 0.0)
+
+
+def _is_config_or_lock_path(file_path: str) -> bool:
+    return file_path.endswith(
+        (".toml", ".lock", ".yaml", ".yml", ".ini", ".cfg")
+    )
+
+
+def _passes_filters(
+    file_path: str,
+    score: float,
+    min_score: float,
+    filter_tokens: list[str] | None,
+) -> bool:
+    filters = set(filter_tokens or [])
+    if score < min_score:
+        return False
+    if FILTER_EXCLUDE_CONFIG in filters and _is_config_or_lock_path(file_path):
+        return False
+    return not (
+        FILTER_EXCLUDE_TESTS in filters and file_path.startswith("tests/")
+    )
+
+
 def _previous_period_bounds(begin, end):
     duration = end - begin
     previous_end = begin
@@ -288,6 +414,19 @@ def _invalid_claim_row(claim: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _evidence_rows_from_refs(evidence_refs: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    if not evidence_refs:
+        return rows
+    for token in evidence_refs.split(" | "):
+        if ":" in token:
+            kind, value = token.split(":", 1)
+        else:
+            kind, value = token, ""
+        rows.append({"kind": kind, "value": value})
+    return rows
+
+
 def _strict_narrative_result(report) -> dict[str, object]:
     prompt_payload = build_prompt_payload(report=report)
     narrative_text = get_llm_client().generate_narrative(
@@ -317,12 +456,25 @@ def _strict_narrative_result(report) -> dict[str, object]:
         Output("id-ai-insights-table", "data"),
         Output("id-ai-insights-status", "children"),
     ],
-    Input("global-date-range", "data"),
+    [
+        Input("global-date-range", "data"),
+        Input("id-ai-insights-top-n", "value"),
+        Input("id-ai-insights-min-score", "value"),
+        Input("id-ai-insights-filters", "value"),
+    ],
 )
-def populate_insights(store_data):
+def populate_insights(
+    store_data,
+    top_n: int | None = 10,
+    min_score: float | int | None = 0,
+    filters: list[str] | None = None,
+):
     """Populate ranked insights table for selected date range."""
     if not store_data or "period" not in store_data:
         raise PreventUpdate
+    normalized_top_n = _normalize_top_n(top_n)
+    normalized_min_score = _normalize_min_score(min_score)
+    report_size = max(50, normalized_top_n * 5)
 
     begin, end = date_utils.parse_date_range_from_store(store_data)
     repo = data.get_repo()
@@ -330,7 +482,9 @@ def populate_insights(store_data):
     previous_snapshot = build_analysis_snapshot(
         repo=repo, period_start=previous_begin, period_end=previous_end
     )
-    previous_report = build_insight_report(snapshot=previous_snapshot)
+    previous_report = build_insight_report(
+        snapshot=previous_snapshot, top_n=report_size
+    )
     previous_scores = {
         item.file_path: round(item.score, 2)
         for item in previous_report.hotspots
@@ -338,7 +492,18 @@ def populate_insights(store_data):
     snapshot = build_analysis_snapshot(
         repo=repo, period_start=begin, period_end=end
     )
-    report = build_insight_report(snapshot=snapshot)
+    report = build_insight_report(snapshot=snapshot, top_n=report_size)
+    filtered_hotspots = [
+        item
+        for item in report.hotspots
+        if _passes_filters(
+            file_path=item.file_path,
+            score=item.score,
+            min_score=normalized_min_score,
+            filter_tokens=filters,
+        )
+    ]
+    limited_hotspots = filtered_hotspots[:normalized_top_n]
 
     rows = [
         _row(
@@ -348,12 +513,56 @@ def populate_insights(store_data):
             repo_path=report.repo_path,
             previous_scores=previous_scores,
         )
-        for index, item in enumerate(report.hotspots, start=1)
+        for index, item in enumerate(limited_hotspots, start=1)
     ]
     if not rows:
         return [], "No evidence-backed hotspots in selected period."
 
     return rows, f"{len(rows)} evidence-backed hotspots in selected period."
+
+
+@callback(
+    [
+        Output("id-ai-insights-drilldown-status", "children"),
+        Output("id-ai-insights-drilldown-details", "data"),
+        Output("id-ai-insights-drilldown-evidence", "data"),
+    ],
+    [
+        Input("id-ai-insights-table", "active_cell"),
+        Input("id-ai-insights-table", "data"),
+    ],
+)
+def populate_hotspot_drilldown(active_cell, rows):
+    """Populate drill-down detail rows for selected hotspot."""
+    if not rows:
+        return DRILLDOWN_EMPTY_STATUS, [], []
+    if not active_cell:
+        selected_index = 0
+    else:
+        selected_index = int(active_cell.get("row", 0))
+        if selected_index < 0 or selected_index >= len(rows):
+            selected_index = 0
+    selected_row = rows[selected_index]
+
+    details = [
+        {"field": "file_path", "value": selected_row.get("file_path", "")},
+        {"field": "risk_score", "value": selected_row.get("score", 0)},
+        {"field": "score_delta", "value": selected_row.get("score_delta", 0)},
+        {"field": "trend", "value": selected_row.get("trend", "")},
+        {"field": "commit_count", "value": selected_row.get("commit_count", 0)},
+        {
+            "field": "risk_reason",
+            "value": selected_row.get("risk_reason", ""),
+        },
+        {
+            "field": "suggested_action",
+            "value": selected_row.get("suggested_action", ""),
+        },
+    ]
+    evidence_rows = _evidence_rows_from_refs(
+        selected_row.get("evidence_refs", "")
+    )
+    return DRILLDOWN_SELECTED_STATUS, details, evidence_rows
 
 
 @callback(
