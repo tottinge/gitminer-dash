@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from urllib.parse import quote
 
 from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
@@ -117,7 +118,8 @@ layout = html.Div(
                         {"name": "Rank", "id": "rank"},
                         {
                             "name": "File",
-                            "id": "file_link",
+                            "id": "file_display_link",
+                            "type": "text",
                             "presentation": "markdown",
                         },
                         {"name": "Risk Score", "id": "score"},
@@ -127,6 +129,7 @@ layout = html.Div(
                         {
                             "name": "Latest Commit",
                             "id": "latest_commit_link",
+                            "type": "text",
                             "presentation": "markdown",
                         },
                         {"name": "Why this is risky", "id": "risk_reason"},
@@ -141,7 +144,10 @@ layout = html.Div(
                     row_selectable="single",
                     style_cell_conditional=[
                         {"if": {"column_id": "rank"}, "width": "8%"},
-                        {"if": {"column_id": "file_link"}, "width": "24%"},
+                        {
+                            "if": {"column_id": "file_display_link"},
+                            "width": "24%",
+                        },
                         {"if": {"column_id": "score"}, "width": "8%"},
                         {"if": {"column_id": "score_delta"}, "width": "8%"},
                         {"if": {"column_id": "trend"}, "width": "8%"},
@@ -277,13 +283,21 @@ def _file_markdown_link(file_path: str, repo_path: str) -> str:
     return f"[`{file_path}`](file://{repo_path}/{file_path})"
 
 
+def _file_display_markdown_link(file_path: str, repo) -> str:
+    base_url = _repo_web_base_url(repo)
+    if not base_url:
+        return file_path
+    encoded_file_path = quote(file_path, safe="/")
+    return f"[{file_path}]({base_url}/blob/HEAD/{encoded_file_path})"
+
+
 def _commit_markdown_link(commit_ref: str, repo) -> str:
     if not commit_ref:
         return ""
     base_url = _repo_web_base_url(repo)
     if not base_url:
         return commit_ref
-    return f"[`{commit_ref}`]({base_url}/commit/{commit_ref})"
+    return f"[{commit_ref}]({base_url}/commit/{commit_ref})"
 
 
 def _risk_reason(file_path: str, score: float, commit_count: int) -> str:
@@ -388,6 +402,7 @@ def _row(
         "rank": rank,
         "file_path": file_path,
         "file_link": _file_markdown_link(file_path, repo_path),
+        "file_display_link": _file_display_markdown_link(file_path, repo),
         "score": score,
         "score_delta": score_delta,
         "trend": _trend_bucket(score, previous_score),
