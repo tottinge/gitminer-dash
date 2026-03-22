@@ -207,16 +207,7 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
 
     if len(G.edges()) == 0:
         # Return empty trace if no edges
-        return [
-            go.Scatter(
-                x=[],
-                y=[],
-                line=dict(width=0, color="#888"),  # pragma: no mutate
-                hoverinfo="none",
-                mode="lines",
-                showlegend=False,
-            )
-        ]
+        return [_empty_edge_trace()]
 
     # Collect edge data
     edge_x = []
@@ -252,6 +243,18 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
         edge_traces.append(edge_trace)
 
     return edge_traces
+
+
+def _empty_edge_trace() -> go.Scatter:
+    """Build an explicit empty edge trace for graphs without edges."""
+    return go.Scatter(
+        x=[],
+        y=[],
+        line=dict(width=0, color="#888"),  # pragma: no mutate
+        hoverinfo="none",
+        mode="lines",
+        showlegend=False,
+    )
 
 
 def _edge_width(weight: float, max_weight: float) -> float:
