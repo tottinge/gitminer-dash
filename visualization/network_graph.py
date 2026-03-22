@@ -282,18 +282,31 @@ def _build_weighted_edge_traces(
     """Build one edge trace per weighted edge segment."""
     traces: list[go.Scatter] = []
     for edge_idx, weight in enumerate(edge_weights):
-        i = edge_idx * 3
         width = _edge_width(weight=weight, max_weight=max_weight)
         text = edge_texts[edge_idx]
+        segment_x, segment_y = _edge_segment_coordinates(
+            edge_x=edge_x, edge_y=edge_y, edge_idx=edge_idx
+        )
 
         edge_trace = _build_edge_trace(
-            edge_x=edge_x[i : i + 3],
-            edge_y=edge_y[i : i + 3],
+            edge_x=segment_x,
+            edge_y=segment_y,
             width=width,
             text=text,
         )
         traces.append(edge_trace)
     return traces
+
+
+def _edge_segment_coordinates(
+    edge_x: list[float | None], edge_y: list[float | None], edge_idx: int
+) -> tuple[list[float | None], list[float | None]]:
+    """Return the x/y coordinate segment for one edge-trace index."""
+    segment_start = edge_idx * 3
+    return (
+        edge_x[segment_start : segment_start + 3],
+        edge_y[segment_start : segment_start + 3],
+    )
 
 
 def _collect_edge_plot_data(
