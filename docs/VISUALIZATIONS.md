@@ -63,3 +63,15 @@ This visualization helps identify:
 - Cohesive modules in your codebase (files that naturally belong together)
 - Central files that affect many other parts of the system
 - Unexpected dependencies between different areas of the codebase
+## Community Flows (Sankey)
+
+Community Flows is a Sankey visualization that summarizes cross-community coupling in the file affinity network. Each node in the Sankey is a detected community (group of files that frequently change together), and each link shows the total affinity weight of edges that connect files across two different communities.
+
+The visualization includes controls to:
+- Adjust the maximum number of nodes considered in the underlying affinity graph
+- Set the minimum affinity factor threshold before an edge contributes to cross-community flow
+
+This view is especially useful for spotting:
+- Architectural boundaries that are leaking (large links between communities)
+- Potentially over-coupled modules that should be more independent
+- Periods where cross-module change pressure is increasing
