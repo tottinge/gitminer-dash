@@ -8,6 +8,8 @@ import pytest
 from insights.cli import main
 from insights.models import (
     AnalysisSnapshot,
+    BridgeMetric,
+    BridgeMetricsReport,
     EvidenceRef,
     HotspotCandidate,
     InsightReport,
@@ -95,6 +97,68 @@ def test_main_defaults_to_top_five_when_top_omitted(capsys):
     assert exit_code == 0
     assert capsys.readouterr().out
     mock_build_report.assert_called_once_with(snapshot=snapshot, top_n=5)
+
+
+def test_main_emits_bridge_metrics_report_when_requested(capsys):
+    bridge_report = BridgeMetricsReport(
+        schema_version="1.0.0",
+        repo_path="/example/repo",
+        period_start="2026-01-01T00:00:00+00:00",
+        period_end="2026-01-31T23:59:59+00:00",
+        total_commits=4,
+        graph_stats={"communities": 2},
+        bridges=[
+            BridgeMetric(
+                file_path="src/core.py",
+                bridge_score=0.85,
+                bridge_ratio=0.8,
+                cross_community_edges=2,
+                total_edges=3,
+                cross_community_affinity=1.2,
+                total_affinity=1.5,
+                community=0,
+                connected_communities=[1, 2],
+                commit_count=8,
+                evidence=[],
+            )
+        ],
+    )
+
+    with (
+        patch("insights.cli.Repo") as mock_repo_type,
+        patch(
+            "insights.cli.build_bridge_metrics_report",
+            return_value=bridge_report,
+        ) as mock_bridge_report,
+    ):
+        exit_code = main(
+            [
+                ".",
+                "--from",
+                "2026-01-01",
+                "--to",
+                "2026-01-31",
+                "--report",
+                "bridge-metrics",
+                "--top",
+                "7",
+            ]
+        )
+
+    assert exit_code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["report_type"] == "bridge-metrics"
+    assert payload["bridges"][0]["file_path"] == "src/core.py"
+    mock_repo_type.assert_called_once_with(".")
+    called_kwargs = mock_bridge_report.call_args.kwargs
+    assert called_kwargs["top_n"] == 7
+
+
+def test_main_rejects_prompt_payload_for_bridge_metrics():
+    with pytest.raises(SystemExit) as caught:
+        main([".", "--report", "bridge-metrics", "--prompt-payload"])
+
+    assert caught.value.code == 2
 
 
 def test_main_rejects_invalid_period_order():

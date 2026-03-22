@@ -9,6 +9,7 @@ from pathlib import Path
 
 from git import Repo
 
+from insights.bridge_metrics_report import build_bridge_metrics_report
 from insights.citation_guard import validate_narrative_citations
 from insights.llm_client import get_llm_client
 from insights.prompt_builder import build_prompt_payload
@@ -72,6 +73,12 @@ def _parser() -> argparse.ArgumentParser:
         help="Number of hotspots to return (default: 5).",
     )
     parser.add_argument(
+        "--report",
+        choices=("hotspots", "bridge-metrics"),
+        default="hotspots",
+        help="Report type to generate (default: hotspots).",
+    )
+    parser.add_argument(
         "--prompt-payload",
         action="store_true",
         help=(
@@ -127,14 +134,37 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _validate_args(
+def _bridge_metrics_unsupported_flags(
+    args: argparse.Namespace,
+) -> list[str]:
+    flag_states = [
+        ("--prompt-payload", args.prompt_payload),
+        ("--narrative", args.narrative),
+        ("--strict-citations", args.strict_citations),
+        ("--narrative-file", bool(args.narrative_file)),
+        ("--validate-citations", args.validate_citations),
+        ("--save-snapshot", args.save_snapshot),
+        ("--snapshot-dir", bool(args.snapshot_dir)),
+    ]
+    return [flag for flag, enabled in flag_states if enabled]
+
+
+def _validate_bridge_metrics_args(
     parser: argparse.ArgumentParser,
     args: argparse.Namespace,
-    period_start: datetime,
-    period_end: datetime,
 ) -> None:
-    if period_start > period_end:
-        parser.error("--from must be earlier than or equal to --to.")
+    unsupported_flags = _bridge_metrics_unsupported_flags(args=args)
+    if unsupported_flags:
+        parser.error(
+            "--report bridge-metrics does not support "
+            + ", ".join(unsupported_flags)
+            + "."
+        )
+
+
+def _validate_hotspot_args(
+    parser: argparse.ArgumentParser, args: argparse.Namespace
+) -> None:
     if args.narrative_file and not args.validate_citations:
         parser.error("--narrative-file requires --validate-citations.")
     if args.validate_citations and not args.narrative_file:
@@ -145,6 +175,20 @@ def _validate_args(
         )
     if args.strict_citations and not args.narrative:
         parser.error("--strict-citations requires --narrative.")
+
+
+def _validate_args(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+    period_start: datetime,
+    period_end: datetime,
+) -> None:
+    if period_start > period_end:
+        parser.error("--from must be earlier than or equal to --to.")
+    if args.report == "bridge-metrics":
+        _validate_bridge_metrics_args(parser=parser, args=args)
+        return
+    _validate_hotspot_args(parser=parser, args=args)
 
 
 def _load_or_build_snapshot(
@@ -248,6 +292,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.snapshot_dir
         else Path(repo_path) / ".gitminer-dash" / "snapshots"
     )
+    if args.report == "bridge-metrics":
+        report = build_bridge_metrics_report(
+            repo=repo,
+            period_start=period_start,
+            period_end=period_end,
+            top_n=args.top,
+        )
+        print(json.dumps(report.to_dict(), indent=2))
+        return 0
     snapshot = _load_or_build_snapshot(
         repo=repo,
         repo_path=repo_path,
