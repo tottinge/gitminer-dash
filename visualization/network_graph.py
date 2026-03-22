@@ -209,21 +209,9 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
         # Return empty trace if no edges
         return [_empty_edge_trace()]
 
-    # Collect edge data
-    edge_x = []
-    edge_y = []
-    edge_weights = []
-    edge_texts = []
-
-    for edge in G.edges():
-        x0, y0 = pos[edge[0]]
-        x1, y1 = pos[edge[1]]
-        edge_x.extend([x0, x1, None])
-        edge_y.extend([y0, y1, None])
-
-        weight = G.edges[edge]["weight"]
-        edge_weights.append(weight)
-        edge_texts.append(f"{edge[0]} - {edge[1]}<br>Affinity: {weight:.2f}")
+    edge_x, edge_y, edge_weights, edge_texts = _collect_edge_plot_data(
+        G=G, pos=pos
+    )
 
     # Normalize edge weights for width
     max_weight = max(edge_weights)
@@ -243,6 +231,27 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
         edge_traces.append(edge_trace)
 
     return edge_traces
+
+
+def _collect_edge_plot_data(
+    G: nx.Graph, pos: dict
+) -> tuple[list[float | None], list[float | None], list[float], list[str]]:
+    """Collect edge coordinates, weights, and hover strings for plotting."""
+    edge_x: list[float | None] = []
+    edge_y: list[float | None] = []
+    edge_weights: list[float] = []
+    edge_texts: list[str] = []
+
+    for edge in G.edges():
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.extend([x0, x1, None])
+        edge_y.extend([y0, y1, None])
+
+        weight = G.edges[edge]["weight"]
+        edge_weights.append(weight)
+        edge_texts.append(f"{edge[0]} - {edge[1]}<br>Affinity: {weight:.2f}")
+    return edge_x, edge_y, edge_weights, edge_texts
 
 
 def _empty_edge_trace() -> go.Scatter:
