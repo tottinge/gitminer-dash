@@ -82,9 +82,7 @@ def create_file_affinity_network(
     stats["commits_with_multiple_files"] = count_multi_file_commits(commits)
 
     # Determine unique files from affinities (not just from commits) so we align with the graph.
-    all_files: set[str] = set()
-    for file_pair in affinities:
-        all_files.update(file_pair)
+    all_files = _unique_files_from_affinities(affinities)
 
     stats["unique_files"] = len(all_files)
     stats["file_pairs"] = len(affinities)
@@ -118,6 +116,16 @@ def create_file_affinity_network(
     stats.update(graph_stats)
 
     return G, communities, stats
+
+
+def _unique_files_from_affinities(
+    affinities: dict[tuple[str, str], float],
+) -> set[str]:
+    """Return distinct file paths present in affinity pairs."""
+    files: set[str] = set()
+    for file_pair in affinities:
+        files.update(file_pair)
+    return files
 
 
 def create_network_visualization(
