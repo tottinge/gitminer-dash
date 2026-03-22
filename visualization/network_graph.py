@@ -6,7 +6,6 @@ It consolidates the best features from the original implementations in affinity_
 and improved_affinity_network.py.
 """
 
-from functools import lru_cache
 from typing import Any
 
 import networkx as nx
@@ -119,19 +118,6 @@ def create_file_affinity_network(
     stats.update(graph_stats)
 
     return G, communities, stats
-
-
-@lru_cache(maxsize=32)
-def _cached_layout(hash_key: str) -> dict:
-    """Cached spring layout positions based on a simple hash key.
-
-    The hash key should uniquely represent the graph structure for layout
-    purposes (e.g., sorted list of edges).
-    """
-    # This function will be populated by create_network_visualization, which
-    # constructs the graph and then calls this helper with a derived key.
-    # The actual implementation is filled in at call-time.
-    raise RuntimeError("_cached_layout should not be called directly")
 
 
 def create_network_visualization(
@@ -320,11 +306,7 @@ def _create_node_traces(
     else:
         # Process each community separately
         for community_id in community_ids:
-            community_nodes = [
-                node
-                for node, data in G.nodes(data=True)
-                if data.get("community") == community_id
-            ]
+            community_nodes = _community_nodes(G, community_id)
 
             # Skip single-node communities
             if len(community_nodes) <= 1:
@@ -337,6 +319,15 @@ def _create_node_traces(
             node_traces.append(node_trace)
 
     return node_traces
+
+
+def _community_nodes(G: nx.Graph, community_id: int) -> list[str]:
+    """Return node names that belong to the specified community."""
+    return [
+        node
+        for node, data in G.nodes(data=True)
+        if data.get("community") == community_id
+    ]
 
 
 def _collect_node_plot_data(
