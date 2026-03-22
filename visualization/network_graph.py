@@ -38,19 +38,9 @@ def create_node_tooltip(node: str, commit_count: int, degree: int) -> str:
     return f"File: {node}<br>Commits: {commit_count}<br>Connections: {degree}"
 
 
-def create_file_affinity_network(
-    commits,
-    min_affinity: float = 0.2,
-    max_nodes: int = 50,
-    min_edge_count: int = 1,
-    precomputed_affinities: dict[tuple[str, str], float] | None = None,
-) -> tuple[nx.Graph, list, dict[str, Any]]:
-    """Create a network graph of file affinities based on commit history.
-
-    Returns:
-        A tuple of (networkx graph, communities list, stats dict)
-    """
-    stats: dict[str, Any] = {
+def _initial_affinity_stats() -> dict[str, Any]:
+    """Create default stats payload for affinity-network analysis."""
+    return {
         "total_commits": 0,
         "commits_with_multiple_files": 0,
         "unique_files": 0,
@@ -65,6 +55,21 @@ def create_file_affinity_network(
         "avg_edge_weight": 0,
         "avg_community_size": 0,
     }
+
+
+def create_file_affinity_network(
+    commits,
+    min_affinity: float = 0.2,
+    max_nodes: int = 50,
+    min_edge_count: int = 1,
+    precomputed_affinities: dict[tuple[str, str], float] | None = None,
+) -> tuple[nx.Graph, list, dict[str, Any]]:
+    """Create a network graph of file affinities based on commit history.
+
+    Returns:
+        A tuple of (networkx graph, communities list, stats dict)
+    """
+    stats: dict[str, Any] = _initial_affinity_stats()
 
     if not commits:
         return nx.Graph(), [], {"error": "No commits provided"}
