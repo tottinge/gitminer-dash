@@ -417,7 +417,6 @@ def _create_non_singleton_community_traces(
         if len(community_nodes) <= 1:
             continue
         color = _community_color(community_id, community_colors)
-        color = community_colors[community_id % len(community_colors)]
         node_trace = _create_community_trace(
             G, pos, community_nodes, color, community_id
         )
