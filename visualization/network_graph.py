@@ -115,10 +115,7 @@ def create_file_affinity_network(
     )
 
     stats["edges_before_filtering"] = len(G.edges())
-
-    stats["isolated_nodes"] = filter_low_degree_nodes(G, min_edge_count)
-    stats["nodes_after_filtering"] = len(G.nodes())
-    stats["edges_after_filtering"] = len(G.edges())
+    _update_post_filter_stats(stats=stats, G=G, min_edge_count=min_edge_count)
 
     communities, community_stats = detect_and_assign_communities(G)
     stats.update(community_stats)
@@ -161,6 +158,15 @@ def _add_nodes_from_top_files(
     """Add graph nodes for selected top files with commit-count attributes."""
     for file in top_file_set:
         G.add_node(file, commit_count=file_counts.get(file, 0))
+
+
+def _update_post_filter_stats(
+    stats: dict[str, Any], G: nx.Graph, min_edge_count: int
+) -> None:
+    """Apply low-degree filtering and update post-filter graph size stats."""
+    stats["isolated_nodes"] = filter_low_degree_nodes(G, min_edge_count)
+    stats["nodes_after_filtering"] = len(G.nodes())
+    stats["edges_after_filtering"] = len(G.edges())
 
 
 def create_network_visualization(
@@ -246,7 +252,6 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
     Returns:
         List of Plotly Scatter traces for edges
     """
-    edge_traces = []
 
     if len(G.edges()) == 0:
         # Return empty trace if no edges
@@ -258,8 +263,24 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
 
     # Normalize edge weights for width
     max_weight = max(edge_weights)
+    return _build_weighted_edge_traces(
+        edge_x=edge_x,
+        edge_y=edge_y,
+        edge_weights=edge_weights,
+        edge_texts=edge_texts,
+        max_weight=max_weight,
+    )
 
-    # Create separate trace for each edge with its own width
+
+def _build_weighted_edge_traces(
+    edge_x: list[float | None],
+    edge_y: list[float | None],
+    edge_weights: list[float],
+    edge_texts: list[str],
+    max_weight: float,
+) -> list[go.Scatter]:
+    """Build one edge trace per weighted edge segment."""
+    traces: list[go.Scatter] = []
     for edge_idx, weight in enumerate(edge_weights):
         i = edge_idx * 3
         width = _edge_width(weight=weight, max_weight=max_weight)
@@ -271,9 +292,8 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
             width=width,
             text=text,
         )
-        edge_traces.append(edge_trace)
-
-    return edge_traces
+        traces.append(edge_trace)
+    return traces
 
 
 def _collect_edge_plot_data(
@@ -352,28 +372,50 @@ def _create_node_traces(
     community_colors = px.colors.qualitative.D3
 
     # Get community IDs from node attributes
-    community_ids = set(nx.get_node_attributes(G, "community").values())
+    community_ids = _community_ids(G)
 
     # If no communities but nodes exist, create single community
     if not community_ids and len(G.nodes()) > 0:
         node_trace = _create_single_community_trace(G, pos, community_colors[0])
         node_traces.append(node_trace)
     else:
-        # Process each community separately
-        for community_id in community_ids:
-            community_nodes = _community_nodes(G, community_id)
-
-            # Skip single-node communities
-            if len(community_nodes) <= 1:
-                continue
-
-            color = community_colors[community_id % len(community_colors)]
-            node_trace = _create_community_trace(
-                G, pos, community_nodes, color, community_id
+        node_traces.extend(
+            _create_non_singleton_community_traces(
+                G=G,
+                pos=pos,
+                community_ids=community_ids,
+                community_colors=community_colors,
             )
-            node_traces.append(node_trace)
+        )
 
     return node_traces
+
+
+def _community_ids(G: nx.Graph) -> set[int]:
+    """Return unique community IDs assigned to graph nodes."""
+    return set(nx.get_node_attributes(G, "community").values())
+
+
+def _create_non_singleton_community_traces(
+    G: nx.Graph,
+    pos: dict,
+    community_ids: set[int],
+    community_colors: list[str],
+) -> list[go.Scatter]:
+    """Build traces for communities with at least two nodes."""
+    traces: list[go.Scatter] = []
+    for community_id in community_ids:
+        community_nodes = _community_nodes(G, community_id)
+
+        if len(community_nodes) <= 1:
+            continue
+
+        color = community_colors[community_id % len(community_colors)]
+        node_trace = _create_community_trace(
+            G, pos, community_nodes, color, community_id
+        )
+        traces.append(node_trace)
+    return traces
 
 
 def _community_nodes(G: nx.Graph, community_id: int) -> list[str]:
