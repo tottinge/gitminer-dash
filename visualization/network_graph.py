@@ -94,14 +94,12 @@ def create_file_affinity_network(
         G.add_node(file, commit_count=file_counts.get(file, 0))
 
     stats["nodes_before_filtering"] = len(G.nodes())
-
-    for (file1, file2), affinity in affinities.items():
-        if (
-            file1 in top_file_set
-            and file2 in top_file_set
-            and affinity >= min_affinity
-        ):
-            G.add_edge(file1, file2, weight=affinity)
+    _add_affinity_edges(
+        G=G,
+        affinities=affinities,
+        top_file_set=top_file_set,
+        min_affinity=min_affinity,
+    )
 
     stats["edges_before_filtering"] = len(G.edges())
 
@@ -126,6 +124,22 @@ def _unique_files_from_affinities(
     for file_pair in affinities:
         files.update(file_pair)
     return files
+
+
+def _add_affinity_edges(
+    G: nx.Graph,
+    affinities: dict[tuple[str, str], float],
+    top_file_set: set[str],
+    min_affinity: float,
+) -> None:
+    """Add weighted edges for affinity pairs that pass node and threshold filters."""
+    for (file1, file2), affinity in affinities.items():
+        if (
+            file1 in top_file_set
+            and file2 in top_file_set
+            and affinity >= min_affinity
+        ):
+            G.add_edge(file1, file2, weight=affinity)
 
 
 def create_network_visualization(
