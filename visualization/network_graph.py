@@ -305,15 +305,14 @@ def _collect_edge_plot_data(
     edge_weights: list[float] = []
     edge_texts: list[str] = []
 
-    for edge in G.edges():
-        x0, y0 = pos[edge[0]]
-        x1, y1 = pos[edge[1]]
+    for file1, file2 in G.edges():
+        x0, y0 = pos[file1]
+        x1, y1 = pos[file2]
         edge_x.extend([x0, x1, None])
         edge_y.extend([y0, y1, None])
-
-        weight = G.edges[edge]["weight"]
+        weight = G.edges[file1, file2]["weight"]
         edge_weights.append(weight)
-        edge_texts.append(f"{edge[0]} - {edge[1]}<br>Affinity: {weight:.2f}")
+        edge_texts.append(f"{file1} - {file2}<br>Affinity: {weight:.2f}")
     return edge_x, edge_y, edge_weights, edge_texts
 
 
