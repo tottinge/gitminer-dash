@@ -376,7 +376,9 @@ def _create_node_traces(
 
     # If no communities but nodes exist, create single community
     if not community_ids and len(G.nodes()) > 0:
-        node_trace = _create_single_community_trace(G, pos, community_colors[0])
+        node_trace = _create_single_community_trace(
+            G, pos, _community_color(0, community_colors)
+        )
         node_traces.append(node_trace)
     else:
         node_traces.extend(
@@ -396,6 +398,11 @@ def _community_ids(G: nx.Graph) -> set[int]:
     return set(nx.get_node_attributes(G, "community").values())
 
 
+def _community_color(community_id: int, community_colors: list[str]) -> str:
+    """Return a deterministic color for a community ID."""
+    return community_colors[community_id % len(community_colors)]
+
+
 def _create_non_singleton_community_traces(
     G: nx.Graph,
     pos: dict,
@@ -409,7 +416,7 @@ def _create_non_singleton_community_traces(
 
         if len(community_nodes) <= 1:
             continue
-
+        color = _community_color(community_id, community_colors)
         color = community_colors[community_id % len(community_colors)]
         node_trace = _create_community_trace(
             G, pos, community_nodes, color, community_id
