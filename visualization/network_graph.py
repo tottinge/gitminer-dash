@@ -57,6 +57,15 @@ def _initial_affinity_stats() -> dict[str, Any]:
     }
 
 
+def _resolve_affinities(
+    commits, precomputed_affinities: dict[tuple[str, str], float] | None
+) -> dict[tuple[str, str], float]:
+    """Return provided affinities or compute them from commits."""
+    if precomputed_affinities is not None:
+        return precomputed_affinities
+    return calculate_affinities(commits)
+
+
 def create_file_affinity_network(
     commits,
     min_affinity: float = 0.2,
@@ -77,10 +86,8 @@ def create_file_affinity_network(
     commits = ensure_list(commits)
     stats["total_commits"] = len(commits)
 
-    affinities = (
-        precomputed_affinities
-        if precomputed_affinities is not None
-        else calculate_affinities(commits)
+    affinities = _resolve_affinities(
+        commits=commits, precomputed_affinities=precomputed_affinities
     )
 
     file_counts = count_files_in_commits(commits)
