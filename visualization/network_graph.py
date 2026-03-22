@@ -90,8 +90,9 @@ def create_file_affinity_network(
     # Build graph with nodes and edges
     G = nx.Graph()
     top_file_set = get_top_files_by_affinity(affinities, max_nodes)
-    for file in top_file_set:
-        G.add_node(file, commit_count=file_counts.get(file, 0))
+    _add_nodes_from_top_files(
+        G=G, top_file_set=top_file_set, file_counts=file_counts
+    )
 
     stats["nodes_before_filtering"] = len(G.nodes())
     _add_affinity_edges(
@@ -140,6 +141,14 @@ def _add_affinity_edges(
             and affinity >= min_affinity
         ):
             G.add_edge(file1, file2, weight=affinity)
+
+
+def _add_nodes_from_top_files(
+    G: nx.Graph, top_file_set: set[str], file_counts: dict[str, int]
+) -> None:
+    """Add graph nodes for selected top files with commit-count attributes."""
+    for file in top_file_set:
+        G.add_node(file, commit_count=file_counts.get(file, 0))
 
 
 def create_network_visualization(
