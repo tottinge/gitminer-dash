@@ -11,6 +11,7 @@ from pages.affinity_groups_service import (
     extract_clicked_node_name,
     files_in_clicked_community,
     generate_affinity_graph_result,
+    generate_node_details_rows,
     get_or_compute_affinities,
 )
 from utils import date_utils
@@ -185,17 +186,13 @@ def update_node_details_table(click_data, graph_data, date_range_data):
     Returns:
         List of dicts for the DataTable containing commits with group files
     """
-    if not click_data or not graph_data or "nodes" not in graph_data:
-        return []
-
-    node_name = extract_clicked_node_name(click_data)
-    group_files = files_in_clicked_community(graph_data, node_name)
-    if not group_files:
-        return []
-
-    # Get date range
-    starting, ending = date_utils.parse_date_range_from_store(date_range_data)
-
-    # Get commits for these files
-    commits_in_period = data.commits_in_period(starting, ending)
-    return get_commits_for_group_files(commits_in_period, group_files)
+    return generate_node_details_rows(
+        click_data=click_data,
+        graph_data=graph_data,
+        date_range_data=date_range_data,
+        extract_clicked_node_name_fn=extract_clicked_node_name,
+        files_in_clicked_community_fn=files_in_clicked_community,
+        parse_date_range_fn=date_utils.parse_date_range_from_store,
+        commits_in_period_fn=data.commits_in_period,
+        get_commits_for_group_files_fn=get_commits_for_group_files,
+    )

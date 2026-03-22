@@ -145,3 +145,28 @@ def files_in_clicked_community(
         for node, node_info in graph_data["nodes"].items()
         if node_info.get("community", -1) == node_community
     ]
+
+
+def generate_node_details_rows(
+    click_data,
+    graph_data,
+    date_range_data,
+    *,
+    extract_clicked_node_name_fn,
+    files_in_clicked_community_fn,
+    parse_date_range_fn,
+    commits_in_period_fn,
+    get_commits_for_group_files_fn,
+) -> list[dict[str, str]]:
+    """Generate group-commit table rows for a clicked affinity node."""
+    if not click_data or not graph_data or "nodes" not in graph_data:
+        return []
+
+    node_name = extract_clicked_node_name_fn(click_data)
+    group_files = files_in_clicked_community_fn(graph_data, node_name)
+    if not group_files:
+        return []
+
+    starting, ending = parse_date_range_fn(date_range_data)
+    commits_in_period = commits_in_period_fn(starting, ending)
+    return get_commits_for_group_files_fn(commits_in_period, group_files)

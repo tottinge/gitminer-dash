@@ -164,13 +164,7 @@ def create_network_visualization(
             message="No data available for the selected time period",  # pragma: no mutate
             title=title,
         )
-
-    # Use force-directed layout with tuned iterations.
-    # For now we compute the layout directly with fewer iterations
-    # to reduce render time. If we want to add true layout caching
-    # keyed by edge structure, we can plug in _compute_layout and an
-    # lru_cache-backed helper.
-    pos = nx.spring_layout(G, seed=42, iterations=40)
+    pos = _compute_layout_positions(G)
 
     # Create edge traces
     edge_traces = _create_edge_traces(G, pos)
@@ -178,8 +172,26 @@ def create_network_visualization(
     # Create node traces
     node_traces = _create_node_traces(G, pos, communities)
 
-    # Create figure
-    fig = go.Figure(
+    return _build_network_figure(
+        edge_traces=edge_traces, node_traces=node_traces, title=title
+    )
+
+
+def _compute_layout_positions(G: nx.Graph) -> dict[str, tuple[float, float]]:
+    """Compute deterministic node positions for visualization layout."""
+    # Use force-directed layout with tuned iterations.
+    # For now we compute the layout directly with fewer iterations
+    # to reduce render time. If we want to add true layout caching
+    # keyed by edge structure, we can plug in _compute_layout and an
+    # lru_cache-backed helper.
+    return nx.spring_layout(G, seed=42, iterations=40)
+
+
+def _build_network_figure(
+    edge_traces: list[go.Scatter], node_traces: list[go.Scatter], title: str
+) -> go.Figure:
+    """Assemble the network visualization figure from prepared traces."""
+    return go.Figure(
         data=[*edge_traces, *node_traces],
         layout=go.Layout(
             # Title text and legend visibility are presentation-only concerns.
@@ -192,8 +204,6 @@ def create_network_visualization(
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         ),
     )
-
-    return fig
 
 
 def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
@@ -244,21 +254,41 @@ def _create_edge_traces(G: nx.Graph, pos: dict) -> list[go.Scatter]:
     # Create separate trace for each edge with its own width
     for edge_idx, weight in enumerate(edge_weights):
         i = edge_idx * 3
-        width = 2 + (weight / max_weight) * 6
+        width = _edge_width(weight=weight, max_weight=max_weight)
         text = edge_texts[edge_idx]
 
-        edge_trace = go.Scatter(
-            x=edge_x[i : i + 3],
-            y=edge_y[i : i + 3],
-            line=dict(width=width, color="#888"),  # pragma: no mutate
-            hoverinfo="text",
+        edge_trace = _build_edge_trace(
+            edge_x=edge_x[i : i + 3],
+            edge_y=edge_y[i : i + 3],
+            width=width,
             text=text,
-            mode="lines",
-            showlegend=False,
         )
         edge_traces.append(edge_trace)
 
     return edge_traces
+
+
+def _edge_width(weight: float, max_weight: float) -> float:
+    """Compute edge stroke width from normalized affinity weight."""
+    return 2 + (weight / max_weight) * 6
+
+
+def _build_edge_trace(
+    edge_x: list[float | None],
+    edge_y: list[float | None],
+    width: float,
+    text: str,
+) -> go.Scatter:
+    """Build a single edge trace segment for the network figure."""
+    return go.Scatter(
+        x=edge_x,
+        y=edge_y,
+        line=dict(width=width, color="#888"),  # pragma: no mutate
+        hoverinfo="text",
+        text=text,
+        mode="lines",
+        showlegend=False,
+    )
 
 
 def _create_node_traces(
@@ -309,16 +339,16 @@ def _create_node_traces(
     return node_traces
 
 
-def _create_single_community_trace(
-    G: nx.Graph, pos: dict, color: str
-) -> go.Scatter:
-    """Create a trace for all nodes in a single color."""
-    node_x = []
-    node_y = []
-    node_text = []
-    node_size = []
+def _collect_node_plot_data(
+    G: nx.Graph, pos: dict, nodes: list[str]
+) -> tuple[list[float], list[float], list[str], list[float]]:
+    """Collect node coordinates, tooltip text, and marker sizes."""
+    node_x: list[float] = []
+    node_y: list[float] = []
+    node_text: list[str] = []
+    node_size: list[float] = []
 
-    for node in G.nodes():
+    for node in nodes:
         x, y = pos[node]
         node_x.append(x)
         node_y.append(y)
@@ -327,7 +357,19 @@ def _create_single_community_trace(
         degree = G.degree(node)
         node_text.append(create_node_tooltip(node, commit_count, degree))
         node_size.append(calculate_node_size(commit_count, degree))
+    return node_x, node_y, node_text, node_size
 
+
+def _build_node_trace(
+    node_x: list[float],
+    node_y: list[float],
+    node_text: list[str],
+    node_size: list[float],
+    *,
+    color: str,
+    name: str,
+) -> go.Scatter:
+    """Build a node marker trace for a community or full graph view."""
     return go.Scatter(
         x=node_x,
         y=node_y,
@@ -339,6 +381,23 @@ def _create_single_community_trace(
             size=node_size,
             line=dict(width=1, color="#333"),  # pragma: no mutate
         ),
+        name=name,
+    )
+
+
+def _create_single_community_trace(
+    G: nx.Graph, pos: dict, color: str
+) -> go.Scatter:
+    """Create a trace for all nodes in a single color."""
+    node_x, node_y, node_text, node_size = _collect_node_plot_data(
+        G=G, pos=pos, nodes=list(G.nodes())
+    )
+    return _build_node_trace(
+        node_x=node_x,
+        node_y=node_y,
+        node_text=node_text,
+        node_size=node_size,
+        color=color,
         # Legend label is cosmetic; exclude from mutation testing.
         name="All Files",  # pragma: no mutate
     )
@@ -348,32 +407,15 @@ def _create_community_trace(
     G: nx.Graph, pos: dict, community_nodes: list, color: str, community_id: int
 ) -> go.Scatter:
     """Create a trace for a specific community."""
-    node_x = []
-    node_y = []
-    node_text = []
-    node_size = []
-
-    for node in community_nodes:
-        x, y = pos[node]
-        node_x.append(x)
-        node_y.append(y)
-
-        commit_count = G.nodes[node].get("commit_count", 0)
-        degree = G.degree(node)
-        node_text.append(create_node_tooltip(node, commit_count, degree))
-        node_size.append(calculate_node_size(commit_count, degree))
-
-    return go.Scatter(
-        x=node_x,
-        y=node_y,
-        mode="markers",
-        hoverinfo="text",
-        text=node_text,
-        marker=dict(
-            color=color,
-            size=node_size,
-            line=dict(width=1, color="#333"),  # pragma: no mutate
-        ),
+    node_x, node_y, node_text, node_size = _collect_node_plot_data(
+        G=G, pos=pos, nodes=community_nodes
+    )
+    return _build_node_trace(
+        node_x=node_x,
+        node_y=node_y,
+        node_text=node_text,
+        node_size=node_size,
+        color=color,
         # Community legend label is cosmetic; exclude from mutation testing.
         name=f"Group {community_id + 1}",  # pragma: no mutate
     )
