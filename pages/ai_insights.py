@@ -49,6 +49,88 @@ FILTER_OPTIONS = [  # pragma: no mutate
 DRILLDOWN_SECTION_TITLE = "Hotspot Drill-down"  # pragma: no mutate
 DRILLDOWN_EMPTY_STATUS = "No hotspot selected."  # pragma: no mutate
 DRILLDOWN_SELECTED_STATUS = "Selected hotspot details."  # pragma: no mutate
+DRILLDOWN_HELPER_TEXT = (  # pragma: no mutate
+    "Select a hotspot row to inspect details and evidence."
+)
+NARRATIVE_HELPER_TEXT = (  # pragma: no mutate
+    "Narrative is shown only when strict citations pass."
+)
+SECTION_CARD_STYLE = {  # pragma: no mutate
+    "backgroundColor": "#ffffff",
+    "border": "1px solid #d9dee8",
+    "borderRadius": "10px",
+    "padding": "12px",
+    "marginBottom": "12px",
+    "boxShadow": "0 1px 2px rgba(15, 23, 42, 0.06)",
+}
+HELPER_TEXT_STYLE = {  # pragma: no mutate
+    "color": "#64748b",
+    "margin": "0 0 8px",
+}
+TABLE_CELL_STYLE = {  # pragma: no mutate
+    "textAlign": "left",
+    "padding": "8px",
+}
+MAIN_TABLE_STYLE_TABLE = {  # pragma: no mutate
+    "maxHeight": "480px",
+    "overflowY": "auto",
+    "overflowX": "auto",
+}
+DRILLDOWN_TABLE_STYLE_TABLE = {  # pragma: no mutate
+    "maxHeight": "240px",
+    "overflowY": "auto",
+    "overflowX": "auto",
+}
+INVALID_CLAIMS_TABLE_STYLE_TABLE = {  # pragma: no mutate
+    "maxHeight": "200px",
+    "overflowY": "auto",
+    "overflowX": "auto",
+}
+NARRATIVE_PRE_STYLE = {  # pragma: no mutate
+    "whiteSpace": "pre-wrap",
+    "padding": "8px",
+    "backgroundColor": "#f8f9fa",
+    "border": "1px solid #ddd",
+    "borderRadius": "4px",
+    "maxHeight": "220px",
+    "overflowY": "auto",
+}
+MAIN_TABLE_HEADER_STYLE = {  # pragma: no mutate
+    "backgroundColor": "#e8f1ff",
+    "fontWeight": "600",
+}
+DRILLDOWN_TABLE_HEADER_STYLE = {  # pragma: no mutate
+    "backgroundColor": "#eefbf3",
+    "fontWeight": "600",
+}
+INVALID_CLAIMS_TABLE_HEADER_STYLE = {  # pragma: no mutate
+    "backgroundColor": "#fff1f2",
+    "fontWeight": "600",
+}
+TABLE_ZEBRA_STYLE_CONDITIONAL = [  # pragma: no mutate
+    {"if": {"row_index": "odd"}, "backgroundColor": "#f8fafc"},
+    {"if": {"row_index": "even"}, "backgroundColor": "#ffffff"},
+]
+MAIN_TABLE_STYLE_DATA_CONDITIONAL = [  # pragma: no mutate
+    *TABLE_ZEBRA_STYLE_CONDITIONAL,
+    {
+        "if": {"filter_query": '{trend} = "rising"'},
+        "backgroundColor": "#fff7e6",
+    },
+    {
+        "if": {"filter_query": '{trend} = "falling"'},
+        "backgroundColor": "#e6f7f1",
+    },
+    {
+        "if": {"filter_query": '{trend} = "new"'},
+        "backgroundColor": "#f3e8ff",
+    },
+    {
+        "if": {"state": "selected"},
+        "backgroundColor": "#dbeafe",
+        "border": "1px solid #60a5fa",
+    },
+]
 
 layout = html.Div(
     [
@@ -104,131 +186,206 @@ layout = html.Div(
                 "margin": "8px 0 12px",
             },
         ),
-        html.P(
-            id="id-ai-insights-status",
-            style={"fontStyle": "italic", "color": "#666"},
+        html.Div(
+            [
+                html.P(
+                    id="id-ai-insights-status",
+                    style={"fontStyle": "italic", "color": "#666"},
+                ),
+                dcc.Loading(
+                    id="loading-ai-insights-table",
+                    type="circle",
+                    children=[
+                        DataTable(
+                            id="id-ai-insights-table",
+                            columns=[
+                                {"name": "Rank", "id": "rank"},
+                                {
+                                    "name": "File",
+                                    "id": "file_display_link",
+                                    "type": "text",
+                                    "presentation": "markdown",
+                                },
+                                {"name": "Risk Score", "id": "score"},
+                                {"name": "Δ Score", "id": "score_delta"},
+                                {"name": "Trend", "id": "trend"},
+                                {
+                                    "name": "Commit Count",
+                                    "id": "commit_count",
+                                },
+                                {
+                                    "name": "Latest Commit",
+                                    "id": "latest_commit_link",
+                                    "type": "text",
+                                    "presentation": "markdown",
+                                },
+                                {
+                                    "name": "Why this is risky",
+                                    "id": "risk_reason",
+                                },
+                                {
+                                    "name": "Suggested action",
+                                    "id": "suggested_action",
+                                },
+                            ],
+                            tooltip_header=INSIGHTS_TABLE_TOOLTIPS,
+                            style_table=MAIN_TABLE_STYLE_TABLE,
+                            style_cell=TABLE_CELL_STYLE,
+                            style_header=MAIN_TABLE_HEADER_STYLE,
+                            style_data_conditional=(
+                                MAIN_TABLE_STYLE_DATA_CONDITIONAL
+                            ),
+                            fixed_rows={"headers": True},
+                            row_selectable="single",
+                            style_cell_conditional=[
+                                {"if": {"column_id": "rank"}, "width": "8%"},
+                                {
+                                    "if": {"column_id": "file_display_link"},
+                                    "width": "24%",
+                                },
+                                {"if": {"column_id": "score"}, "width": "8%"},
+                                {
+                                    "if": {"column_id": "score_delta"},
+                                    "width": "8%",
+                                },
+                                {"if": {"column_id": "trend"}, "width": "8%"},
+                                {
+                                    "if": {"column_id": "commit_count"},
+                                    "width": "8%",
+                                },
+                                {
+                                    "if": {"column_id": "latest_commit_link"},
+                                    "width": "12%",
+                                },
+                                {
+                                    "if": {"column_id": "risk_reason"},
+                                    "width": "18%",
+                                },
+                                {
+                                    "if": {"column_id": "suggested_action"},
+                                    "width": "14%",
+                                },
+                            ],
+                            data=[],
+                        )
+                    ],
+                ),
+            ],
+            style=SECTION_CARD_STYLE,
         ),
-        dcc.Loading(
-            id="loading-ai-insights-table",
-            type="circle",
-            children=[
+        html.Div(
+            [
+                html.H3(
+                    DRILLDOWN_SECTION_TITLE,
+                    style={"margin": "0 0 8px"},
+                ),
+                html.P(DRILLDOWN_HELPER_TEXT, style=HELPER_TEXT_STYLE),
+                html.P(
+                    id="id-ai-insights-drilldown-status",
+                    style={"fontStyle": "italic", "color": "#666"},
+                ),
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                DataTable(
+                                    id="id-ai-insights-drilldown-details",
+                                    columns=[
+                                        {"name": "Field", "id": "field"},
+                                        {"name": "Value", "id": "value"},
+                                    ],
+                                    style_table=DRILLDOWN_TABLE_STYLE_TABLE,
+                                    style_cell=TABLE_CELL_STYLE,
+                                    style_header=DRILLDOWN_TABLE_HEADER_STYLE,
+                                    style_data_conditional=(
+                                        TABLE_ZEBRA_STYLE_CONDITIONAL
+                                    ),
+                                    fixed_rows={"headers": True},
+                                    data=[],
+                                )
+                            ],
+                            style={"flex": "1 1 320px"},
+                        ),
+                        html.Div(
+                            [
+                                DataTable(
+                                    id="id-ai-insights-drilldown-evidence",
+                                    columns=[
+                                        {
+                                            "name": "Evidence Kind",
+                                            "id": "kind",
+                                        },
+                                        {
+                                            "name": "Evidence Value",
+                                            "id": "value",
+                                        },
+                                    ],
+                                    style_table=DRILLDOWN_TABLE_STYLE_TABLE,
+                                    style_cell=TABLE_CELL_STYLE,
+                                    style_header=DRILLDOWN_TABLE_HEADER_STYLE,
+                                    style_data_conditional=(
+                                        TABLE_ZEBRA_STYLE_CONDITIONAL
+                                    ),
+                                    fixed_rows={"headers": True},
+                                    data=[],
+                                )
+                            ],
+                            style={"flex": "1 1 320px"},
+                        ),
+                    ],
+                    style={
+                        "display": "flex",
+                        "gap": "12px",
+                        "flexWrap": "wrap",
+                    },
+                ),
+            ],
+            style=SECTION_CARD_STYLE,
+        ),
+        html.Div(
+            [
+                html.H3(
+                    NARRATIVE_SECTION_TITLE,
+                    style={"margin": "0 0 8px"},
+                ),
+                html.P(NARRATIVE_HELPER_TEXT, style=HELPER_TEXT_STYLE),
+                html.P(
+                    id="id-ai-insights-narrative-status",
+                    style={"fontStyle": "italic", "color": "#666"},
+                ),
+                html.Pre(
+                    id="id-ai-insights-narrative-text",
+                    style=NARRATIVE_PRE_STYLE,
+                ),
                 DataTable(
-                    id="id-ai-insights-table",
+                    id="id-ai-insights-narrative-invalid-claims",
                     columns=[
-                        {"name": "Rank", "id": "rank"},
+                        {"name": "Line", "id": "line"},
+                        {"name": "Reason", "id": "reason"},
+                        {"name": "Claim", "id": "claim"},
                         {
-                            "name": "File",
-                            "id": "file_display_link",
-                            "type": "text",
-                            "presentation": "markdown",
-                        },
-                        {"name": "Risk Score", "id": "score"},
-                        {"name": "Δ Score", "id": "score_delta"},
-                        {"name": "Trend", "id": "trend"},
-                        {"name": "Commit Count", "id": "commit_count"},
-                        {
-                            "name": "Latest Commit",
-                            "id": "latest_commit_link",
-                            "type": "text",
-                            "presentation": "markdown",
-                        },
-                        {"name": "Why this is risky", "id": "risk_reason"},
-                        {
-                            "name": "Suggested action",
-                            "id": "suggested_action",
+                            "name": "Unknown Citations",
+                            "id": "unknown_citations",
                         },
                     ],
-                    tooltip_header=INSIGHTS_TABLE_TOOLTIPS,
-                    style_table={"maxHeight": "500px", "overflowY": "auto"},
-                    style_cell={"textAlign": "left", "padding": "8px"},
-                    row_selectable="single",
+                    style_table=INVALID_CLAIMS_TABLE_STYLE_TABLE,
+                    style_cell=TABLE_CELL_STYLE,
+                    style_header=INVALID_CLAIMS_TABLE_HEADER_STYLE,
+                    style_data_conditional=TABLE_ZEBRA_STYLE_CONDITIONAL,
+                    fixed_rows={"headers": True},
                     style_cell_conditional=[
-                        {"if": {"column_id": "rank"}, "width": "8%"},
+                        {"if": {"column_id": "line"}, "width": "8%"},
+                        {"if": {"column_id": "reason"}, "width": "18%"},
+                        {"if": {"column_id": "claim"}, "width": "44%"},
                         {
-                            "if": {"column_id": "file_display_link"},
-                            "width": "24%",
-                        },
-                        {"if": {"column_id": "score"}, "width": "8%"},
-                        {"if": {"column_id": "score_delta"}, "width": "8%"},
-                        {"if": {"column_id": "trend"}, "width": "8%"},
-                        {"if": {"column_id": "commit_count"}, "width": "8%"},
-                        {
-                            "if": {"column_id": "latest_commit_link"},
-                            "width": "12%",
-                        },
-                        {"if": {"column_id": "risk_reason"}, "width": "18%"},
-                        {
-                            "if": {"column_id": "suggested_action"},
-                            "width": "14%",
+                            "if": {"column_id": "unknown_citations"},
+                            "width": "30%",
                         },
                     ],
                     data=[],
-                )
+                ),
             ],
-        ),
-        html.H3(
-            DRILLDOWN_SECTION_TITLE,
-            style={"margin": "16px 0 8px"},
-        ),
-        html.P(
-            id="id-ai-insights-drilldown-status",
-            style={"fontStyle": "italic", "color": "#666"},
-        ),
-        DataTable(
-            id="id-ai-insights-drilldown-details",
-            columns=[
-                {"name": "Field", "id": "field"},
-                {"name": "Value", "id": "value"},
-            ],
-            style_table={"maxHeight": "180px", "overflowY": "auto"},
-            style_cell={"textAlign": "left", "padding": "8px"},
-            data=[],
-        ),
-        DataTable(
-            id="id-ai-insights-drilldown-evidence",
-            columns=[
-                {"name": "Evidence Kind", "id": "kind"},
-                {"name": "Evidence Value", "id": "value"},
-            ],
-            style_table={"maxHeight": "180px", "overflowY": "auto"},
-            style_cell={"textAlign": "left", "padding": "8px"},
-            data=[],
-        ),
-        html.H3(
-            NARRATIVE_SECTION_TITLE,
-            style={"margin": "16px 0 8px"},
-        ),
-        html.P(
-            id="id-ai-insights-narrative-status",
-            style={"fontStyle": "italic", "color": "#666"},
-        ),
-        html.Pre(
-            id="id-ai-insights-narrative-text",
-            style={
-                "whiteSpace": "pre-wrap",
-                "padding": "8px",
-                "backgroundColor": "#f8f9fa",
-                "border": "1px solid #ddd",
-                "borderRadius": "4px",
-            },
-        ),
-        DataTable(
-            id="id-ai-insights-narrative-invalid-claims",
-            columns=[
-                {"name": "Line", "id": "line"},
-                {"name": "Reason", "id": "reason"},
-                {"name": "Claim", "id": "claim"},
-                {"name": "Unknown Citations", "id": "unknown_citations"},
-            ],
-            style_table={"maxHeight": "240px", "overflowY": "auto"},
-            style_cell={"textAlign": "left", "padding": "8px"},
-            style_cell_conditional=[
-                {"if": {"column_id": "line"}, "width": "8%"},
-                {"if": {"column_id": "reason"}, "width": "18%"},
-                {"if": {"column_id": "claim"}, "width": "44%"},
-                {"if": {"column_id": "unknown_citations"}, "width": "30%"},
-            ],
-            data=[],
+            style=SECTION_CARD_STYLE,
         ),
     ]
 )
