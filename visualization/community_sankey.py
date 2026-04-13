@@ -9,7 +9,7 @@ from utils.plotly_utils import create_empty_figure
 
 def _community_label(community: int, community_sizes: dict[int, int]) -> str:
     size = community_sizes.get(community, 0)
-    return f"Group {community + 1} ({size} files)"
+    return f"Community {community + 1} ({size} files)"
 
 
 def create_community_flow_sankey(
@@ -49,7 +49,7 @@ def create_community_flow_sankey(
     link_labels = [
         (
             f"{_community_label(int(row['source_community']), community_sizes)}"
-            f" → "
+            f" ↔ "
             f"{_community_label(int(row['target_community']), community_sizes)}"
         )
         for row in flow_rows
@@ -74,7 +74,8 @@ def create_community_flow_sankey(
                     hovertemplate=(
                         "%{label}<br>"
                         "Coupling Strength: %{value:.3f}<br>"
-                        "Cross-community edges: %{customdata}<extra></extra>"
+                        "Cross-community edges: %{customdata}<br>"
+                        "Direction: undirected<extra></extra>"
                     ),
                 ),
             )

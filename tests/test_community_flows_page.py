@@ -61,16 +61,17 @@ def test_populate_community_flow_sankey_returns_sankey_and_table(
     assert "cross-community links across 2 communities" in status
     assert table_rows == [
         {
-            "source_group": "Group 1",
-            "target_group": "Group 2",
+            "source_group": "Community 1",
+            "target_group": "Community 2",
             "coupling_strength": 0.8,
             "cross_community_edges": 1,
+            "coupling_share_pct": 100.0,
         }
     ]
     assert composition_store == {
         "communities": {
             "0": {
-                "group_label": "Group 1",
+                "community_label": "Community 1",
                 "file_count": 1,
                 "files": [
                     {
@@ -82,7 +83,7 @@ def test_populate_community_flow_sankey_returns_sankey_and_table(
                 ],
             },
             "1": {
-                "group_label": "Group 2",
+                "community_label": "Community 2",
                 "file_count": 1,
                 "files": [
                     {
@@ -152,11 +153,11 @@ def test_populate_community_flow_sankey_prevent_update_without_store_data(
 
 def test_reveal_group_composition_for_selected_group(reveal_group_composition):
     status, table_rows = reveal_group_composition(
-        {"points": [{"label": "Group 1 (3 files)"}]},
+        {"points": [{"label": "Community 1 (3 files)"}]},
         {
             "communities": {
                 "0": {
-                    "group_label": "Group 1",
+                    "community_label": "Community 1",
                     "file_count": 2,
                     "files": [
                         {
@@ -177,7 +178,7 @@ def test_reveal_group_composition_for_selected_group(reveal_group_composition):
         },
     )
 
-    assert status == "Group 1: 2 files"
+    assert status == "Community 1: 2 files"
     assert table_rows[0]["file_path"] == "src/a.py"
     assert table_rows[1]["file_path"] == "src/b.py"
 
@@ -189,14 +190,18 @@ def test_reveal_group_composition_requires_node_selection(
         {
             "points": [
                 {
-                    "label": "Group 1 (2 files) → Group 2 (4 files)",
+                    "label": "Community 1 (2 files) ↔ Community 2 (4 files)",
                     "source": 0,
                     "target": 1,
                 }
             ]
         },
-        {"communities": {"0": {"group_label": "Group 1", "file_count": 0}}},
+        {
+            "communities": {
+                "0": {"community_label": "Community 1", "file_count": 0}
+            }
+        },
     )
 
-    assert "Select a group node (not a link)" in status
+    assert "Select a community node (not a link)" in status
     assert table_rows == []

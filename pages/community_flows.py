@@ -32,6 +32,13 @@ _CONTROL_GRID_STYLE = {
     "rowGap": "8px",
     "marginBottom": "12px",
 }
+_INTERPRETATION_GUIDANCE_STYLE = {
+    "margin": "0 0 12px 0",
+    "padding": "8px 12px",
+    "border": "1px solid #d9e2f2",
+    "borderRadius": "6px",
+    "backgroundColor": "#f7f9fc",
+}
 
 
 def _stats_text(
@@ -49,16 +56,24 @@ def _stats_text(
 
 def _table_row(
     flow_row: dict[str, float | int],
+    total_coupling_strength: float,
 ) -> dict[str, float | int | str]:
+    coupling_strength = float(flow_row["coupling_strength"])
+    coupling_share_pct = (
+        0.0
+        if total_coupling_strength <= 0
+        else (coupling_strength / total_coupling_strength) * 100
+    )
     return {
-        "source_group": f"Group {int(flow_row['source_community']) + 1}",
-        "target_group": f"Group {int(flow_row['target_community']) + 1}",
-        "coupling_strength": round(float(flow_row["coupling_strength"]), 3),
+        "source_group": f"Community {int(flow_row['source_community']) + 1}",
+        "target_group": f"Community {int(flow_row['target_community']) + 1}",
+        "coupling_strength": round(coupling_strength, 3),
         "cross_community_edges": int(flow_row["edge_count"]),
+        "coupling_share_pct": round(coupling_share_pct, 1),
     }
 
 
-_GROUP_LABEL_PATTERN = re.compile(r"Group\s+(\d+)")
+_GROUP_LABEL_PATTERN = re.compile(r"(?:Group|Community)\s+(\d+)")
 
 
 def _repo_error_message() -> str:
@@ -103,7 +118,7 @@ def _community_composition_store(graph) -> dict[str, object]:
             ),
         )
         communities[str(community)] = {
-            "group_label": f"Group {community + 1}",
+            "community_label": f"Community {community + 1}",
             "file_count": len(sorted_rows),
             "files": sorted_rows,
         }
@@ -170,6 +185,29 @@ def _min_affinity_slider() -> dcc.Slider:
     )
 
 
+def _interpretation_guidance() -> html.Div:
+    return html.Div(
+        style=_INTERPRETATION_GUIDANCE_STYLE,
+        children=[
+            html.Strong("How to read this chart"),
+            html.Ul(
+                style={"margin": "6px 0 0 18px", "padding": "0"},
+                children=[
+                    html.Li(
+                        "Each node is a community of files that frequently change together."
+                    ),
+                    html.Li(
+                        "Thicker links indicate stronger cross-community coupling."
+                    ),
+                    html.Li(
+                        "Links are undirected coupling summaries, not source-to-target causality."
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
 layout = html.Div(
     [
         html.H2(SANKEY_TITLE, style={"margin": "10px 0"}),
@@ -190,6 +228,7 @@ layout = html.Div(
                 ),
             ],
         ),
+        _interpretation_guidance(),
         html.P(
             id="id-community-flow-status",
             style={"fontStyle": "italic", "color": "#666"},
@@ -206,7 +245,42 @@ layout = html.Div(
         ),
         dcc.Store(id="id-community-flow-table", data=[]),
         dcc.Store(id="id-community-flow-composition-store", data={}),
-        html.H3("Selected Group Composition", style={"margin": "16px 0 8px 0"}),
+        html.H3(
+            "Cross-Community Coupling Links", style={"margin": "16px 0 8px 0"}
+        ),
+        html.P(
+            "Ranked by coupling strength (largest first).",
+            style={"fontStyle": "italic", "color": "#666"},
+        ),
+        DataTable(
+            id="id-community-flow-links-table",
+            columns=[
+                {"name": "Source Community", "id": "source_group"},
+                {"name": "Target Community", "id": "target_group"},
+                {"name": "Coupling Strength", "id": "coupling_strength"},
+                {
+                    "name": "Cross-Community Edges",
+                    "id": "cross_community_edges",
+                },
+                {"name": "% of Total Coupling", "id": "coupling_share_pct"},
+            ],
+            style_table={"maxHeight": "240px", "overflowY": "auto"},
+            style_cell={"textAlign": "left", "padding": "8px"},
+            style_cell_conditional=[
+                {"if": {"column_id": "source_group"}, "width": "22%"},
+                {"if": {"column_id": "target_group"}, "width": "22%"},
+                {"if": {"column_id": "coupling_strength"}, "width": "16%"},
+                {
+                    "if": {"column_id": "cross_community_edges"},
+                    "width": "20%",
+                },
+                {"if": {"column_id": "coupling_share_pct"}, "width": "20%"},
+            ],
+            data=[],
+        ),
+        html.H3(
+            "Selected Community Composition", style={"margin": "16px 0 8px 0"}
+        ),
         html.P(
             id="id-community-flow-composition-status",
             style={"fontStyle": "italic", "color": "#666"},
@@ -301,13 +375,29 @@ def populate_community_flow_sankey(store_data, max_nodes, min_affinity):
         community_sizes=community_sizes,
         title=SANKEY_TITLE,
     )
-    table_rows = [_table_row(flow_row) for flow_row in flow_rows]
+    total_coupling_strength = sum(
+        float(flow_row["coupling_strength"]) for flow_row in flow_rows
+    )
+    table_rows = [
+        _table_row(flow_row, total_coupling_strength) for flow_row in flow_rows
+    ]
     return (
         figure,
         _stats_text(flow_rows, graph_stats),
         table_rows,
         _community_composition_store(graph),
     )
+
+
+@callback(
+    Output("id-community-flow-links-table", "data"),
+    Input("id-community-flow-table", "data"),
+)
+def reveal_coupling_links(table_data):
+    """Reveal ranked cross-community coupling links beneath the chart."""
+    if not table_data:
+        return []
+    return list(table_data)
 
 
 @callback(
@@ -327,19 +417,19 @@ def reveal_group_composition(click_data, composition_store):
     if not communities:
         return "No community composition available for selected period.", []
     if not click_data:
-        return "Click a group node in the Sankey chart to reveal files.", []
+        return "Click a community node in the Sankey chart to reveal files.", []
     if _is_link_click(click_data):
-        return "Select a group node (not a link) to reveal composition.", []
+        return "Select a community node (not a link) to reveal composition.", []
 
     selected_community = _selected_community_from_click(click_data)
     if selected_community is None:
-        return "Could not determine selected group from chart click.", []
+        return "Could not determine selected community from chart click.", []
 
     community_payload = communities.get(str(selected_community))
     if community_payload is None:
-        return "Selected group is not available in current results.", []
+        return "Selected community is not available in current results.", []
 
-    group_label = str(community_payload["group_label"])
+    community_label = str(community_payload["community_label"])
     file_count = int(community_payload["file_count"])
-    status = f"{group_label}: {file_count} files"
+    status = f"{community_label}: {file_count} files"
     return status, list(community_payload["files"])

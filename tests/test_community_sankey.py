@@ -45,8 +45,13 @@ def test_create_community_flow_sankey_builds_expected_links():
     assert list(sankey_trace.link.target) == [1, 2]
     assert list(sankey_trace.link.value) == [1.25, 0.5]
     assert list(sankey_trace.link.customdata) == [3, 2]
+    assert list(sankey_trace.link.label) == [
+        "Community 1 (4 files) ↔ Community 2 (3 files)",
+        "Community 2 (3 files) ↔ Community 3 (2 files)",
+    ]
+    assert "Direction: undirected" in sankey_trace.link.hovertemplate
     assert list(sankey_trace.node.label) == [
-        "Group 1 (4 files)",
-        "Group 2 (3 files)",
-        "Group 3 (2 files)",
+        "Community 1 (4 files)",
+        "Community 2 (3 files)",
+        "Community 3 (2 files)",
     ]
