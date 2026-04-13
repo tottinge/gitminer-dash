@@ -4,6 +4,10 @@ echo "Running dependency policy check..."
 uv run python scripts/check_dependency_policy.py
 
 echo ""
+echo "Running hotspot guardrail check..."
+uv run python scripts/check_hotspot_guardrail.py .
+
+echo ""
 
 echo "Running ruff check..."
 uv run ruff check .

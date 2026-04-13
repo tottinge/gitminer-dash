@@ -7,10 +7,10 @@ from datetime import datetime
 import networkx as nx
 from git import Repo
 
+from algorithms.affinity_network import create_file_affinity_network
 from insights.models import BridgeMetric, BridgeMetricsReport, EvidenceRef
 from insights.schema_version import ANALYSIS_SCHEMA_VERSION
 from insights.snapshot_builder import get_commits_for_period
-from visualization.network_graph import create_file_affinity_network
 
 
 def _rounded(value: float) -> float:

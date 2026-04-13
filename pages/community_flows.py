@@ -10,6 +10,7 @@ from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 
 import data
+from algorithms.affinity_network import create_file_affinity_network
 from algorithms.community_flow import (
     community_flow_rows,
     count_nodes_by_community,
@@ -17,7 +18,6 @@ from algorithms.community_flow import (
 from utils import date_utils
 from utils.plotly_utils import create_empty_figure
 from visualization.community_sankey import create_community_flow_sankey
-from visualization.network_graph import create_file_affinity_network
 
 register_page(
     module=__name__,

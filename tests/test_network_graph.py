@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 import networkx as nx
 import plotly.graph_objects as go
 
+from algorithms.affinity_network import AFFINITY_STATS_KEYS
 from visualization.common import create_empty_figure
 from visualization.network_graph import (
     _create_edge_traces,
@@ -25,6 +26,7 @@ class TestNetworkGraph(unittest.TestCase):
         assert len(G.nodes()) == 0
         assert len(G.edges()) == 0
         assert len(communities) == 0
+        assert set(AFFINITY_STATS_KEYS).issubset(stats)
         assert "error" in stats
 
     def test_single_file_commits_ignored(self):
@@ -126,30 +128,30 @@ class TestNetworkGraph(unittest.TestCase):
         # going through the public function.
         with (
             patch(
-                "visualization.network_graph.count_files_in_commits",
+                "algorithms.affinity_network.count_files_in_commits",
                 return_value={"a.py": 1, "b.py": 2, "c.py": 2},
             ),
             patch(
-                "visualization.network_graph.count_multi_file_commits",
+                "algorithms.affinity_network.count_multi_file_commits",
                 return_value=2,
             ),
             patch(
-                "visualization.network_graph.get_top_files_by_affinity",
+                "algorithms.affinity_network.get_top_files_by_affinity",
                 return_value={"a.py", "b.py", "c.py"},
             ),
             patch(
-                "visualization.network_graph.filter_low_degree_nodes",
+                "algorithms.affinity_network.filter_low_degree_nodes",
                 return_value=1,
             ),
             patch(
-                "visualization.network_graph.detect_and_assign_communities",
+                "algorithms.affinity_network.detect_and_assign_communities",
                 return_value=(
                     ["community-1", "community-2"],
                     {"communities": 2, "avg_community_size": 1.5},
                 ),
             ),
             patch(
-                "visualization.network_graph.calculate_graph_statistics",
+                "algorithms.affinity_network.calculate_graph_statistics",
                 return_value={"avg_node_degree": 1.5, "avg_edge_weight": 0.5},
             ),
         ):
@@ -184,6 +186,7 @@ class TestNetworkGraph(unittest.TestCase):
         assert stats["avg_edge_weight"] == 0.5
         assert stats["communities"] == 2
         assert stats["avg_community_size"] == 1.5
+        assert set(AFFINITY_STATS_KEYS).issubset(stats)
 
     def test_create_empty_figure(self):
         """Test that empty figure is created correctly."""
@@ -226,7 +229,7 @@ class TestNetworkGraph(unittest.TestCase):
             commit.stats.files = {"a.py": {}, "b.py": {}, "c.py": {}}
 
         with patch(
-            "visualization.network_graph.calculate_affinities",
+            "algorithms.affinity_network.calculate_affinities",
             return_value=affinities,
         ):
             (G, communities, stats) = create_file_affinity_network(
@@ -255,11 +258,11 @@ class TestNetworkGraph(unittest.TestCase):
 
         with (
             patch(
-                "visualization.network_graph.calculate_affinities",
+                "algorithms.affinity_network.calculate_affinities",
                 return_value=affinities,
             ),
             patch(
-                "visualization.network_graph.get_top_files_by_affinity",
+                "algorithms.affinity_network.get_top_files_by_affinity",
                 return_value={"a.py", "b.py", "c.py"},
             ),
         ):
@@ -281,7 +284,7 @@ class TestNetworkGraph(unittest.TestCase):
         precomputed = {("a.py", "b.py"): 0.5}
 
         with patch(
-            "visualization.network_graph.calculate_affinities"
+            "algorithms.affinity_network.calculate_affinities"
         ) as mock_calc:
             (G, communities, stats) = create_file_affinity_network(
                 commits,

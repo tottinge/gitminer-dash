@@ -4,6 +4,7 @@ from dash.dcc import Slider, Store
 
 import data
 from algorithms.affinity_calculator import calculate_affinities
+from algorithms.affinity_network import create_file_affinity_network
 from algorithms.commit_filter import get_commits_for_group_files
 from pages.affinity_groups_service import (
     build_affinity_graph_output,
@@ -17,10 +18,7 @@ from pages.affinity_groups_service import (
 from utils import date_utils
 from utils.git import ensure_list
 from utils.plotly_utils import create_empty_figure
-from visualization.network_graph import (
-    create_file_affinity_network,
-    create_network_visualization,
-)
+from visualization.network_graph import create_network_visualization
 
 # Simple in-process cache of affinity maps keyed by date range.
 # This avoids recomputing file-pair affinities for the same period when
