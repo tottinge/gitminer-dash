@@ -236,7 +236,7 @@ layout = html.Div(
                                 MAIN_TABLE_STYLE_DATA_CONDITIONAL
                             ),
                             fixed_rows={"headers": True},
-                            row_selectable="single",
+                            cell_selectable=True,
                             style_cell_conditional=[
                                 {"if": {"column_id": "rank"}, "width": "8%"},
                                 {
@@ -599,6 +599,25 @@ def _evidence_rows_from_refs(evidence_refs: str) -> list[dict[str, str]]:
     return rows
 
 
+def _row_highlight_style(active_cell, rows) -> list[dict[str, object]]:
+    style = list(MAIN_TABLE_STYLE_DATA_CONDITIONAL)
+    if not rows:
+        return style
+    selected_index = 0
+    if isinstance(active_cell, dict):
+        selected_index = int(active_cell.get("row", 0))
+    if selected_index < 0 or selected_index >= len(rows):
+        selected_index = 0
+    style.append(
+        {
+            "if": {"row_index": selected_index},
+            "backgroundColor": "#dbeafe",
+            "border": "1px solid #60a5fa",
+        }
+    )
+    return style
+
+
 def _strict_narrative_result(report) -> dict[str, object]:
     prompt_payload = build_prompt_payload(report=report)
     narrative_text = get_llm_client().generate_narrative(
@@ -708,12 +727,12 @@ def populate_hotspot_drilldown(active_cell, rows):
     """Populate drill-down detail rows for selected hotspot."""
     if not rows:
         return DRILLDOWN_EMPTY_STATUS, [], []
-    if not active_cell:
-        selected_index = 0
-    else:
+    if isinstance(active_cell, dict):
         selected_index = int(active_cell.get("row", 0))
-        if selected_index < 0 or selected_index >= len(rows):
-            selected_index = 0
+    else:
+        selected_index = 0
+    if selected_index < 0 or selected_index >= len(rows):
+        selected_index = 0
     selected_row = rows[selected_index]
 
     details = [
@@ -735,6 +754,18 @@ def populate_hotspot_drilldown(active_cell, rows):
         selected_row.get("evidence_refs", "")
     )
     return DRILLDOWN_SELECTED_STATUS, details, evidence_rows
+
+
+@callback(
+    Output("id-ai-insights-table", "style_data_conditional"),
+    [
+        Input("id-ai-insights-table", "active_cell"),
+        Input("id-ai-insights-table", "data"),
+    ],
+)
+def populate_hotspot_row_highlight(active_cell, rows):
+    """Keep main-table selection row-focused when a cell is clicked."""
+    return _row_highlight_style(active_cell, rows)
 
 
 @callback(
