@@ -93,8 +93,12 @@ def _build_network_figure(
             showlegend=True,  # pragma: no mutate
             hovermode="closest",  # pragma: no mutate
             margin=dict(b=20, l=5, r=5, t=40),  # pragma: no mutate
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),  # pragma: no mutate
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),  # pragma: no mutate
+            xaxis=dict(
+                showgrid=False, zeroline=False, showticklabels=False
+            ),  # pragma: no mutate
+            yaxis=dict(
+                showgrid=False, zeroline=False, showticklabels=False
+            ),  # pragma: no mutate
         ),
     )
 
@@ -183,7 +187,9 @@ def _collect_edge_plot_data(
         edge_y.extend([y0, y1, None])
         weight = G.edges[file1, file2]["weight"]
         edge_weights.append(weight)
-        edge_texts.append(f"{file1} - {file2}<br>Affinity: {weight:.2f}")  # pragma: no mutate
+        edge_texts.append(
+            f"{file1} - {file2}<br>Affinity: {weight:.2f}"
+        )  # pragma: no mutate
     return edge_x, edge_y, edge_weights, edge_texts
 
 
@@ -202,7 +208,6 @@ def _empty_edge_trace() -> go.Scatter:
 def _edge_width(weight: float, max_weight: float) -> float:
     """Compute edge stroke width from normalized affinity weight."""
     return 2 + (weight / max_weight) * 6  # pragma: no mutate
-
 
 
 def _build_edge_trace(
@@ -271,8 +276,9 @@ def _community_ids(G: nx.Graph) -> set[int]:
 
 def _community_color(community_id: int, community_colors: list[str]) -> str:
     """Return a deterministic color for a community ID."""
-    return community_colors[community_id % len(community_colors)]  # pragma: no mutate
-
+    return community_colors[
+        community_id % len(community_colors)
+    ]  # pragma: no mutate
 
 
 def _create_non_singleton_community_traces(

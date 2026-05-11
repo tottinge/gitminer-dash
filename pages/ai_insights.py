@@ -599,7 +599,9 @@ def _evidence_rows_from_refs(evidence_refs: str) -> list[dict[str, str]]:
     return rows
 
 
-def _row_highlight_style(active_cell, rows) -> list[dict[str, object]]:  # pragma: no mutate
+def _row_highlight_style(
+    active_cell, rows
+) -> list[dict[str, object]]:  # pragma: no mutate
     style = list(MAIN_TABLE_STYLE_DATA_CONDITIONAL)  # pragma: no mutate
     if not rows:  # pragma: no mutate
         return style  # pragma: no mutate

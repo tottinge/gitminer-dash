@@ -36,7 +36,11 @@ def create_empty_figure(
     )
     fig.update_layout(
         title=f"{title} - No Data",  # pragma: no mutate
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),  # pragma: no mutate
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),  # pragma: no mutate
+        xaxis=dict(
+            showgrid=False, zeroline=False, showticklabels=False
+        ),  # pragma: no mutate
+        yaxis=dict(
+            showgrid=False, zeroline=False, showticklabels=False
+        ),  # pragma: no mutate
     )
     return fig  # pragma: no mutate

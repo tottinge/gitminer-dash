@@ -191,7 +191,10 @@ def _interpretation_guidance() -> html.Div:  # pragma: no mutate
         children=[
             html.Strong("How to read this chart"),  # pragma: no mutate
             html.Ul(
-                style={"margin": "6px 0 0 18px", "padding": "0"},  # pragma: no mutate
+                style={
+                    "margin": "6px 0 0 18px",
+                    "padding": "0",
+                },  # pragma: no mutate
                 children=[
                     html.Li(
                         "Each node is a community of files that frequently change together."  # pragma: no mutate
