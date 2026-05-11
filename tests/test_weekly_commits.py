@@ -259,12 +259,16 @@ class TestCreateWeeklyCommitsFigure(unittest.TestCase):
         assert list(base.y) == [0, 0]
         assert base.name == "base"
         assert base.showlegend is False
+        assert base.hoverinfo == "skip"
         assert base.opacity == 0
 
         # First commit-position trace has data for both weeks
         first_commit_trace = fig.data[1]
         assert list(first_commit_trace.x) == expected_labels
         assert list(first_commit_trace.y) == [1, 1]
+        assert first_commit_trace.name == "Commit 1"
+        assert first_commit_trace.showlegend is False
+        assert first_commit_trace.hovertemplate == "%{hovertext}<extra></extra>"
         assert len(first_commit_trace.hovertext) == 2
         # Hover text should contain truncated summary and committer name
         hover0 = first_commit_trace.hovertext[0]
@@ -275,7 +279,14 @@ class TestCreateWeeklyCommitsFigure(unittest.TestCase):
         second_commit_trace = fig.data[2]
         assert list(second_commit_trace.x) == [expected_labels[0]]
         assert list(second_commit_trace.y) == [1]
+        assert second_commit_trace.name == "Commit 2"
+        assert second_commit_trace.showlegend is False
+        assert (
+            second_commit_trace.hovertemplate == "%{hovertext}<extra></extra>"
+        )
         assert len(second_commit_trace.hovertext) == 1
+        assert fig.layout.hovermode == "closest"
+        assert fig.layout.height == 500
 
         # Stats HTML should contain the formatted min/avg/max text
         spans = stats_html.children
@@ -283,6 +294,8 @@ class TestCreateWeeklyCommitsFigure(unittest.TestCase):
         assert "Minimum: 1 commits/week" in texts[0]
         assert "Average: 1.5 commits/week" in texts[1]
         assert "Maximum: 2 commits/week" in texts[2]
+        assert spans[0].style == {"marginRight": "20px"}
+        assert spans[1].style == {"marginRight": "20px"}
 
 
 class TestWeeklyCommitsCallback(unittest.TestCase):

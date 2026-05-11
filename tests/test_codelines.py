@@ -11,6 +11,12 @@ from unittest.mock import patch
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _stub_dash_register_page(monkeypatch):
+    """Prevent Dash page registration side effects during unit-test imports."""
+    monkeypatch.setattr("dash.register_page", lambda *args, **kwargs: None)
+
+
 @pytest.mark.parametrize(
     "click_data",
     [
@@ -115,6 +121,88 @@ def test_branch_for_commit_uses_refs_to_extract_branch(
     rows = update_chain_commits_table(click_data)
 
     assert rows == [{"branch": "main"}]
+
+
+def test_branch_for_commit_returns_empty_when_refs_and_name_rev_absent():
+    """Missing refs/name_rev attributes should resolve to empty branch."""
+    from pages.codelines import branch_for_commit
+
+    class MinimalCommit:
+        pass
+
+    assert branch_for_commit(MinimalCommit()) == ""
+
+
+def test_branch_for_commit_skips_blank_refs_and_uses_next_leaf_name():
+    """Blank ref names should be skipped and later refs should still be considered."""
+    from pages.codelines import branch_for_commit
+
+    class CommitWithMixedRefs:
+        def __init__(self):
+            self.refs = [DummyRef(""), DummyRef("origin/feature/cool")]
+
+    assert branch_for_commit(CommitWithMixedRefs()) == "cool"
+
+
+def test_branch_for_commit_missing_ref_name_attribute_returns_empty():
+    """Refs without `name` should not fabricate a branch name."""
+    from pages.codelines import branch_for_commit
+
+    class RefWithoutName:
+        pass
+
+    class CommitWithUnnamedRef:
+        def __init__(self):
+            self.refs = [RefWithoutName()]
+
+    assert branch_for_commit(CommitWithUnnamedRef()) == ""
+
+
+def test_branch_for_commit_name_rev_with_single_token_returns_empty():
+    """A single-token name_rev cannot contain branch metadata and should return empty."""
+    from pages.codelines import branch_for_commit
+
+    class CommitWithSingleTokenNameRev:
+        def __init__(self):
+            self.refs = []
+            self.name_rev = "deadbeef"
+
+    assert branch_for_commit(CommitWithSingleTokenNameRev()) == ""
+
+
+def test_branch_for_commit_name_rev_extracts_leaf_from_nested_path():
+    """Fallback parsing should return the leaf branch component from nested refs."""
+    from pages.codelines import branch_for_commit
+
+    class CommitWithNestedNameRev:
+        def __init__(self):
+            self.refs = []
+            self.name_rev = "deadbeef refs/remotes/origin/main"
+
+    assert branch_for_commit(CommitWithNestedNameRev()) == "main"
+
+
+def test_branch_for_commit_non_string_name_rev_is_ignored():
+    """Non-string name_rev values should be ignored safely."""
+    from pages.codelines import branch_for_commit
+
+    class CommitWithNonStringNameRev:
+        def __init__(self):
+            self.refs = []
+            self.name_rev = 123
+
+    assert branch_for_commit(CommitWithNonStringNameRev()) == ""
+
+
+def test_branch_for_commit_missing_name_rev_attr_with_empty_refs_returns_empty():
+    """When refs exist but name_rev does not, branch lookup should still return empty."""
+    from pages.codelines import branch_for_commit
+
+    class CommitWithRefsOnly:
+        def __init__(self):
+            self.refs = []
+
+    assert branch_for_commit(CommitWithRefsOnly()) == ""
 
 
 @patch("pages.codelines.commits_to_chain_rows")

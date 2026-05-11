@@ -7,6 +7,7 @@ import pytest
 
 from algorithms.file_changes import (
     FileChangeStats,
+    _lines_changed_in_commit,
     file_changes_over_period,
     files_changes_over_period,
 )
@@ -283,6 +284,154 @@ def test_file_changes_over_period_small_original_size_computes_percent(
     )
 
     assert percent_change == 100.0
+
+
+def test_lines_changed_in_commit_calls_git_show_with_expected_flags(
+    mock_repo,
+):
+    """Helper should invoke git show with stable numstat formatting flags."""
+    mock_repo.git.show.side_effect = None
+    mock_repo.git.show.return_value = "5\t7\tfile1.py\n"
+
+    total = _lines_changed_in_commit(mock_repo, "abc123", "file1.py")
+
+    assert total == 12
+    mock_repo.git.show.assert_called_once_with(
+        "abc123",
+        "--numstat",
+        "--format=",
+        "--",
+        "file1.py",
+    )
+
+
+def test_lines_changed_in_commit_skips_malformed_prefix_line(mock_repo):
+    """Malformed lines must be skipped so a later valid numstat line is used."""
+    mock_repo.git.show.side_effect = None
+    mock_repo.git.show.return_value = "not-a-numstat-line\n2\t3\tfile1.py\n"
+
+    total = _lines_changed_in_commit(mock_repo, "abc123", "file1.py")
+
+    assert total == 5
+
+
+def test_lines_changed_in_commit_non_digit_adds_defaults_to_zero(mock_repo):
+    """Non-digit adds should be treated as zero, not one."""
+    mock_repo.git.show.side_effect = None
+    mock_repo.git.show.return_value = "-\t3\tfile1.py\n"
+
+    total = _lines_changed_in_commit(mock_repo, "abc123", "file1.py")
+
+    assert total == 3
+
+
+def test_lines_changed_in_commit_non_digit_dels_defaults_to_zero(mock_repo):
+    """Non-digit deletes should be treated as zero, not one."""
+    mock_repo.git.show.side_effect = None
+    mock_repo.git.show.return_value = "3\t-\tfile1.py\n"
+
+    total = _lines_changed_in_commit(mock_repo, "abc123", "file1.py")
+
+    assert total == 3
+
+
+def test_files_changes_over_period_uses_default_window_when_start_end_none(
+    monkeypatch, mock_repo
+):
+    """Plural helper should default to a 1-year window ending at now()."""
+    fixed_now = datetime(2025, 2, 1, 8, 30, 0)
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):  # type: ignore[override]
+            return fixed_now if tz is None else fixed_now.astimezone(tz)
+
+    monkeypatch.setattr("algorithms.file_changes.datetime", FixedDateTime)
+
+    with patch(
+        "algorithms.file_changes.file_changes_over_period",
+        return_value=(1, 2.0, 3, 4.0),
+    ) as mock_single:
+        files_changes_over_period(["file1.py"], repo=mock_repo)
+
+    assert mock_single.call_count == 1
+    file_path, start, end, repo = mock_single.call_args[0]
+    assert file_path == "file1.py"
+    assert start == fixed_now - timedelta(days=365)
+    assert end == fixed_now
+    assert repo is mock_repo
+
+
+def test_files_changes_over_period_forwards_explicit_start_end(
+    mock_repo,
+):
+    """Explicit start/end should be forwarded unchanged to per-file helper."""
+    explicit_start = datetime(2024, 1, 1, 0, 0, 0)
+    explicit_end = datetime(2024, 1, 31, 0, 0, 0)
+
+    with patch(
+        "algorithms.file_changes.file_changes_over_period",
+        return_value=(1, 2.0, 3, 4.0),
+    ) as mock_single:
+        files_changes_over_period(
+            ["file1.py"],
+            start=explicit_start,
+            end=explicit_end,
+            repo=mock_repo,
+        )
+
+    assert mock_single.call_count == 1
+    assert mock_single.call_args[0] == (
+        "file1.py",
+        explicit_start,
+        explicit_end,
+        mock_repo,
+    )
+
+
+def test_files_changes_over_period_error_path_uses_exact_default_stats(
+    mock_repo,
+):
+    """Error fallback row should keep all zero/default values exactly."""
+    with patch(
+        "algorithms.file_changes.file_changes_over_period",
+        side_effect=ValueError("boom"),
+    ):
+        results = files_changes_over_period(
+            ["broken.py"],
+            start=datetime(2024, 1, 1),
+            end=datetime(2024, 1, 2),
+            repo=mock_repo,
+        )
+
+    stats = results["broken.py"]
+    assert stats.file_path == "broken.py"
+    assert stats.commits == 0
+    assert stats.avg_changes == 0.0
+    assert stats.total_change == 0
+    assert stats.percent_change == 0.0
+
+
+def test_files_changes_over_period_logs_error_with_module_logger(mock_repo):
+    """Error path should log with this module logger and a stable message."""
+    logger = MagicMock()
+    with (
+        patch("algorithms.file_changes.logging.getLogger") as mock_get_logger,
+        patch(
+            "algorithms.file_changes.file_changes_over_period",
+            side_effect=ValueError("boom"),
+        ),
+    ):
+        mock_get_logger.return_value = logger
+        files_changes_over_period(
+            ["broken.py"],
+            start=datetime(2024, 1, 1),
+            end=datetime(2024, 1, 2),
+            repo=mock_repo,
+        )
+
+    mock_get_logger.assert_called_once_with("algorithms.file_changes")
+    logger.exception.assert_called_once_with("Error processing file broken.py")
 
 
 if __name__ == "__main__":

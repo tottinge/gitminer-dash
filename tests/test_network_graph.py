@@ -588,6 +588,38 @@ class TestNetworkGraph(unittest.TestCase):
         assert fig.layout.showlegend is True
         assert fig.layout.hovermode == "closest"
 
+    def test_build_network_figure_layout_serialized_contract(self):
+        """Layout should preserve exact title/font, margin, and hidden-axis settings."""
+        edge_trace = go.Scatter(x=[0, 1, None], y=[0, 1, None], mode="lines")
+        node_trace = go.Scatter(x=[0, 1], y=[0, 1], mode="markers")
+
+        fig = _build_network_figure(
+            edge_traces=[edge_trace],
+            node_traces=[node_trace],
+            title="Exact Layout",
+        )
+
+        assert fig.layout.title.to_plotly_json() == {
+            "text": "Exact Layout",
+            "font": {"size": 16},
+        }
+        assert fig.layout.margin.to_plotly_json() == {
+            "b": 20,
+            "l": 5,
+            "r": 5,
+            "t": 40,
+        }
+        assert fig.layout.xaxis.to_plotly_json() == {
+            "showgrid": False,
+            "zeroline": False,
+            "showticklabels": False,
+        }
+        assert fig.layout.yaxis.to_plotly_json() == {
+            "showgrid": False,
+            "zeroline": False,
+            "showticklabels": False,
+        }
+
     def test_collect_node_plot_data_happy_path(self):
         """Collects node coordinates, tooltip text, and marker sizes."""
         graph = nx.Graph()

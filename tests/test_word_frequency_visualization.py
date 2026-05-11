@@ -97,6 +97,66 @@ class TestWordFrequencyTreemap(unittest.TestCase):
         self.assertEqual("single", treemap.labels[0])
         self.assertEqual(42, treemap.values[0])
 
+    def test_empty_word_counts_with_custom_title_uses_exact_empty_contract(
+        self,
+    ):
+        """Empty-path should preserve exact message and custom title propagation."""
+        fig = create_word_frequency_treemap({}, title="Chosen Title")
+
+        self.assertEqual(1, len(fig.layout.annotations))
+        self.assertEqual(
+            "No word frequency data available",
+            fig.layout.annotations[0].to_plotly_json()["text"],
+        )
+        self.assertEqual(
+            {"text": "Chosen Title - No Data"},
+            fig.layout.title.to_plotly_json(),
+        )
+
+    def test_default_top_n_limits_to_50_words(self):
+        """Default top_n should cap output at 50 entries."""
+        word_counts = {f"word{i}": 1000 - i for i in range(60)}
+
+        fig = create_word_frequency_treemap(word_counts)
+        treemap = fig.data[0]
+
+        self.assertEqual(50, len(treemap.labels))
+        self.assertIn("word49", treemap.labels)
+        self.assertNotIn("word50", treemap.labels)
+
+    def test_treemap_style_contract(self):
+        """Treemap should retain explicit text position, marker style, and hover template."""
+        fig = create_word_frequency_treemap({"bug": 5, "fix": 3})
+        treemap = fig.data[0]
+
+        self.assertEqual("middle center", treemap.textposition)
+        self.assertEqual(
+            "<b>%{label}</b><br>Count: %{value}<br><extra></extra>",
+            treemap.hovertemplate,
+        )
+
+        marker_json = treemap.marker.to_plotly_json()
+        self.assertIn("colorscale", marker_json)
+        self.assertEqual(9, len(marker_json["colorscale"]))
+        self.assertEqual(
+            [0.0, "rgb(247,251,255)"], marker_json["colorscale"][0]
+        )
+        self.assertEqual([1.0, "rgb(8,48,107)"], marker_json["colorscale"][-1])
+        self.assertEqual({"color": "white", "width": 2}, marker_json["line"])
+
+    def test_treemap_layout_title_font_and_margin_contract(self):
+        """Layout should preserve title font and margin defaults."""
+        fig = create_word_frequency_treemap({"bug": 5}, title="Word Counts")
+
+        self.assertEqual(
+            {"text": "Word Counts", "font": {"size": 16}},
+            fig.layout.title.to_plotly_json(),
+        )
+        self.assertEqual(
+            {"t": 50, "l": 0, "r": 0, "b": 0},
+            fig.layout.margin.to_plotly_json(),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
