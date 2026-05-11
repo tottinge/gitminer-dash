@@ -74,6 +74,19 @@ def _table_row(
 
 
 _GROUP_LABEL_PATTERN = re.compile(r"(?:Group|Community)\s+(\d+)")
+_NODE_COUNT_VALUES = (10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
+_MIN_AFFINITY_VALUES = (
+    0.05,
+    0.10,
+    0.15,
+    0.20,
+    0.25,
+    0.30,
+    0.35,
+    0.40,
+    0.45,
+    0.50,
+)
 
 
 def _repo_error_message() -> str:
@@ -128,8 +141,8 @@ def _community_composition_store(graph) -> dict[str, object]:
 def _is_link_click(click_data: dict[str, object] | None) -> bool:
     if not click_data:
         return False
-    points = click_data.get("points", [])
-    if not points:
+    points = click_data.get("points")
+    if not isinstance(points, list) or not points:
         return False
     point = points[0]
     return (
@@ -144,13 +157,16 @@ def _selected_community_from_click(
 ) -> int | None:
     if not click_data:
         return None
-    points = click_data.get("points", [])
-    if not points:
+    points = click_data.get("points")
+    if not isinstance(points, list) or not points:
         return None
     point = points[0]
     if not isinstance(point, dict):
         return None
-    label = str(point.get("label", ""))
+    label_value = point.get("label")
+    if label_value is None:
+        return None
+    label = str(label_value)
     matched = _GROUP_LABEL_PATTERN.search(label)
     if not matched:
         return None
@@ -159,7 +175,7 @@ def _selected_community_from_click(
 
 def _node_count_slider() -> dcc.Slider:  # pragma: no mutate
     node_marks = {
-        node_count: str(node_count) for node_count in range(10, 101, 10)
+        node_count: str(node_count) for node_count in _NODE_COUNT_VALUES
     }  # pragma: no mutate
     return dcc.Slider(
         id="id-community-flow-node-slider",  # pragma: no mutate
@@ -173,7 +189,7 @@ def _node_count_slider() -> dcc.Slider:  # pragma: no mutate
 
 def _min_affinity_slider() -> dcc.Slider:  # pragma: no mutate
     affinity_marks = {
-        affinity / 100: str(affinity / 100) for affinity in range(5, 51, 5)
+        affinity: f"{affinity:.2f}" for affinity in _MIN_AFFINITY_VALUES
     }  # pragma: no mutate
     return dcc.Slider(
         id="id-community-flow-min-affinity-slider",  # pragma: no mutate
