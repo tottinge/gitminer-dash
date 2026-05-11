@@ -11,7 +11,7 @@ from plotly.graph_objs import Figure
 # the app from the parent dir and these are okay.
 from algorithms.change_series import change_name, change_series
 from algorithms.sorted_tags import get_most_recent_tags
-from data import get_repo
+from repository_context import get_repo
 
 register_page(
     module=__name__,  # Where it's found

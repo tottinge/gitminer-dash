@@ -9,7 +9,7 @@ from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 
-import data
+import repository_context as repo_context
 from insights.citation_guard import validate_narrative_citations
 from insights.llm_client import get_llm_client
 from insights.prompt_builder import build_prompt_payload
@@ -668,7 +668,7 @@ def populate_insights(
     report_size = max(50, normalized_top_n * 5)
 
     begin, end = date_utils.parse_date_range_from_store(store_data)
-    repo = data.get_repo()
+    repo = repo_context.get_repo()
     previous_begin, previous_end = _previous_period_bounds(begin, end)
     previous_snapshot = build_analysis_snapshot(
         repo=repo, period_start=previous_begin, period_end=previous_end
@@ -782,7 +782,7 @@ def populate_narrative_summary(store_data):
         raise PreventUpdate
 
     begin, end = date_utils.parse_date_range_from_store(store_data)
-    repo = data.get_repo()
+    repo = repo_context.get_repo()
     snapshot = build_analysis_snapshot(
         repo=repo, period_start=begin, period_end=end
     )

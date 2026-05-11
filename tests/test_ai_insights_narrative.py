@@ -98,7 +98,7 @@ def test_strict_narrative_result_reports_invalid_claims(
     )
 
 
-@patch("pages.ai_insights.data.get_repo")
+@patch("pages.ai_insights.repo_context.get_repo")
 @patch("pages.ai_insights.build_analysis_snapshot")
 @patch("pages.ai_insights.build_insight_report")
 def test_populate_narrative_summary_empty_hotspots(

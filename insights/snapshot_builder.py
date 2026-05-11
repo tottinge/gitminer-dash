@@ -8,9 +8,9 @@ from datetime import datetime
 from git import Repo
 
 from algorithms.commit_frequency import count_file_commits
-from data import commits_in_period_for_repo_path
 from insights.models import AnalysisSnapshot
 from insights.schema_version import ANALYSIS_SCHEMA_VERSION
+from repository_context import commits_in_period_for_repo_path
 
 
 def get_commits_for_period(
@@ -20,7 +20,9 @@ def get_commits_for_period(
     repo_path = repo.working_tree_dir or repo.git_dir
     return list(
         commits_in_period_for_repo_path(
-            repo_path=repo_path, beginning=period_start, ending=period_end
+            repo_path=repo_path,
+            period_start=period_start,
+            period_end=period_end,
         )
     )
 

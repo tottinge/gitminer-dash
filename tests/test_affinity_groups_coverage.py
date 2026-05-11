@@ -15,7 +15,7 @@ from dash import Dash
 app = Dash(__name__, suppress_callback_exceptions=True)
 
 
-@patch("data.commits_in_period")
+@patch("repository_context.commits_in_period")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
 def test_callback_with_invalid_date_range(mock_parse, mock_commits):
     """Test that invalid date range is handled gracefully."""
@@ -42,7 +42,7 @@ def test_callback_with_invalid_date_range(mock_parse, mock_commits):
 
 
 @patch("pages.affinity_groups.create_file_affinity_network")
-@patch("data.commits_in_period")
+@patch("repository_context.commits_in_period")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
 def test_callback_with_network_creation_error(
     mock_parse, mock_commits, mock_network
@@ -66,7 +66,7 @@ def test_callback_with_network_creation_error(
     assert graph_data == {}
 
 
-@patch("data.commits_in_period")
+@patch("repository_context.commits_in_period")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
 def test_callback_with_empty_commits(mock_parse, mock_commits):
     """Test callback behavior with no commits in the period."""
@@ -89,19 +89,13 @@ def test_callback_with_empty_commits(mock_parse, mock_commits):
 
 
 @patch("pages.affinity_groups.calculate_affinities")
-@patch("data.commits_in_period")
+@patch("repository_context.commits_in_period")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
 def test_affinity_caching_behavior(
     mock_parse, mock_commits, mock_calc_affinities
 ):
     """Test that affinity calculations are cached properly."""
-    from pages.affinity_groups import (
-        _AFFINITY_CACHE,
-        update_file_affinity_graph,
-    )
-
-    # Clear cache before test
-    _AFFINITY_CACHE.clear()
+    from pages.affinity_groups import update_file_affinity_graph
 
     start = datetime(2024, 1, 1)
     end = datetime(2024, 1, 31)
@@ -140,18 +134,13 @@ def test_affinity_caching_behavior(
 
 
 @patch("pages.affinity_groups.calculate_affinities")
-@patch("data.commits_in_period")
+@patch("repository_context.commits_in_period")
 @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
 def test_affinity_cache_different_date_ranges(
     mock_parse, mock_commits, mock_calc
 ):
     """Test that different date ranges create separate cache entries."""
-    from pages.affinity_groups import (
-        _AFFINITY_CACHE,
-        update_file_affinity_graph,
-    )
-
-    _AFFINITY_CACHE.clear()
+    from pages.affinity_groups import update_file_affinity_graph
 
     mock_commit = Mock()
     mock_commit.hexsha = "abc123"
@@ -177,7 +166,9 @@ def test_get_commits_for_group_files_with_no_parents():
     """Test handling of commits without parents (initial commit)."""
     from algorithms.commit_filter import get_commits_for_group_files
 
-    with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
+    with patch(
+        "pages.affinity_groups.repo_context.commits_in_period"
+    ) as mock_commits:
         mock_commit = Mock()
         mock_commit.hexsha = "abc123"
         mock_commit.committed_datetime = datetime(2024, 1, 15, 10, 30)
@@ -197,7 +188,9 @@ def test_get_commits_for_group_files_with_missing_paths():
     """Test handling of diff items without a_path or b_path."""
     from algorithms.commit_filter import get_commits_for_group_files
 
-    with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
+    with patch(
+        "pages.affinity_groups.repo_context.commits_in_period"
+    ) as mock_commits:
         mock_commit = Mock()
         mock_commit.hexsha = "abc123"
         mock_commit.committed_datetime = datetime(2024, 1, 15, 10, 30)
@@ -225,7 +218,9 @@ def test_get_commits_for_group_files_truncates_long_message():
     """Test that long commit messages are truncated to 100 chars."""
     from algorithms.commit_filter import get_commits_for_group_files
 
-    with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
+    with patch(
+        "pages.affinity_groups.repo_context.commits_in_period"
+    ) as mock_commits:
         long_message = "A" * 150  # 150 character message
         mock_commit = Mock()
         mock_commit.hexsha = "abc123def456"
@@ -252,7 +247,9 @@ def test_get_commits_for_group_files_multiline_message():
     """Test that only first line of commit message is used."""
     from algorithms.commit_filter import get_commits_for_group_files
 
-    with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
+    with patch(
+        "pages.affinity_groups.repo_context.commits_in_period"
+    ) as mock_commits:
         multiline = "feat: first line\n\nThis is the body\nMore details here"
         mock_commit = Mock()
         mock_commit.hexsha = "abc123def456"
@@ -279,7 +276,9 @@ def test_get_commits_for_group_files_sorts_by_timestamp():
     """Test that commits are sorted by timestamp, most recent first."""
     from algorithms.commit_filter import get_commits_for_group_files
 
-    with patch("pages.affinity_groups.data.commits_in_period") as mock_commits:
+    with patch(
+        "pages.affinity_groups.repo_context.commits_in_period"
+    ) as mock_commits:
         # Create commits in non-chronological order
         mock_commit1 = Mock()
         mock_commit1.hexsha = "aaa111"
@@ -320,7 +319,7 @@ def test_update_node_details_table_parses_tooltip_correctly():
             "pages.affinity_groups.get_commits_for_group_files"
         ) as mock_get_commits,
         patch(
-            "pages.affinity_groups.data.commits_in_period"
+            "pages.affinity_groups.repo_context.commits_in_period"
         ) as mock_commits_in_period,
         patch(
             "pages.affinity_groups.date_utils.parse_date_range_from_store"
@@ -379,7 +378,7 @@ def test_update_node_details_table_missing_community():
             "pages.affinity_groups.get_commits_for_group_files"
         ) as mock_get_commits,
         patch(
-            "pages.affinity_groups.data.commits_in_period"
+            "pages.affinity_groups.repo_context.commits_in_period"
         ) as mock_commits_in_period,
         patch(
             "pages.affinity_groups.date_utils.parse_date_range_from_store"

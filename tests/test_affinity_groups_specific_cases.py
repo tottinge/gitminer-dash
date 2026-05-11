@@ -33,9 +33,6 @@ class TestGetCachedAffinities:
             _get_cached_affinities,
         )
 
-        # Clear cache
-        _AFFINITY_CACHE.clear()
-
         # Setup
         starting = datetime(2024, 1, 1)
         ending = datetime(2024, 1, 31)
@@ -266,7 +263,7 @@ class TestUpdateFileAffinityGraphInvalidDateRange:
 class TestUpdateFileAffinityGraphNoRepository:
     """Test for update_file_affinity_graph() handling missing repository path."""
 
-    @patch("data.commits_in_period")
+    @patch("repository_context.commits_in_period")
     @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
     def test_update_file_affinity_graph_no_repository_path(
         self, mock_parse, mock_commits
@@ -301,19 +298,15 @@ class TestUpdateFileAffinityGraphExceptionHandling:
     """Test for update_file_affinity_graph() handling exceptions during graph generation."""
 
     @patch("pages.affinity_groups.create_file_affinity_network")
-    @patch("data.commits_in_period")
+    @patch("repository_context.commits_in_period")
     @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
     def test_update_file_affinity_graph_network_creation_exception(
         self, mock_parse, mock_commits, mock_network
     ):
         """Test that exceptions during network creation return error figure."""
-        from pages.affinity_groups import (
-            _AFFINITY_CACHE,
-            update_file_affinity_graph,
-        )
+        from pages.affinity_groups import update_file_affinity_graph
 
         # Setup
-        _AFFINITY_CACHE.clear()
         mock_parse.return_value = (datetime(2024, 1, 1), datetime(2024, 1, 31))
         mock_commit = Mock()
         mock_commit.stats.files = {"file1.py": {}, "file2.py": {}}
@@ -344,7 +337,7 @@ class TestUpdateFileAffinityGraphExceptionHandling:
             )
 
     @patch("pages.affinity_groups.create_file_affinity_network")
-    @patch("data.commits_in_period")
+    @patch("repository_context.commits_in_period")
     @patch("pages.affinity_groups.date_utils.parse_date_range_from_store")
     def test_update_file_affinity_graph_generic_exception(
         self, mock_parse, mock_commits, mock_network

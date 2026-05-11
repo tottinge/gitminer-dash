@@ -4,7 +4,7 @@ from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 from pandas import DataFrame
 
-import data
+import repository_context as repo_context
 from algorithms.commit_frequency import calculate_file_commit_frequency
 from algorithms.word_frequency import calculate_word_frequency
 from utils import date_utils
@@ -132,8 +132,8 @@ def populate_graph(store_data):
 
     # Get file usage data with additional metrics
     begin, end = date_utils.parse_date_range_from_store(store_data)
-    commits_data = data.commits_in_period(begin, end)
-    repo = data.get_repo()
+    commits_data = repo_context.commits_in_period(begin, end)
+    repo = repo_context.get_repo()
     usages = calculate_file_commit_frequency(
         commits_data, repo, begin, end, top_n=20
     )
@@ -186,7 +186,7 @@ def update_word_frequency(active_cell, store_data, table_data):
     begin, end = date_utils.parse_date_range_from_store(store_data)
 
     # Get commit messages for the file
-    repo = data.get_repo()
+    repo = repo_context.get_repo()
     messages = list(get_commit_messages_for_file(repo, filename, begin, end))
 
     if not messages:

@@ -7,6 +7,7 @@ multiple test files, reducing code duplication.
 
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock
@@ -21,32 +22,35 @@ TEST_DATA_DIR = Path(os.path.join(os.path.dirname(__file__), "test_data"))
 class MockCommit:
     """Mock commit object for testing."""
 
-    def __init__(self, data):
-        self.hexsha = data["hash"]
-        self.message = data["message"]
-        self.committed_date = datetime.fromisoformat(data["date"]).timestamp()
-        self.committed_datetime = datetime.fromisoformat(data["date"])
+    def __init__(self, commit_record):
+        self.hexsha = commit_record["hash"]
+        self.message = commit_record["message"]
+        self.committed_date = datetime.fromisoformat(
+            commit_record["date"]
+        ).timestamp()
+        self.committed_datetime = datetime.fromisoformat(commit_record["date"])
 
         class MockStats:
-            def __init__(self, files):
+            def __init__(self, changed_file_paths):
                 self.files = {
-                    file: {"insertions": 1, "deletions": 1} for file in files
+                    file_path: {"insertions": 1, "deletions": 1}
+                    for file_path in changed_file_paths
                 }
 
-        self.stats = MockStats(data["files"])
+        self.stats = MockStats(commit_record["files"])
 
 
-def create_mock_commit(commit_data):
+def build_mock_commit(commit_record):
     """
     Create a mock commit object from simplified commit data.
 
     Args:
-        commit_data: Dictionary with commit data
+        commit_record: Dictionary with commit data
 
     Returns:
         A mock commit object with the necessary attributes
     """
-    return MockCommit(commit_data)
+    return MockCommit(commit_record)
 
 
 def create_mock_commit_with_diffs(
@@ -88,17 +92,17 @@ def create_mock_commit_with_diffs(
     return commit
 
 
-def load_commits_json(period):
+def load_commit_records_json(period_label):
     """
     Load raw commit data from a JSON file.
 
     Args:
-        period: Time period string
+        period_label: Time period string
 
     Returns:
         List of commit dictionaries, or None if file doesn't exist
     """
-    filename = f"commits_{period.replace(' ', '_').lower()}.json"
+    filename = f"commits_{period_label.replace(' ', '_').lower()}.json"
     filepath = TEST_DATA_DIR / filename
     if not filepath.exists():
         return None
@@ -106,7 +110,7 @@ def load_commits_json(period):
         return json.load(f)
 
 
-def load_commits_data(period):
+def load_mock_commits_for_period(period_label):
     """
     Load commit data from a file and convert to mock commits.
 
@@ -116,10 +120,12 @@ def load_commits_data(period):
     Returns:
         List of mock commit objects (empty list if file doesn't exist)
     """
-    commits_json = load_commits_json(period)
-    if commits_json is None:
+    commit_records = load_commit_records_json(period_label)
+    if commit_records is None:
         return []
-    return [create_mock_commit(commit) for commit in commits_json]
+    return [
+        build_mock_commit(commit_record) for commit_record in commit_records
+    ]
 
 
 @pytest.fixture
@@ -137,10 +143,42 @@ def test_data_dir():
 @pytest.fixture
 def mock_commit_factory():
     """Factory fixture for creating mock commits."""
-    return create_mock_commit
+    return build_mock_commit
 
 
 @pytest.fixture
 def commits_loader():
     """Factory fixture for loading commit data."""
-    return load_commits_data
+    return load_mock_commits_for_period
+
+
+def _clear_cache_if_available(owner, cache_name):
+    cache = getattr(owner, cache_name, None)
+    if cache and hasattr(cache, "cache_clear"):
+        cache.cache_clear()
+
+
+def _clear_affinity_cache_if_loaded():
+    affinity_groups_module = sys.modules.get("pages.affinity_groups")
+    if affinity_groups_module and hasattr(
+        affinity_groups_module, "_AFFINITY_CACHE"
+    ):
+        affinity_groups_module._AFFINITY_CACHE.clear()
+
+
+@pytest.fixture(autouse=True)
+def clear_process_caches():
+    """Reset process-level caches to keep tests isolated under random order."""
+    import repository_context as repo_context
+
+    _clear_cache_if_available(repo_context, "get_repo")
+    _clear_cache_if_available(repo_context, "format_repository_display_name")
+    _clear_cache_if_available(repo_context, "_cached_commits")
+    _clear_affinity_cache_if_loaded()
+
+    yield
+
+    _clear_cache_if_available(repo_context, "get_repo")
+    _clear_cache_if_available(repo_context, "format_repository_display_name")
+    _clear_cache_if_available(repo_context, "_cached_commits")
+    _clear_affinity_cache_if_loaded()

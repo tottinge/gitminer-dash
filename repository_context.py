@@ -24,38 +24,48 @@ def get_repo() -> Repo:
 
 
 @cache
-def get_repo_name():
+def format_repository_display_name():
     reverse_split_path = reversed(repository_path().split(os.sep))
-    rightmost_word = next(x for x in reverse_split_path if x)
-    return re.sub(pattern=r"[_\.-]", repl=" ", string=rightmost_word).title()
+    repository_directory_name = next(
+        path_segment for path_segment in reverse_split_path if path_segment
+    )
+    return re.sub(
+        pattern=r"[_\.-]",
+        repl=" ",
+        string=repository_directory_name,
+    ).title()
 
 
-def _dt_key(dt: datetime) -> str:
+def _iso_datetime_key(dt: datetime) -> str:
     return dt.astimezone().replace(microsecond=0).isoformat()
 
 
 @lru_cache(maxsize=2)
 def _cached_commits(
-    repo_path: str, begin_key: str, end_key: str
+    repo_path: str, period_start_key: str, period_end_key: str
 ) -> list[Commit]:
     repo = Repo(repo_path)
-    begin = datetime.fromisoformat(begin_key)
-    end = datetime.fromisoformat(end_key)
-    return list(repo.iter_commits("--all", since=begin, until=end))
+    period_start = datetime.fromisoformat(period_start_key)
+    period_end = datetime.fromisoformat(period_end_key)
+    return list(
+        repo.iter_commits("--all", since=period_start, until=period_end)
+    )
 
 
 def commits_in_period(
-    beginning: datetime, ending: datetime
+    period_start: datetime, period_end: datetime
 ) -> Iterable[Commit]:
     repo_path = repository_path()
     yield from commits_in_period_for_repo_path(
-        repo_path=repo_path, beginning=beginning, ending=ending
+        repo_path=repo_path,
+        period_start=period_start,
+        period_end=period_end,
     )
 
 
 def commits_in_period_for_repo_path(
-    repo_path: str, beginning: datetime, ending: datetime
+    repo_path: str, period_start: datetime, period_end: datetime
 ) -> Iterable[Commit]:
-    begin_key = _dt_key(beginning)
-    end_key = _dt_key(ending)
-    yield from _cached_commits(repo_path, begin_key, end_key)
+    period_start_key = _iso_datetime_key(period_start)
+    period_end_key = _iso_datetime_key(period_end)
+    yield from _cached_commits(repo_path, period_start_key, period_end_key)

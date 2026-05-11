@@ -38,7 +38,7 @@ def store_data():
     }
 
 
-@patch("pages.ai_insights.data.get_repo")
+@patch("pages.ai_insights.repo_context.get_repo")
 @patch("pages.ai_insights.build_analysis_snapshot")
 @patch("pages.ai_insights.build_insight_report")
 def test_populate_insights_returns_rows_and_status(
@@ -90,7 +90,7 @@ def test_populate_insights_returns_rows_and_status(
     assert called["period_end"].isoformat() == store_data["end"]
 
 
-@patch("pages.ai_insights.data.get_repo")
+@patch("pages.ai_insights.repo_context.get_repo")
 @patch("pages.ai_insights.build_analysis_snapshot")
 @patch("pages.ai_insights.build_insight_report")
 def test_populate_insights_empty_state(

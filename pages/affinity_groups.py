@@ -2,7 +2,7 @@ from dash import Input, Output, State, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.dcc import Slider, Store
 
-import data
+import repository_context as repo_context
 from algorithms.affinity_calculator import calculate_affinities
 from algorithms.affinity_network import create_file_affinity_network
 from algorithms.commit_filter import get_commits_for_group_files
@@ -157,7 +157,7 @@ def update_file_affinity_graph(store_data, max_nodes: int, min_affinity: float):
         max_nodes=max_nodes,
         min_affinity=min_affinity,
         parse_date_range_fn=date_utils.parse_date_range_from_store,
-        commits_in_period_fn=data.commits_in_period,
+        commits_in_period_fn=repo_context.commits_in_period,
         ensure_list_fn=ensure_list,
         get_cached_affinities_fn=_get_cached_affinities,
         create_network_fn=create_file_affinity_network,
@@ -191,6 +191,6 @@ def update_node_details_table(click_data, graph_data, date_range_data):
         extract_clicked_node_name_fn=extract_clicked_node_name,
         files_in_clicked_community_fn=files_in_clicked_community,
         parse_date_range_fn=date_utils.parse_date_range_from_store,
-        commits_in_period_fn=data.commits_in_period,
+        commits_in_period_fn=repo_context.commits_in_period,
         get_commits_for_group_files_fn=get_commits_for_group_files,
     )

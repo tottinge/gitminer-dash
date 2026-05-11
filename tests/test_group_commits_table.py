@@ -15,7 +15,7 @@ from dash import Dash
 app = Dash(__name__, suppress_callback_exceptions=True)
 
 
-@patch("pages.affinity_groups.data.commits_in_period")
+@patch("pages.affinity_groups.repo_context.commits_in_period")
 def test_get_commits_for_group_files_with_multiple_file_commits(
     mock_commits_in_period,
 ):
@@ -61,7 +61,7 @@ def test_get_commits_for_group_files_with_multiple_file_commits(
     assert "src/utils.py" in result[0]["group_files"]
 
 
-@patch("pages.affinity_groups.data.commits_in_period")
+@patch("pages.affinity_groups.repo_context.commits_in_period")
 def test_get_commits_for_group_files_with_no_matching_commits(
     mock_commits_in_period,
 ):

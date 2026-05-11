@@ -6,7 +6,7 @@ from dash.dash_table import DataTable
 from dash.dcc import Graph
 from pandas import DataFrame
 
-import data
+import repository_context as repo_context
 from algorithms.conventional_commits import prepare_changes_by_date
 from utils import date_utils
 
@@ -63,7 +63,7 @@ layout = html.Div(
 )
 def update_conventional_table(_, store_data):
     start, today = date_utils.parse_date_range_from_store(store_data)
-    commits_data = data.commits_in_period(start, today)
+    commits_data = repo_context.commits_in_period(start, today)
     dataframe = prepare_changes_by_date(commits_data)
     return make_figure(dataframe, start, today)
 
@@ -85,7 +85,7 @@ def handle_click_on_conventional_graph(click_data):
             date=commit.committed_datetime.strftime("%b %d %H:%M"),
             message=commit.message,
         )
-        for commit in data.commits_in_period(start, end)
+        for commit in repo_context.commits_in_period(start, end)
     ]
     return result_data
 

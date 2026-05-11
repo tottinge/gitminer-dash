@@ -11,7 +11,7 @@ from dash import (
     page_registry,
 )
 
-import data
+import repository_context as repo_context
 from utils import date_utils
 from utils.global_date_store import build_store_payload
 
@@ -77,7 +77,7 @@ app.layout = html.Div(
         # Memory-scoped date range store (cleared on page refresh)
         dcc.Store(id="global-date-range", storage_type="memory"),
         html.H1(
-            f"The Git Miner: {data.get_repo_name()}",
+            f"The Git Miner: {repo_context.format_repository_display_name()}",
             style={"text-align": "center", "margin": "10px 0"},
         ),
         # Global period selector

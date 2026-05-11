@@ -10,7 +10,9 @@ from git import Repo
 
 
 def get_repo() -> Repo:
-    from data import get_repo as _get_repo  # local import to avoid cycles
+    from repository_context import (
+        get_repo as _get_repo,
+    )  # local import to avoid cycles
 
     return _get_repo()
 
@@ -31,12 +33,12 @@ def ensure_list(items: Iterable[T] | Sequence[T] | None) -> list[T]:
     return list(items)
 
 
-def tree_entry_size(repo: Repo, commitish, path: str) -> int:
+def tree_entry_size(repo: Repo, commit_ref, path: str) -> int:
     """Safely fetch the size of a tree entry for a path at a commit.
     Returns 0 if the path does not exist or cannot be read.
     """
     try:
-        entry = repo.commit(commitish).tree[path]
+        entry = repo.commit(commit_ref).tree[path]
         return getattr(entry, "size", 0) or 0
     except Exception:
         return 0
@@ -64,16 +66,20 @@ def get_commit_messages_for_file(
 
 
 def get_commits_for_file_pair(
-    repo: Repo, file1: str, file2: str, start_date, end_date
+    repo: Repo,
+    first_file_path: str,
+    second_file_path: str,
+    period_start,
+    period_end,
 ) -> list[dict[str, str]]:
     """Get commits that modified both files in a pairing during the specified period.
 
     Args:
         repo: Git repository object
-        file1: First file path
-        file2: Second file path
-        start_date: Start of date range
-        end_date: End of date range
+        first_file_path: First file path
+        second_file_path: Second file path
+        period_start: Start of date range
+        period_end: End of date range
 
     Returns:
         List of dicts with keys: hash, date, message
@@ -81,7 +87,7 @@ def get_commits_for_file_pair(
     commits = []
     for commit in repo.iter_commits():
         commit_date = commit.committed_datetime
-        if not (start_date <= commit_date <= end_date):
+        if not (period_start <= commit_date <= period_end):
             continue
 
         # Check if both files were modified in this commit
@@ -91,7 +97,10 @@ def get_commits_for_file_pair(
             else set()
         )
 
-        if file1 in modified_files and file2 in modified_files:
+        if (
+            first_file_path in modified_files
+            and second_file_path in modified_files
+        ):
             commits.append(
                 {
                     "hash": commit.hexsha[:7],

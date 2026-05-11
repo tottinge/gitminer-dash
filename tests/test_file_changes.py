@@ -15,23 +15,22 @@ from tests import setup_path
 setup_path()
 
 
-_SHAS = ["sha1", "sha2", "sha3", "sha4", "sha5"]
-_SHA_LIST_OUTPUT = "\n".join(_SHAS) + "\n"
+_COMMIT_SHAS = ["sha1", "sha2", "sha3", "sha4", "sha5"]
+_COMMIT_SHA_LIST_OUTPUT = "\n".join(_COMMIT_SHAS) + "\n"
 
-_REV_LIST_OUTPUT_BY_FILE = {
+_REV_LIST_OUTPUT_BY_FILE_PATH = {
     "nonexistent.py": "",
-    "file1.py": _SHA_LIST_OUTPUT,
-    "file2.py": _SHA_LIST_OUTPUT,
-    "file3.py": _SHA_LIST_OUTPUT,
+    "file1.py": _COMMIT_SHA_LIST_OUTPUT,
+    "file2.py": _COMMIT_SHA_LIST_OUTPUT,
+    "file3.py": _COMMIT_SHA_LIST_OUTPUT,
 }
 
-_SHOW_NUMSTAT_BY_FILE = {
+_NUMSTAT_OUTPUT_BY_FILE_PATH = {
     "file1.py": "5\t5\tfile1.py\n",  # 10 lines changed
     "file2.py": "10\t10\tfile2.py\n",  # 20 lines changed
     "file3.py": "15\t15\tfile3.py\n",  # 30 lines changed
 }
-
-_CAT_FILE_SIZE_BY_SHA = {
+_BLOB_SIZE_BY_COMMIT_SHA = {
     "sha5": "1000",
     "sha1": "1200",
 }
@@ -42,18 +41,20 @@ def _rev_list_side_effect(*args: str) -> str:
     target_file = args[-1]
     if target_file == "error.py":
         raise ValueError("File not found")
-    return _REV_LIST_OUTPUT_BY_FILE.get(target_file, _SHA_LIST_OUTPUT)
+    return _REV_LIST_OUTPUT_BY_FILE_PATH.get(
+        target_file, _COMMIT_SHA_LIST_OUTPUT
+    )
 
 
 def _show_side_effect(_sha: str, *args: str) -> str:
     target_file = args[-1]
-    return _SHOW_NUMSTAT_BY_FILE.get(target_file, "")
+    return _NUMSTAT_OUTPUT_BY_FILE_PATH.get(target_file, "")
 
 
 def _cat_file_side_effect(_flag: str, spec: str) -> str:
     # spec is: "<sha>:<path>"
     sha, _path = spec.split(":", 1)
-    return _CAT_FILE_SIZE_BY_SHA.get(sha, "1100")
+    return _BLOB_SIZE_BY_COMMIT_SHA.get(sha, "1100")
 
 
 @pytest.fixture
@@ -177,7 +178,7 @@ def test_file_changes_over_period_passes_each_sha_to_lines_changed(mock_repo):
     with (
         patch(
             "algorithms.file_changes._commits_touching_file",
-            return_value=_SHAS,
+            return_value=_COMMIT_SHAS,
         ),
         patch("algorithms.file_changes._lines_changed_in_commit") as mock_lines,
     ):
@@ -185,7 +186,7 @@ def test_file_changes_over_period_passes_each_sha_to_lines_changed(mock_repo):
         file_changes_over_period("file1.py", repo=mock_repo)
 
     called_shas = [call.args[1] for call in mock_lines.call_args_list]
-    assert called_shas == _SHAS
+    assert called_shas == _COMMIT_SHAS
 
 
 def test_file_changes_over_period_passes_correct_args_to_blob_size(mock_repo):
@@ -193,7 +194,7 @@ def test_file_changes_over_period_passes_correct_args_to_blob_size(mock_repo):
     with (
         patch(
             "algorithms.file_changes._commits_touching_file",
-            return_value=_SHAS,
+            return_value=_COMMIT_SHAS,
         ),
         patch("algorithms.file_changes._blob_size_at_commit") as mock_blob,
     ):
@@ -208,7 +209,10 @@ def test_file_changes_over_period_passes_correct_args_to_blob_size(mock_repo):
 
     assert repo1 is mock_repo
     assert repo2 is mock_repo
-    assert (oldest_sha, newest_sha) == (_SHAS[-1], _SHAS[0])
+    assert (oldest_sha, newest_sha) == (
+        _COMMIT_SHAS[-1],
+        _COMMIT_SHAS[0],
+    )
     assert path1 == path2 == "file1.py"
 
 
@@ -229,7 +233,7 @@ def test_file_changes_over_period_no_lines_changed_keeps_avg_at_zero(mock_repo):
         )
     )
 
-    assert commits == len(_SHAS)
+    assert commits == len(_COMMIT_SHAS)
     assert avg_changes == 0.0
 
 
@@ -240,7 +244,7 @@ def test_file_changes_over_period_zero_original_size_has_zero_percent_change(
 
     def zero_size_cat_file(_flag: str, spec: str) -> str:
         sha, _ = spec.split(":", 1)
-        if sha == _SHAS[-1]:  # oldest
+        if sha == _COMMIT_SHAS[-1]:  # oldest
             return "0"
         return "100"
 
@@ -263,9 +267,9 @@ def test_file_changes_over_period_small_original_size_computes_percent(
 
     def tiny_sizes_cat_file(_flag: str, spec: str) -> str:
         sha, _ = spec.split(":", 1)
-        if sha == _SHAS[-1]:  # oldest
+        if sha == _COMMIT_SHAS[-1]:  # oldest
             return "1"
-        if sha == _SHAS[0]:  # newest
+        if sha == _COMMIT_SHAS[0]:  # newest
             return "2"
         return "1"
 

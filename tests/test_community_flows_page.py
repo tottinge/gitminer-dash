@@ -29,7 +29,7 @@ def reveal_group_composition():
 
 
 @patch("pages.community_flows.create_file_affinity_network")
-@patch("pages.community_flows.data.commits_in_period")
+@patch("pages.community_flows.repo_context.commits_in_period")
 @patch("pages.community_flows.date_utils.parse_date_range_from_store")
 def test_populate_community_flow_sankey_returns_sankey_and_table(
     mock_parse_date_range,
@@ -117,7 +117,7 @@ def test_populate_community_flow_sankey_invalid_date_range(
 
 
 @patch("pages.community_flows.create_file_affinity_network")
-@patch("pages.community_flows.data.commits_in_period")
+@patch("pages.community_flows.repo_context.commits_in_period")
 @patch("pages.community_flows.date_utils.parse_date_range_from_store")
 def test_populate_community_flow_sankey_repository_path_error(
     mock_parse_date_range,

@@ -9,7 +9,7 @@ from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 
-import data
+import repository_context as repo_context
 from algorithms.affinity_network import create_file_affinity_network
 from algorithms.community_flow import (
     community_flow_rows,
@@ -343,7 +343,7 @@ def populate_community_flow_sankey(store_data, max_nodes, min_affinity):
         )
 
     try:
-        commits_data = data.commits_in_period(begin, end)
+        commits_data = repo_context.commits_in_period(begin, end)
         graph, _, graph_stats = create_file_affinity_network(
             commits=commits_data,
             min_affinity=float(min_affinity),

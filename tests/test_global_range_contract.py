@@ -15,7 +15,7 @@ STORE = {
 
 @pytest.fixture
 def capture_commits_call(monkeypatch):
-    import data
+    import repository_context as repo_context
 
     called = {}
 
@@ -24,8 +24,10 @@ def capture_commits_call(monkeypatch):
         called["end"] = end
         return []
 
-    monkeypatch.setattr(data, "commits_in_period", _capture)
-    monkeypatch.setattr(data, "get_repo", lambda: types.SimpleNamespace())
+    monkeypatch.setattr(repo_context, "commits_in_period", _capture)
+    monkeypatch.setattr(
+        repo_context, "get_repo", lambda: types.SimpleNamespace()
+    )
     return called
 
 

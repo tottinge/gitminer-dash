@@ -18,11 +18,11 @@ uv run black --check .
 
 echo ""
 echo "Running pylint duplicate code detection..."
-uv run pylint --disable=all --enable=duplicate-code algorithms pages utils visualization app.py data.py
+uv run pylint --disable=all --enable=duplicate-code algorithms pages utils visualization app.py repository_context.py
 
 echo ""
 echo "Running bandit security check..."
-uv run bandit -r algorithms pages utils visualization app.py data.py -x tests/,mutants/
+uv run bandit -r algorithms pages utils visualization app.py repository_context.py -x tests/,mutants/
 
 echo ""
 echo "Running secrets check..."

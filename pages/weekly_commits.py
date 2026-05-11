@@ -9,7 +9,7 @@ from dash import Input, Output, State, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 
-import data
+import repository_context as repo_context
 from algorithms.weekly_commits import (
     calculate_weekly_commits,
     extract_commit_details,
@@ -101,7 +101,7 @@ def populate_graph(store_data):
 
     begin, end = date_utils.parse_date_range_from_store(store_data)
 
-    commits_data = data.commits_in_period(begin, end)
+    commits_data = repo_context.commits_in_period(begin, end)
     weekly_data = calculate_weekly_commits(commits_data, begin, end)
 
     if not weekly_data["weeks"]:
@@ -155,7 +155,7 @@ def update_commit_details_table(click_data, store_data):
         return [], f"No commits found for week ending {clicked_x}"
 
     # Get the repository and extract commit details
-    repo = data.get_repo()
+    repo = repo_context.get_repo()
     table_data = []
     for commit_sha in week_info["commits"]:
         commit = repo.commit(commit_sha)

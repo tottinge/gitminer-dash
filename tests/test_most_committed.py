@@ -36,8 +36,8 @@ def mock_store_data():
     }
 
 
-@patch("pages.most_committed.data.commits_in_period")
-@patch("pages.most_committed.data.get_repo")
+@patch("pages.most_committed.repo_context.commits_in_period")
+@patch("pages.most_committed.repo_context.get_repo")
 @patch("pages.most_committed.calculate_file_commit_frequency")
 def test_no_data_message_displayed(
     mock_calc, mock_get_repo, mock_commits, mock_store_data, populate_graph
@@ -57,8 +57,8 @@ def test_no_data_message_displayed(
     assert style == {"display": "block"}
 
 
-@patch("pages.most_committed.data.commits_in_period")
-@patch("pages.most_committed.data.get_repo")
+@patch("pages.most_committed.repo_context.commits_in_period")
+@patch("pages.most_committed.repo_context.get_repo")
 @patch("pages.most_committed.calculate_file_commit_frequency")
 def test_dataframe_initialized_with_correct_columns_when_empty(
     mock_calc, mock_get_repo, mock_commits, mock_store_data, populate_graph
@@ -72,8 +72,8 @@ def test_dataframe_initialized_with_correct_columns_when_empty(
     assert len(table_data) == 0
 
 
-@patch("pages.most_committed.data.commits_in_period")
-@patch("pages.most_committed.data.get_repo")
+@patch("pages.most_committed.repo_context.commits_in_period")
+@patch("pages.most_committed.repo_context.get_repo")
 @patch("pages.most_committed.calculate_file_commit_frequency")
 def test_dataframe_columns_with_valid_data(
     mock_calc, mock_get_repo, mock_commits, mock_store_data, populate_graph

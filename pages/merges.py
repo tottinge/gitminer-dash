@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 from dash import Input, Output, callback, dcc, html, register_page
 
-import data
+import repository_context as repo_context
 from utils import date_utils
 
 register_page(__name__, title="Merge Sizes")
@@ -21,7 +21,7 @@ layout = html.Div(
 def prepare_dataframe(start_date, end_date):
     recent_merges = [
         commit
-        for commit in data.commits_in_period(start_date, end_date)
+        for commit in repo_context.commits_in_period(start_date, end_date)
         if len(commit.parents) > 1
     ]
     columns = ["hash", "date", "comment", "lines", "files"]

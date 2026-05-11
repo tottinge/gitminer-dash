@@ -83,7 +83,7 @@ class DummyCommitWithNameRev:
 
 @patch("pages.codelines.commits_to_chain_rows")
 @patch("pages.codelines.traverse_linear_chain")
-@patch("pages.codelines.data.get_repo")
+@patch("pages.codelines.repo_context.get_repo")
 def test_branch_for_commit_uses_refs_to_extract_branch(
     mock_get_repo, mock_traverse_linear_chain, mock_commits_to_chain_rows
 ):
@@ -119,7 +119,7 @@ def test_branch_for_commit_uses_refs_to_extract_branch(
 
 @patch("pages.codelines.commits_to_chain_rows")
 @patch("pages.codelines.traverse_linear_chain")
-@patch("pages.codelines.data.get_repo")
+@patch("pages.codelines.repo_context.get_repo")
 def test_branch_for_commit_uses_name_rev_when_refs_missing(
     mock_get_repo, mock_traverse_linear_chain, mock_commits_to_chain_rows
 ):

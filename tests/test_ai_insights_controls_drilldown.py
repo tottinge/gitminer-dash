@@ -107,7 +107,7 @@ def test_populate_insights_applies_score_and_path_filters(
 
     with (
         patch.object(
-            module.data,
+            module.repo_context,
             "get_repo",
             return_value=type("Repo", (), {"remotes": []})(),
         ),
@@ -169,7 +169,7 @@ def test_populate_insights_applies_top_n_limit(ai_insights_module, store_data):
 
     with (
         patch.object(
-            module.data,
+            module.repo_context,
             "get_repo",
             return_value=type("Repo", (), {"remotes": []})(),
         ),

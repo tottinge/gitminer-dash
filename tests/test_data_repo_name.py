@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-import data
+import repository_context as repo_context
 
 
 @pytest.mark.parametrize(
@@ -27,8 +27,6 @@ import data
         ("/home/user/repos/data.analysis/", "Data Analysis"),
     ],
 )
-def test_get_repo_name(input_path, expected_name):
-    data.get_repo_name.cache_clear()
-    data.get_repo.cache_clear()
+def test_format_repository_display_name(input_path, expected_name):
     with patch("sys.argv", ["script_name", input_path]):
-        assert data.get_repo_name() == expected_name
+        assert repo_context.format_repository_display_name() == expected_name

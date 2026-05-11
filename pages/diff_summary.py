@@ -2,7 +2,7 @@ import plotly
 import plotly.express as px
 from dash import Input, Output, callback, dcc, html, register_page
 
-import data
+import repository_context as repo_context
 from algorithms.diff_analysis import get_diffs_in_period
 from utils import date_utils
 from utils.logging_wrapper import log
@@ -59,7 +59,7 @@ def make_figure(diffs_in_period, start_date=None, end_date=None):
 )
 def update_graph(_, store_data):
     start, end = date_utils.parse_date_range_from_store(store_data)
-    commits_data = data.commits_in_period(start, end)
+    commits_data = repo_context.commits_in_period(start, end)
     diffs_in_period = get_diffs_in_period(commits_data, start, end)
     return make_figure(diffs_in_period, start, end)
 

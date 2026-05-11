@@ -1,7 +1,7 @@
 from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 
-import data
+import repository_context as repo_context
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_clamper import clamp_chains_to_period
 from algorithms.chain_layout import calculate_chain_layout
@@ -84,7 +84,7 @@ def update_code_lines_graph(_: int, store_data):
     start_date, end_date = date_utils.parse_date_range_from_store(store_data)
 
     # Build commit graph
-    commits = data.commits_in_period(start_date, end_date)
+    commits = repo_context.commits_in_period(start_date, end_date)
     graph = build_commit_graph(commits)
 
     # Analyze chains
@@ -163,7 +163,7 @@ def update_chain_commits_table(click_data):
     latest_sha = custom_data[1]
 
     # Resolve commits from the repository and traverse the linear chain.
-    repo = data.get_repo()
+    repo = repo_context.get_repo()
     latest_commit = repo.commit(latest_sha)
     chain_commits = traverse_linear_chain(latest_commit, earliest_sha)
 

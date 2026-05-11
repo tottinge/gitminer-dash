@@ -18,22 +18,24 @@ import plotly.graph_objects as go
 import pytest
 from dash import Dash
 
-import data
+import repository_context as repo_context
 
-# Pytest automatically loads conftest.py, so load_commits_data is available
-from tests.conftest import load_commits_data
+# Pytest automatically loads conftest.py, so helper loaders are available
+from tests.conftest import load_mock_commits_for_period
 
 app = Dash(__name__, suppress_callback_exceptions=True)
 
 
 def test_callback_with_mock_data(monkeypatch):
     """Test the affinity graph callback with mocked commit data."""
-    mock_commits = load_commits_data("last_6_months")
+    mock_commits = load_mock_commits_for_period("last_6_months")
 
     def mock_commits_in_period(*args, **kwargs):
         return mock_commits
 
-    monkeypatch.setattr(data, "commits_in_period", mock_commits_in_period)
+    monkeypatch.setattr(
+        repo_context, "commits_in_period", mock_commits_in_period
+    )
 
     from pages.affinity_groups import update_file_affinity_graph
 
@@ -72,7 +74,11 @@ def test_callback_without_repo_path(monkeypatch):
             "No repository path provided. Please run the application with a repository path as a command-line argument."
         )
 
-    monkeypatch.setattr(data, "commits_in_period", mock_commits_in_period_error)
+    monkeypatch.setattr(
+        repo_context,
+        "commits_in_period",
+        mock_commits_in_period_error,
+    )
 
     # Avoid global sys.argv mutations (order-dependent)
     monkeypatch.setattr(sys, "argv", ["app.py"])

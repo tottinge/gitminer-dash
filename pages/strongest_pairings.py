@@ -4,7 +4,7 @@ from dash import Input, Output, State, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from git import Commit
 
-import data
+import repository_context as repo_context
 from algorithms.affinity_calculator import calculate_affinities
 from utils import date_utils
 from utils.git import get_commits_for_file_pair
@@ -155,7 +155,7 @@ def handle_period_selection(store_data):
         starting, ending = date_utils.calculate_date_range(period)
 
     affinity_list = create_affinity_list(
-        data.commits_in_period(starting, ending)
+        repo_context.commits_in_period(starting, ending)
     )
     if not affinity_list:
         return [
@@ -208,7 +208,7 @@ def show_commit_details(active_cell, store_data, table_data):
         starting, ending = date_utils.calculate_date_range(period)
 
     # Get commits involving both files
-    repo = data.get_repo()
+    repo = repo_context.get_repo()
     commits = get_commits_for_file_pair(repo, file1, file2, starting, ending)
 
     # Create title and show container

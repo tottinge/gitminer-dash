@@ -347,7 +347,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
         with (
             patch("dash.register_page"),
-            patch("pages.weekly_commits.data.get_repo") as mock_repo,
+            patch("pages.weekly_commits.repo_context.get_repo") as mock_repo,
         ):
             mock_repo_obj = Mock()
             mock_repo_obj.commit.side_effect = lambda sha: {
@@ -470,7 +470,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
         with (
             patch("dash.register_page"),
-            patch("pages.weekly_commits.data.get_repo") as mock_repo,
+            patch("pages.weekly_commits.repo_context.get_repo") as mock_repo,
         ):
             mock_repo_obj = Mock()
             mock_repo_obj.commit.side_effect = lambda sha: {
@@ -554,7 +554,7 @@ class TestWeeklyCommitsCallback(unittest.TestCase):
 
         with (
             patch("dash.register_page"),
-            patch("pages.weekly_commits.data.get_repo") as mock_repo,
+            patch("pages.weekly_commits.repo_context.get_repo") as mock_repo,
         ):
             mock_repo_obj = Mock()
             mock_repo_obj.commit.side_effect = lambda sha: {

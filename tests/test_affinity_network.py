@@ -18,7 +18,11 @@ from pathlib import Path
 
 from git import Repo
 
-from tests.conftest import TEST_DATA_DIR, create_mock_commit, load_commits_json
+from tests.conftest import (
+    TEST_DATA_DIR,
+    build_mock_commit,
+    load_commit_records_json,
+)
 from utils import date_utils
 from visualization.network_graph import (
     create_file_affinity_network,
@@ -107,7 +111,9 @@ def analyze_affinity_network(commits, period, min_affinity=0.5, max_nodes=50):
         Dictionary with analysis results
     """
     if isinstance(commits[0], dict):
-        mock_commits = [create_mock_commit(commit) for commit in commits]
+        mock_commits = [
+            build_mock_commit(commit_record) for commit_record in commits
+        ]
         commits = mock_commits
     files_in_commits = set()
     for commit in commits:
@@ -199,7 +205,9 @@ def try_affinity_network_with_different_parameters(commits, period):
     """
     results = []
     if isinstance(commits[0], dict):
-        mock_commits = [create_mock_commit(commit) for commit in commits]
+        mock_commits = [
+            build_mock_commit(commit_record) for commit_record in commits
+        ]
     else:
         mock_commits = commits
     for min_affinity in [0.1, 0.2, 0.3, 0.4, 0.5]:
@@ -227,7 +235,7 @@ def main():
     repo_path = get_repository_path()
     all_results = []
     for period in TEST_PERIODS:
-        commits_data = load_commits_json(period)
+        commits_data = load_commit_records_json(period)
         if commits_data is None:
             try:
                 commits = get_commits_for_period(repo_path, period)
@@ -239,7 +247,8 @@ def main():
             all_results.append(result)
             if isinstance(commits[0], dict):
                 mock_commits = [
-                    create_mock_commit(commit) for commit in commits
+                    build_mock_commit(commit_record)
+                    for commit_record in commits
                 ]
                 (G, communities, _stats) = create_file_affinity_network(
                     mock_commits

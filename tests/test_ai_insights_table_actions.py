@@ -143,7 +143,9 @@ def test_populate_insights_includes_actionable_columns(ai_insights_module):
     )
 
     with (
-        patch.object(module.data, "get_repo", return_value=_Repo(remotes=[])),
+        patch.object(
+            module.repo_context, "get_repo", return_value=_Repo(remotes=[])
+        ),
         patch.object(
             module,
             "build_analysis_snapshot",
