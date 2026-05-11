@@ -11,7 +11,12 @@ import plotly.graph_objects as go
 from algorithms.affinity_network import AFFINITY_STATS_KEYS
 from visualization.common import create_empty_figure
 from visualization.network_graph import (
+    _build_network_figure,
+    _build_node_trace,
+    _build_weighted_edge_traces,
+    _collect_node_plot_data,
     _create_edge_traces,
+    _create_non_singleton_community_traces,
     create_file_affinity_network,
     create_network_visualization,
 )
@@ -566,6 +571,103 @@ class TestNetworkGraph(unittest.TestCase):
             message="No data available for the selected time period",
             title="Chosen Title",
         )
+
+    def test_build_network_figure_happy_path(self):
+        """Assembles edge and node traces into a titled figure."""
+        edge_trace = go.Scatter(x=[0, 1, None], y=[0, 1, None], mode="lines")
+        node_trace = go.Scatter(x=[0, 1], y=[0, 1], mode="markers")
+
+        fig = _build_network_figure(
+            edge_traces=[edge_trace],
+            node_traces=[node_trace],
+            title="Network Title",
+        )
+
+        assert len(fig.data) == 2
+        assert fig.layout.title.text == "Network Title"
+        assert fig.layout.showlegend is True
+        assert fig.layout.hovermode == "closest"
+
+    def test_collect_node_plot_data_happy_path(self):
+        """Collects node coordinates, tooltip text, and marker sizes."""
+        graph = nx.Graph()
+        graph.add_node("a.py", commit_count=4)
+        graph.add_node("b.py", commit_count=2)
+        graph.add_edge("a.py", "b.py")
+        positions = {"a.py": (0.0, 0.5), "b.py": (1.0, 1.5)}
+
+        node_x, node_y, node_text, node_size = _collect_node_plot_data(
+            G=graph,
+            pos=positions,
+            nodes=["a.py", "b.py"],
+        )
+
+        assert node_x == [0.0, 1.0]
+        assert node_y == [0.5, 1.5]
+        assert node_text == [
+            "File: a.py<br>Commits: 4<br>Connections: 1",
+            "File: b.py<br>Commits: 2<br>Connections: 1",
+        ]
+        assert node_size == [14.0, 13.0]
+
+    def test_create_non_singleton_community_traces_edge_cases(self):
+        """Skips singleton communities and returns traces for multi-node groups."""
+        graph = nx.Graph()
+        graph.add_node("a.py", community=0, commit_count=3)
+        graph.add_node("b.py", community=0, commit_count=1)
+        graph.add_node("c.py", community=1, commit_count=5)
+        graph.add_edge("a.py", "b.py")
+        positions = {
+            "a.py": (0.0, 0.0),
+            "b.py": (1.0, 0.0),
+            "c.py": (2.0, 0.0),
+        }
+
+        traces = _create_non_singleton_community_traces(
+            G=graph,
+            pos=positions,
+            community_ids={0, 1},
+            community_colors=["#111111", "#222222"],
+        )
+
+        assert len(traces) == 1
+        assert traces[0].name == "Group 1"
+        assert traces[0].marker.color == "#111111"
+        assert list(traces[0].x) == [0.0, 1.0]
+
+    def test_build_weighted_edge_traces_happy_path(self):
+        """Builds one trace per weighted segment with scaled widths."""
+        traces = _build_weighted_edge_traces(
+            edge_x=[0.0, 1.0, None, 1.0, 2.0, None],
+            edge_y=[0.0, 0.0, None, 0.0, 0.5, None],
+            edge_weights=[0.25, 0.5],
+            edge_texts=["a-b", "b-c"],
+            max_weight=0.5,
+        )
+
+        assert len(traces) == 2
+        assert traces[0].text == "a-b"
+        assert traces[1].text == "b-c"
+        assert round(traces[0].line.width, 2) == 5.0
+        assert round(traces[1].line.width, 2) == 8.0
+
+    def test_build_node_trace_happy_path(self):
+        """Builds a marker trace preserving coordinates, labels, and style."""
+        trace = _build_node_trace(
+            node_x=[0.0, 1.0],
+            node_y=[1.0, 2.0],
+            node_text=["node-a", "node-b"],
+            node_size=[12.0, 18.0],
+            color="#abcdef",
+            name="Group X",
+        )
+
+        assert list(trace.x) == [0.0, 1.0]
+        assert list(trace.y) == [1.0, 2.0]
+        assert list(trace.text) == ["node-a", "node-b"]
+        assert list(trace.marker.size) == [12.0, 18.0]
+        assert trace.marker.color == "#abcdef"
+        assert trace.name == "Group X"
 
 
 if __name__ == "__main__":

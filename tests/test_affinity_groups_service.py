@@ -7,11 +7,13 @@ import networkx as nx
 import pytest
 
 from pages.affinity_groups_service import (
+    build_affinity_graph_output,
     build_graph_data_store,
     extract_clicked_node_name,
     files_in_clicked_community,
     generate_affinity_graph_result,
     generate_node_details_rows,
+    get_or_compute_affinities,
 )
 
 
@@ -423,3 +425,137 @@ def test_generate_node_details_rows_happy_path():
     get_commits_for_group_files_fn.assert_called_once_with(
         commits_in_period, group_files
     )
+
+
+def test_build_affinity_graph_output_happy_path():
+    """Build output should wire create-network and create-visualization calls."""
+    graph = nx.Graph()
+    graph.add_node("src/a.py", community=0, commit_count=4)
+    graph.add_node("src/b.py", community=0, commit_count=2)
+    graph.add_edge("src/a.py", "src/b.py")
+    communities = [{"src/a.py", "src/b.py"}]
+
+    create_network_fn = Mock(return_value=(graph, communities, {"stats": 1}))
+    expected_figure = object()
+    create_visualization_fn = Mock(return_value=expected_figure)
+    affinities = {("src/a.py", "src/b.py"): 0.6}
+    commits_data = ["c1", "c2"]
+
+    figure, graph_data = build_affinity_graph_output(
+        commits_data=commits_data,
+        min_affinity=0.2,
+        max_nodes=25,
+        affinities=affinities,
+        create_network_fn=create_network_fn,
+        create_visualization_fn=create_visualization_fn,
+    )
+
+    assert figure is expected_figure
+    assert set(graph_data.keys()) == {"nodes", "communities"}
+    assert set(graph_data["nodes"].keys()) == {"src/a.py", "src/b.py"}
+    create_network_fn.assert_called_once_with(
+        commits_data,
+        min_affinity=0.2,
+        max_nodes=25,
+        precomputed_affinities=affinities,
+    )
+    create_visualization_fn.assert_called_once_with(graph, communities)
+
+
+def test_build_affinity_graph_output_edge_cases():
+    """Empty graph still returns valid serialized graph structure."""
+    graph = nx.Graph()
+    create_network_fn = Mock(return_value=(graph, [], {}))
+    expected_figure = object()
+    create_visualization_fn = Mock(return_value=expected_figure)
+
+    figure, graph_data = build_affinity_graph_output(
+        commits_data=[],
+        min_affinity=0.5,
+        max_nodes=10,
+        affinities={},
+        create_network_fn=create_network_fn,
+        create_visualization_fn=create_visualization_fn,
+    )
+
+    assert figure is expected_figure
+    assert graph_data == {"nodes": {}, "communities": {}}
+
+
+def test_build_affinity_graph_output_invalid_input():
+    """Exceptions from collaborators are not swallowed."""
+    create_network_fn = Mock(side_effect=RuntimeError("network failed"))
+    create_visualization_fn = Mock()
+
+    with pytest.raises(RuntimeError, match="network failed"):
+        build_affinity_graph_output(
+            commits_data=["c1"],
+            min_affinity=0.1,
+            max_nodes=5,
+            affinities={("a.py", "b.py"): 0.4},
+            create_network_fn=create_network_fn,
+            create_visualization_fn=create_visualization_fn,
+        )
+
+    create_visualization_fn.assert_not_called()
+
+
+def test_get_or_compute_affinities_happy_path():
+    """Returns cached affinities when cache key already exists."""
+    starting = datetime(2026, 5, 1, tzinfo=timezone.utc)
+    ending = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    cached_affinities = {("a.py", "b.py"): 0.8}
+    cache = {(starting.isoformat(), ending.isoformat()): cached_affinities}
+    calculate_affinities_fn = Mock()
+
+    result = get_or_compute_affinities(
+        cache=cache,
+        starting=starting,
+        ending=ending,
+        commits_data=["commit-1"],
+        calculate_affinities_fn=calculate_affinities_fn,
+    )
+
+    assert result is cached_affinities
+    calculate_affinities_fn.assert_not_called()
+
+
+def test_get_or_compute_affinities_edge_cases():
+    """Computes and caches affinities on miss, including empty commit input."""
+    starting = datetime(2026, 6, 1, tzinfo=timezone.utc)
+    ending = datetime(2026, 6, 7, tzinfo=timezone.utc)
+    cache: dict[tuple[str, str], dict[tuple[str, str], float]] = {}
+    computed_affinities = {("a.py", "c.py"): 0.42}
+    calculate_affinities_fn = Mock(return_value=computed_affinities)
+
+    result = get_or_compute_affinities(
+        cache=cache,
+        starting=starting,
+        ending=ending,
+        commits_data=[],
+        calculate_affinities_fn=calculate_affinities_fn,
+    )
+
+    cache_key = (starting.isoformat(), ending.isoformat())
+    assert result == computed_affinities
+    assert cache[cache_key] == computed_affinities
+    calculate_affinities_fn.assert_called_once_with([])
+
+
+def test_get_or_compute_affinities_invalid_input():
+    """Propagates calculator errors and does not write failed cache entries."""
+    starting = datetime(2026, 7, 1, tzinfo=timezone.utc)
+    ending = datetime(2026, 7, 2, tzinfo=timezone.utc)
+    cache: dict[tuple[str, str], dict[tuple[str, str], float]] = {}
+    calculate_affinities_fn = Mock(side_effect=RuntimeError("calc failed"))
+
+    with pytest.raises(RuntimeError, match="calc failed"):
+        get_or_compute_affinities(
+            cache=cache,
+            starting=starting,
+            ending=ending,
+            commits_data=["commit-x"],
+            calculate_affinities_fn=calculate_affinities_fn,
+        )
+
+    assert cache == {}
