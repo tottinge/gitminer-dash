@@ -14,8 +14,8 @@ if [ -d .mutmut-cache ]; then
     rm -rf .mutmut-cache
 fi
 
-# Run mutmut (config from pyproject.toml)
-uv run mutmut run
+# Run mutmut (config from pyproject.toml) through the safe wrapper.
+uv run python scripts/mutmut_safe_run.py
 
 echo ""
 echo "Mutation testing complete!"

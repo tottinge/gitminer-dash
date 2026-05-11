@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Mutation status summary"
+echo "======================="
+/Users/timottinger/Projects/gitminer-dash/scripts/mutant_discover
+
+echo
+echo "Priority ranking (code_None,no_tests,survived,timeout,crash)"
+echo "============================================================="
+/Users/timottinger/Projects/gitminer-dash/scripts/mutant_rank --statuses code_None,no_tests,survived,timeout,crash --top 10
