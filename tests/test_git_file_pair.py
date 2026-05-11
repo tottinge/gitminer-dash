@@ -84,6 +84,73 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         self.assertEqual("def456g", result[0]["hash"])
         self.assertEqual("in range", result[0]["message"])
 
+    def test_commit_date_equal_to_period_start_is_included(self):
+        """Commit exactly at period start should be included."""
+        start = datetime(2025, 6, 1, 0, 0)
+        end = datetime(2025, 7, 31, 23, 59)
+        commit = create_mock_commit_with_diffs(
+            hexsha="start01abcdef",
+            message="boundary start",
+            date=start,
+            modified_files=["file1.py", "file2.py"],
+        )
+        repo = Mock()
+        repo.iter_commits = Mock(return_value=[commit])
+
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
+
+        self.assertEqual(1, len(result))
+        self.assertEqual("start01", result[0]["hash"])
+        self.assertEqual("boundary start", result[0]["message"])
+
+    def test_commit_date_equal_to_period_end_is_included(self):
+        """Commit exactly at period end should be included."""
+        start = datetime(2025, 6, 1, 0, 0)
+        end = datetime(2025, 7, 31, 23, 59)
+        commit = create_mock_commit_with_diffs(
+            hexsha="end01abcdef12",
+            message="boundary end",
+            date=end,
+            modified_files=["file1.py", "file2.py"],
+        )
+        repo = Mock()
+        repo.iter_commits = Mock(return_value=[commit])
+
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
+
+        self.assertEqual(1, len(result))
+        self.assertEqual("end01ab", result[0]["hash"])
+        self.assertEqual("boundary end", result[0]["message"])
+
+    def test_commit_outside_period_is_excluded(self):
+        """Commit outside the period should not be included."""
+        start = datetime(2025, 6, 1, 0, 0)
+        end = datetime(2025, 7, 31, 23, 59)
+        before_start = create_mock_commit_with_diffs(
+            hexsha="before01abcde",
+            message="before start",
+            date=datetime(2025, 5, 31, 23, 59),
+            modified_files=["file1.py", "file2.py"],
+        )
+        after_end = create_mock_commit_with_diffs(
+            hexsha="after01abcdef",
+            message="after end",
+            date=datetime(2025, 8, 1, 0, 0),
+            modified_files=["file1.py", "file2.py"],
+        )
+        repo = Mock()
+        repo.iter_commits = Mock(return_value=[before_start, after_end])
+
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
+
+        self.assertEqual([], result)
+
     def test_message_truncation(self):
         """Test that long commit messages are truncated."""
         start = datetime(2025, 1, 1)
