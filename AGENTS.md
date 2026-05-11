@@ -101,6 +101,7 @@ Write and maintain micro/unit tests so they are:
 
 ## 6) Mutation-analysis helpers (`scripts/mutant*`)
 - Prefer `scripts/mutant_*` helpers over ad-hoc parsing of `*.py.meta` and `mutmut-stats.json`.
+- When renaming files, also update related documentation and mutation-testing configuration/references in the same change.
 - Mutation-analysis workflow:
   1. Run `./mutate` to refresh artifacts.
   2. Run `./scripts/mutant_discover` for inventory/status counts.

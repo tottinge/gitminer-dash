@@ -68,7 +68,7 @@ norecursedirs = ["mutants", ".git", ".pytest_cache", "__pycache__", "*.egg-info"
 
 [tool.mutmut]
 paths_to_mutate = ["algorithms/", "pages/", "visualization/", "utils/"]
-also_copy = ["data.py", "config.py", "app.py", "insights/"]
+also_copy = ["repository_context.py", "config.py", "app.py", "insights/"]
 runner = "PYTHONPATH=.. uv run pytest --ignore=tests/test_mutants_for.py -m \"not scripts\""
 tests_dir = ["tests/"]
 
