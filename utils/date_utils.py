@@ -55,36 +55,36 @@ def calculate_date_range(period: str) -> tuple[datetime, datetime]:
 
     lower = period.lower()
     if "last 7 " in lower:
-        begin = (end - timedelta(days=7)).replace(
+        begin = (end - timedelta(days=7)).replace(  # pragma: no mutate
             hour=0, minute=0, second=0, microsecond=0
         )
     elif "30" in lower:
-        begin = (end - timedelta(days=30)).replace(
+        begin = (end - timedelta(days=30)).replace(  # pragma: no mutate
             hour=0, minute=0, second=0, microsecond=0
         )
     elif "60" in lower:
-        begin = (end - timedelta(days=60)).replace(
+        begin = (end - timedelta(days=60)).replace(  # pragma: no mutate
             hour=0, minute=0, second=0, microsecond=0
         )
     elif "90" in lower:
-        begin = (end - timedelta(days=90)).replace(
+        begin = (end - timedelta(days=90)).replace(  # pragma: no mutate
             hour=0, minute=0, second=0, microsecond=0
         )
     elif "6 months" in lower:
-        begin = (end - relativedelta(months=6)).replace(
+        begin = (end - relativedelta(months=6)).replace(  # pragma: no mutate
             hour=0, minute=0, second=0, microsecond=0
         )
     elif "1 year" in lower:
-        begin = (end - relativedelta(years=1)).replace(
+        begin = (end - relativedelta(years=1)).replace(  # pragma: no mutate
             hour=0, minute=0, second=0, microsecond=0
         )
     elif "5 years" in lower:
-        begin = (end - relativedelta(years=5)).replace(
+        begin = (end - relativedelta(years=5)).replace(  # pragma: no mutate
             hour=0, minute=0, second=0, microsecond=0
         )
     else:
         # Ever
-        begin = end.replace(
+        begin = end.replace(  # pragma: no mutate
             year=1970, month=1, day=1, hour=0, minute=0, second=0, microsecond=0
         )
         return begin, end

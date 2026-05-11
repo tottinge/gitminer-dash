@@ -171,6 +171,140 @@ def test_calculate_date_range_default_empty(mock_datetime):
     assert (end.date() - begin.date()).days == 30
 
 
+@pytest.mark.parametrize(
+    "period_label",
+    [
+        "Last 7 days",
+        "Last 30 days",
+        "Last 60 days",
+        "Last 90 days",
+        "Last 6 Months",
+        "Last 1 Year",
+        "Last 5 Years",
+        "Ever",
+    ],
+)
+def test_calculate_date_range_clears_microseconds(monkeypatch, period_label):
+    """Begin/end normalization should clear source microseconds."""
+
+    class MockDatetime:
+
+        @classmethod
+        def today(cls):
+            return datetime(2025, 10, 22, 17, 0, 0, 123456)
+
+        @staticmethod
+        def astimezone(dt):
+            return dt
+
+    monkeypatch.setattr(date_utils, "datetime", MockDatetime)
+
+    begin, end = date_utils.calculate_date_range(period_label)
+
+    assert begin.microsecond == 0
+    assert end.microsecond == 0
+
+
+def test_parse_date_range_from_store_uses_period_from_store(monkeypatch):
+    """Stored period value is forwarded to calculate_date_range."""
+    expected_begin = datetime(2025, 10, 1, 0, 0, 0)
+    expected_end = datetime(2025, 10, 31, 23, 59, 59)
+    captured_periods = []
+
+    def fake_calculate(period):
+        captured_periods.append(period)
+        return expected_begin, expected_end
+
+    monkeypatch.setattr(
+        date_utils,
+        "calculate_date_range",
+        fake_calculate,
+    )
+    begin, end = date_utils.parse_date_range_from_store(
+        {"period": "Last 7 days"}
+    )
+    assert begin == expected_begin
+    assert end == expected_end
+    assert captured_periods == ["Last 7 days"]
+
+
+def test_parse_date_range_from_store_defaults_period_when_missing(monkeypatch):
+    """Missing period key should fall back to DEFAULT_PERIOD."""
+    captured_periods = []
+    expected_begin = datetime(2025, 10, 1, 0, 0, 0)
+    expected_end = datetime(2025, 10, 31, 23, 59, 59)
+
+    def fake_calculate(period):
+        captured_periods.append(period)
+        return expected_begin, expected_end
+
+    monkeypatch.setattr(date_utils, "calculate_date_range", fake_calculate)
+    begin, end = date_utils.parse_date_range_from_store({})
+
+    assert begin == expected_begin
+    assert end == expected_end
+    assert captured_periods == [date_utils.DEFAULT_PERIOD]
+
+
+def test_parse_date_range_from_store_defaults_for_non_dict(monkeypatch):
+    """Non-dict store_data should use DEFAULT_PERIOD."""
+    captured_periods = []
+    expected_begin = datetime(2025, 10, 1, 0, 0, 0)
+    expected_end = datetime(2025, 10, 31, 23, 59, 59)
+
+    def fake_calculate(period):
+        captured_periods.append(period)
+        return expected_begin, expected_end
+
+    monkeypatch.setattr(date_utils, "calculate_date_range", fake_calculate)
+    begin, end = date_utils.parse_date_range_from_store(None)
+
+    assert begin == expected_begin
+    assert end == expected_end
+    assert captured_periods == [date_utils.DEFAULT_PERIOD]
+
+
+def test_parse_date_range_from_store_uses_explicit_begin_end(monkeypatch):
+    """Explicit begin/end values should bypass calculate_date_range."""
+    explicit_begin = "2024-01-01T00:00:00+00:00"
+    explicit_end = "2024-01-31T23:59:59+00:00"
+    called = False
+
+    def fake_calculate(_):
+        nonlocal called
+        called = True
+        return datetime(2025, 1, 1), datetime(2025, 1, 31)
+
+    monkeypatch.setattr(date_utils, "calculate_date_range", fake_calculate)
+    begin, end = date_utils.parse_date_range_from_store(
+        {"period": "Last 7 days", "begin": explicit_begin, "end": explicit_end}
+    )
+
+    assert begin == datetime.fromisoformat(explicit_begin)
+    assert end == datetime.fromisoformat(explicit_end)
+    assert called is False
+
+
+def test_parse_date_range_from_store_requires_both_begin_and_end(monkeypatch):
+    """Missing either begin or end should use period-based calculation."""
+    captured_periods = []
+    expected_begin = datetime(2025, 10, 1, 0, 0, 0)
+    expected_end = datetime(2025, 10, 31, 23, 59, 59)
+
+    def fake_calculate(period):
+        captured_periods.append(period)
+        return expected_begin, expected_end
+
+    monkeypatch.setattr(date_utils, "calculate_date_range", fake_calculate)
+    begin, end = date_utils.parse_date_range_from_store(
+        {"period": "Last 7 days", "begin": "2024-01-01T00:00:00+00:00"}
+    )
+
+    assert begin == expected_begin
+    assert end == expected_end
+    assert captured_periods == ["Last 7 days"]
+
+
 if __name__ == "__main__":
     import doctest
 
