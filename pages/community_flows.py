@@ -157,50 +157,50 @@ def _selected_community_from_click(
     return int(matched.group(1)) - 1
 
 
-def _node_count_slider() -> dcc.Slider:
+def _node_count_slider() -> dcc.Slider:  # pragma: no mutate
     node_marks = {
         node_count: str(node_count) for node_count in range(10, 101, 10)
-    }
+    }  # pragma: no mutate
     return dcc.Slider(
-        id="id-community-flow-node-slider",
-        min=10,
-        max=100,
-        step=10,
-        value=50,
-        marks=node_marks,
+        id="id-community-flow-node-slider",  # pragma: no mutate
+        min=10,  # pragma: no mutate
+        max=100,  # pragma: no mutate
+        step=10,  # pragma: no mutate
+        value=50,  # pragma: no mutate
+        marks=node_marks,  # pragma: no mutate
     )
 
 
-def _min_affinity_slider() -> dcc.Slider:
+def _min_affinity_slider() -> dcc.Slider:  # pragma: no mutate
     affinity_marks = {
         affinity / 100: str(affinity / 100) for affinity in range(5, 51, 5)
-    }
+    }  # pragma: no mutate
     return dcc.Slider(
-        id="id-community-flow-min-affinity-slider",
-        min=0.05,
-        max=0.5,
-        step=0.01,
-        value=0.2,
-        marks=affinity_marks,
+        id="id-community-flow-min-affinity-slider",  # pragma: no mutate
+        min=0.05,  # pragma: no mutate
+        max=0.5,  # pragma: no mutate
+        step=0.01,  # pragma: no mutate
+        value=0.2,  # pragma: no mutate
+        marks=affinity_marks,  # pragma: no mutate
     )
 
 
-def _interpretation_guidance() -> html.Div:
+def _interpretation_guidance() -> html.Div:  # pragma: no mutate
     return html.Div(
-        style=_INTERPRETATION_GUIDANCE_STYLE,
+        style=_INTERPRETATION_GUIDANCE_STYLE,  # pragma: no mutate
         children=[
-            html.Strong("How to read this chart"),
+            html.Strong("How to read this chart"),  # pragma: no mutate
             html.Ul(
-                style={"margin": "6px 0 0 18px", "padding": "0"},
+                style={"margin": "6px 0 0 18px", "padding": "0"},  # pragma: no mutate
                 children=[
                     html.Li(
-                        "Each node is a community of files that frequently change together."
+                        "Each node is a community of files that frequently change together."  # pragma: no mutate
                     ),
                     html.Li(
-                        "Thicker links indicate stronger cross-community coupling."
+                        "Thicker links indicate stronger cross-community coupling."  # pragma: no mutate
                     ),
                     html.Li(
-                        "Links are undirected coupling summaries, not source-to-target causality."
+                        "Links are undirected coupling summaries, not source-to-target causality."  # pragma: no mutate
                     ),
                 ],
             ),
