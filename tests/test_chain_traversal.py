@@ -226,6 +226,62 @@ def test_commits_to_chain_rows_includes_branch_when_given_getter():
     assert row["branch"] == "main"
 
 
+def test_commits_to_chain_rows_passes_commit_to_branch_getter():
+    commit = make_commit("abcdef123456")
+
+    def branch_getter(candidate):
+        return "unexpected-none" if candidate is None else candidate.hexsha
+
+    [row] = commits_to_chain_rows([commit], branch_getter=branch_getter)
+
+    assert row["branch"] == "abcdef123456"
+
+
+def test_commits_to_chain_rows_defaults_empty_for_missing_optional_fields():
+    commit = make_commit("abcdef123456")
+    commit.hexsha = None
+    commit.message = None
+    commit.author = None
+
+    [row] = commits_to_chain_rows([commit])
+
+    assert row["hash"] == ""
+    assert row["author"] == ""
+    assert row["message"] == ""
+
+
+def test_commits_to_chain_rows_defaults_empty_for_author_without_name():
+    commit = make_commit("abcdef123456")
+    commit.author = object()
+
+    [row] = commits_to_chain_rows([commit])
+
+    assert row["author"] == ""
+
+
+def test_commits_to_chain_rows_defaults_empty_when_author_missing():
+    class CommitWithoutAuthor:
+        def __init__(self):
+            self.hexsha = "abcdef123456"
+            self.committed_datetime = datetime(
+                2024, 1, 1, 15, 30, tzinfo=timezone.utc
+            )
+            self.message = "Commit message"
+
+    [row] = commits_to_chain_rows([CommitWithoutAuthor()])
+
+    assert row["author"] == ""
+
+
+def test_commits_to_chain_rows_uses_first_message_line_only():
+    commit = make_commit("abcdef123456")
+    commit.message = "first line\nsecond line\nthird line"
+
+    [row] = commits_to_chain_rows([commit])
+
+    assert row["message"] == "first line"
+
+
 def test_commits_to_chain_rows_truncates_long_message():
     long_msg = "X" * 200
     commit = make_commit("c1")
