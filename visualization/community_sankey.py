@@ -12,6 +12,29 @@ def _community_label(community: int, community_sizes: dict[int, int]) -> str:
     return f"Community {community + 1} ({size} files)"  # pragma: no mutate
 
 
+def _sankey_arrangement() -> str:
+    """Return cosmetic arrangement mode for sankey rendering."""
+    return "snap"  # pragma: no mutate
+
+
+def _sankey_node_style() -> dict[str, object]:
+    """Return cosmetic node style for community sankey diagrams."""
+    return {
+        "pad": 18,  # pragma: no mutate
+        "thickness": 20,  # pragma: no mutate
+        "line": dict(color="black", width=0.4),  # pragma: no mutate
+    }
+
+
+def _sankey_layout_style(title: str) -> dict[str, object]:
+    """Return cosmetic layout style for community sankey diagrams."""
+    return {
+        "title": title,  # pragma: no mutate
+        "font_size": 12,  # pragma: no mutate
+        "margin": dict(l=10, r=10, t=50, b=10),  # pragma: no mutate
+    }
+
+
 def create_community_flow_sankey(
     flow_rows: list[dict[str, float | int]],
     community_sizes: dict[int, int],
@@ -54,16 +77,15 @@ def create_community_flow_sankey(
         )
         for row in flow_rows
     ]
+    sankey_node_style = _sankey_node_style()
 
     figure = go.Figure(
         data=[
             go.Sankey(
-                arrangement="snap",  # pragma: no mutate
+                arrangement=_sankey_arrangement(),  # pragma: no mutate
                 node=dict(
-                    pad=18,  # pragma: no mutate
-                    thickness=20,  # pragma: no mutate
-                    line=dict(color="black", width=0.4),  # pragma: no mutate
                     label=community_labels,
+                    **sankey_node_style,  # pragma: no mutate
                 ),
                 link=dict(
                     source=link_source,
@@ -81,9 +103,5 @@ def create_community_flow_sankey(
             )
         ]
     )
-    figure.update_layout(
-        title=title,  # pragma: no mutate
-        font_size=12,  # pragma: no mutate
-        margin=dict(l=10, r=10, t=50, b=10),  # pragma: no mutate
-    )
+    figure.update_layout(**_sankey_layout_style(title))  # pragma: no mutate
     return figure

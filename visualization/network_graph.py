@@ -70,6 +70,31 @@ def create_network_visualization(
     )
 
 
+def _community_trace_style(color: str, community_id: int) -> dict[str, str]:
+    """Return cosmetic style attributes for a community trace."""
+    return {
+        "color": color,  # pragma: no mutate
+        # Community legend label is cosmetic; exclude from mutation testing.
+        "name": f"Group {community_id + 1}",  # pragma: no mutate
+    }
+
+
+def _node_trace_style(
+    color: str, node_size: list[float], name: str
+) -> dict[str, object]:
+    """Return cosmetic styling kwargs for node traces."""
+    return {
+        "mode": "markers",  # pragma: no mutate
+        "hoverinfo": "text",  # pragma: no mutate
+        "marker": {
+            "color": color,  # pragma: no mutate
+            "size": node_size,
+            "line": dict(width=1, color="#333"),  # pragma: no mutate
+        },
+        "name": name,  # pragma: no mutate
+    }
+
+
 def _compute_layout_positions(G: nx.Graph) -> dict[str, tuple[float, float]]:
     """Compute deterministic node positions for visualization layout."""
     # Use force-directed layout with tuned iterations.
@@ -217,15 +242,23 @@ def _build_edge_trace(
     text: str,
 ) -> go.Scatter:
     """Build a single edge trace segment for the network figure."""
+    edge_trace_style = _edge_trace_style(width=width)
     return go.Scatter(
         x=edge_x,
         y=edge_y,
-        line=dict(width=width, color="#888"),  # pragma: no mutate
-        hoverinfo="text",  # pragma: no mutate
-        text=text,  # pragma: no mutate
-        mode="lines",  # pragma: no mutate
-        showlegend=False,  # pragma: no mutate
+        text=text,
+        **edge_trace_style,
     )
+
+
+def _edge_trace_style(width: float) -> dict[str, object]:
+    """Return cosmetic styling kwargs for edge traces."""
+    return {
+        "line": dict(width=width, color="#888"),  # pragma: no mutate
+        "hoverinfo": "text",  # pragma: no mutate
+        "mode": "lines",  # pragma: no mutate
+        "showlegend": False,  # pragma: no mutate
+    }
 
 
 def _create_node_traces(
@@ -252,9 +285,7 @@ def _create_node_traces(
 
     # If no communities but nodes exist, create single community
     if not community_ids and len(G.nodes()) > 0:
-        node_trace = _create_single_community_trace(
-            G, pos, _community_color(0, community_colors)
-        )
+        node_trace = _create_single_community_trace(G, pos)
         node_traces.append(node_trace)
     else:
         node_traces.extend(
@@ -342,37 +373,40 @@ def _build_node_trace(
     name: str,
 ) -> go.Scatter:
     """Build a node marker trace for a community or full graph view."""
+    node_trace_style = _node_trace_style(
+        color=color, node_size=node_size, name=name
+    )
     return go.Scatter(
         x=node_x,
         y=node_y,
-        mode="markers",  # pragma: no mutate
-        hoverinfo="text",  # pragma: no mutate
-        text=node_text,  # pragma: no mutate
-        marker=dict(
-            color=color,  # pragma: no mutate
-            size=node_size,  # pragma: no mutate
-            line=dict(width=1, color="#333"),  # pragma: no mutate
-        ),
-        name=name,  # pragma: no mutate
+        text=node_text,
+        **node_trace_style,
     )
 
 
-def _create_single_community_trace(
-    G: nx.Graph, pos: dict, color: str
-) -> go.Scatter:
+def _create_single_community_trace(G: nx.Graph, pos: dict) -> go.Scatter:
     """Create a trace for all nodes in a single color."""
     node_x, node_y, node_text, node_size = _collect_node_plot_data(
         G=G, pos=pos, nodes=list(G.nodes())
     )
+    trace_style = _single_community_trace_style()
     return _build_node_trace(
         node_x=node_x,
         node_y=node_y,
         node_text=node_text,
         node_size=node_size,
-        color=color,
-        # Legend label is cosmetic; exclude from mutation testing.
-        name="All Files",  # pragma: no mutate
+        **trace_style,
     )
+
+
+def _single_community_trace_style() -> dict[str, str]:
+    """Return cosmetic style attributes for the singleton community trace."""
+    return {
+        "color": _community_color(
+            0, px.colors.qualitative.D3
+        ),  # pragma: no mutate
+        "name": "All Files",  # pragma: no mutate
+    }
 
 
 def _create_community_trace(
@@ -382,12 +416,11 @@ def _create_community_trace(
     node_x, node_y, node_text, node_size = _collect_node_plot_data(
         G=G, pos=pos, nodes=community_nodes
     )
+    trace_style = _community_trace_style(color=color, community_id=community_id)
     return _build_node_trace(
         node_x=node_x,
         node_y=node_y,
         node_text=node_text,
         node_size=node_size,
-        color=color,
-        # Community legend label is cosmetic; exclude from mutation testing.
-        name=f"Group {community_id + 1}",  # pragma: no mutate
+        **trace_style,
     )
