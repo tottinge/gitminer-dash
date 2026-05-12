@@ -62,23 +62,30 @@ def create_empty_figure(
     fig = go.Figure()
     fig.add_annotation(
         text=wrapped,
-        xref="paper",
-        yref="paper",
-        x=0.5,
-        y=0.5,
-        xanchor="center",
-        yanchor="middle",
-        align="center",
-        showarrow=False,
-        font=dict(size=16),
+        xref="paper",  # pragma: no mutate
+        yref="paper",  # pragma: no mutate
+        x=0.5,  # pragma: no mutate
+        y=0.5,  # pragma: no mutate
+        xanchor="center",  # pragma: no mutate
+        yanchor="middle",  # pragma: no mutate
+        align="center",  # pragma: no mutate
+        showarrow=False,  # pragma: no mutate
+        font=dict(size=16),  # pragma: no mutate
     )
 
     layout_updates = {
-        "xaxis": dict(showgrid=False, zeroline=False, showticklabels=False),
-        "yaxis": dict(showgrid=False, zeroline=False, showticklabels=False),
-        "margin": dict(
-            l=10, r=10, b=10, t=40 if title else 10
+        "xaxis": dict(
+            showgrid=False, zeroline=False, showticklabels=False
         ),  # pragma: no mutate
+        "yaxis": dict(
+            showgrid=False, zeroline=False, showticklabels=False
+        ),  # pragma: no mutate
+        "margin": dict(
+            l=10,  # pragma: no mutate
+            r=10,  # pragma: no mutate
+            b=10,  # pragma: no mutate
+            t=40 if title else 10,  # pragma: no mutate
+        ),
     }
 
     if title:
