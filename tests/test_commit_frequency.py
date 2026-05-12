@@ -6,7 +6,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from algorithms.commit_frequency import calculate_file_commit_frequency
+from algorithms.commit_frequency import (
+    calculate_file_commit_frequency,
+    count_file_commits,
+)
 from algorithms.file_changes import FileChangeStats
 from tests import setup_path
 
@@ -646,6 +649,47 @@ def test_calculate_file_commit_frequency_reraises_value_error():
         )
 
     mock_changes.assert_not_called()
+
+
+def test_count_file_commits_logs_with_module_logger_and_message():
+    bad_commit = MagicMock()
+    files = MagicMock()
+    files.keys.side_effect = ValueError("bad stats")
+    bad_commit.stats.files = files
+    logger = MagicMock()
+
+    with (
+        pytest.raises(ValueError, match="bad stats"),
+        patch(
+            "algorithms.commit_frequency.logging.getLogger"
+        ) as mock_get_logger,
+    ):
+        mock_get_logger.return_value = logger
+        count_file_commits([bad_commit])
+
+    mock_get_logger.assert_called_once_with("algorithms.commit_frequency")
+    logger.exception.assert_called_once_with("Error processing commit")
+
+
+def test_calculate_file_commit_frequency_default_top_n_is_twenty():
+    begin = datetime(2025, 4, 1, tzinfo=timezone.utc)
+    end = datetime(2025, 4, 30, tzinfo=timezone.utc)
+    repo = MagicMock()
+    commits = [_mock_commit([f"file_{index}.py"]) for index in range(21)]
+
+    with patch(
+        "algorithms.file_changes.files_changes_over_period", return_value={}
+    ) as mock_changes:
+        result = calculate_file_commit_frequency(
+            commits_data=commits,
+            repo=repo,
+            begin=begin,
+            end=end,
+        )
+
+    assert len(result) == 20
+    forwarded_filenames, _, _, _ = mock_changes.call_args[0]
+    assert len(forwarded_filenames) == 20
 
 
 if __name__ == "__main__":

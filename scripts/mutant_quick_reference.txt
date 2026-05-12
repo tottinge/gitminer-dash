@@ -25,8 +25,12 @@ Recommended flow
 
 4) Get concrete test suggestions:
    ./scripts/mutant_suggest --top 10
+5) Triage one target source file in one command:
+   ./scripts/mutant_triage
+   # or select a specific source directly
+   ./scripts/mutant_triage algorithms/graph_statistics.py
 
-5) Track progress over time:
+6) Track progress over time:
    ./scripts/mutant_verify --save-snapshot .tmp/mutant-baseline.json
    # ... make test improvements ...
    ./scripts/mutant_verify --baseline .tmp/mutant-baseline.json --top-changes 25
@@ -60,6 +64,12 @@ Script details
   - What it does: compares current mutant statuses to a baseline snapshot.
   - Best for: proving improvements/regressions after test changes.
   - Useful flags: --baseline, --save-snapshot, --focus, --top-changes, --run-cmd, --json
+
+./scripts/mutant_triage
+  - What it does: combines no_tests source ranking, surviving mutant details
+    for one selected source, and related test-file discovery.
+  - Best for: getting quick context on one mutant-heavy file before fixing.
+  - Useful flags: source (optional), --top-sources, --json
 
 Internal helper
 ---------------

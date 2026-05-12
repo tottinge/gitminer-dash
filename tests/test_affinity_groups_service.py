@@ -38,6 +38,7 @@ def test_build_graph_data_store_happy_path():
     assert a_node["degree"] == 2
     assert a_node["community"] == 0
     assert a_node["connected_communities"] == [0, 1]
+    assert result["nodes"]["ui/c.py"]["community"] == 1
 
     assert set(result["communities"][0]) == {"api/a.py", "api/b.py"}
     assert set(result["communities"][1]) == {"ui/c.py"}
@@ -64,6 +65,20 @@ def test_build_graph_data_store_edge_cases():
 
     empty_result = build_graph_data_store(nx.Graph(), [])
     assert empty_result == {"nodes": {}, "communities": {}}
+
+
+def test_build_graph_data_store_missing_neighbor_community_defaults_to_zero():
+    """Missing neighbor community should serialize as community 0."""
+    graph = nx.Graph()
+    graph.add_node("center.py", community=9, commit_count=2)
+    graph.add_node("missing_neighbor.py")
+    graph.add_edge("center.py", "missing_neighbor.py")
+
+    result = build_graph_data_store(
+        graph, [{"center.py", "missing_neighbor.py"}]
+    )
+
+    assert result["nodes"]["center.py"]["connected_communities"] == [0]
 
 
 @pytest.mark.parametrize(
@@ -119,6 +134,7 @@ def test_generate_affinity_graph_result_happy_path():
         )
 
     assert result == (expected_figure, expected_graph_data)
+    parse_date_range_fn.assert_called_once_with({"period": "Last 30 days"})
     commits_in_period_fn.assert_called_once_with(starting, ending)
     ensure_list_fn.assert_called_once_with(raw_commits)
     get_cached_affinities_fn.assert_called_once_with(
@@ -281,6 +297,8 @@ def test_extract_clicked_node_name_handles_missing_and_plain_text():
     """Missing payloads return empty, plain labels are returned as-is."""
     assert extract_clicked_node_name(None) == ""
     assert extract_clicked_node_name({}) == ""
+    assert extract_clicked_node_name({"metadata": "present"}) == ""
+    assert extract_clicked_node_name({"points": [{}]}) == ""
     assert (
         extract_clicked_node_name(
             {"points": [{"text": "src/feature/module.py"}]}
@@ -316,6 +334,63 @@ def test_files_in_clicked_community_returns_matching_community_members():
     assert files_in_clicked_community(graph_data, "src/a.py") == [
         "src/a.py",
         "src/b.py",
+    ]
+
+
+def test_files_in_clicked_community_missing_clicked_community_defaults_to_zero():
+    """Clicked node without community should match only explicit community 0."""
+    graph_data = {
+        "nodes": {
+            "clicked.py": {},
+            "zero.py": {"community": 0},
+            "one.py": {"community": 1},
+        }
+    }
+    assert files_in_clicked_community(graph_data, "clicked.py") == ["zero.py"]
+
+
+def test_files_in_clicked_community_missing_members_do_not_match_none():
+    """Nodes missing community are excluded when clicked node community is None."""
+    graph_data = {
+        "nodes": {
+            "clicked.py": {"community": None},
+            "none_explicit.py": {"community": None},
+            "missing.py": {},
+        }
+    }
+    assert files_in_clicked_community(graph_data, "clicked.py") == [
+        "clicked.py",
+        "none_explicit.py",
+    ]
+
+
+def test_files_in_clicked_community_missing_members_do_not_match_plus_one():
+    """Nodes missing community are excluded when clicked node community is 1."""
+    graph_data = {
+        "nodes": {
+            "clicked.py": {"community": 1},
+            "one.py": {"community": 1},
+            "missing.py": {},
+        }
+    }
+    assert files_in_clicked_community(graph_data, "clicked.py") == [
+        "clicked.py",
+        "one.py",
+    ]
+
+
+def test_files_in_clicked_community_missing_members_do_not_match_minus_two():
+    """Nodes missing community are excluded when clicked node community is -2."""
+    graph_data = {
+        "nodes": {
+            "clicked.py": {"community": -2},
+            "minus_two.py": {"community": -2},
+            "missing.py": {},
+        }
+    }
+    assert files_in_clicked_community(graph_data, "clicked.py") == [
+        "clicked.py",
+        "minus_two.py",
     ]
 
 

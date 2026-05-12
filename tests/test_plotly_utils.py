@@ -117,6 +117,10 @@ class TestPlotlyUtils(unittest.TestCase):
         assert fig.layout.yaxis.showgrid is False
         assert fig.layout.yaxis.zeroline is False
         assert fig.layout.yaxis.showticklabels is False
+        assert fig.layout.margin.l == 10
+        assert fig.layout.margin.r == 10
+        assert fig.layout.margin.b == 10
+        assert fig.layout.margin.t == 10
 
     def test_create_empty_figure_title_updates_margin_and_title(self):
         fig = create_empty_figure(
@@ -128,6 +132,10 @@ class TestPlotlyUtils(unittest.TestCase):
         )
 
         assert fig.layout.title.text == "Weekly Commits"
+        assert fig.layout.margin.l == 10
+        assert fig.layout.margin.r == 10
+        assert fig.layout.margin.b == 10
+        assert fig.layout.margin.t == 40
         assert "<br>" in fig.layout.annotations[0].text
 
 

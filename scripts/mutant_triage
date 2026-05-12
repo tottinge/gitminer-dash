@@ -1,0 +1,375 @@
+#!/usr/bin/env python3
+"""Triage one mutant-heavy source file and show surviving mutation source."""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from mutant_common import (
+    collect_mutants,
+    filter_mutants_for_source,
+    load_tests_by_function,
+    relative_path_str,
+)
+
+
+def rank_sources_by_no_tests(records, root: Path) -> list[dict[str, object]]:
+    counts_by_source: dict[str, Counter] = defaultdict(Counter)
+
+    for record in records:
+        source_file = relative_path_str(record.source_path, root)
+        counts_by_source[source_file][record.status] += 1
+
+    ranked_sources: list[dict[str, object]] = []
+    for source_file, status_counts in counts_by_source.items():
+        ranked_sources.append(
+            {
+                "source_file": source_file,
+                "total_mutants": sum(status_counts.values()),
+                "no_tests": status_counts.get("no_tests", 0),
+                "survived": status_counts.get("survived", 0),
+                "timeout": status_counts.get("timeout", 0),
+            }
+        )
+
+    return sorted(
+        ranked_sources,
+        key=lambda row: (
+            -int(row["no_tests"]),
+            -int(row["survived"]),
+            -int(row["timeout"]),
+            -int(row["total_mutants"]),
+            str(row["source_file"]),
+        ),
+    )
+
+
+def select_source_query(
+    ranked_sources: list[dict[str, object]], source_query: str | None
+) -> tuple[str, str]:
+    if source_query:
+        return source_query, "explicit-query"
+
+    if not ranked_sources:
+        return "", "none"
+
+    for row in ranked_sources:
+        if int(row["no_tests"]) > 0:
+            return str(row["source_file"]), "top-no_tests"
+
+    return str(ranked_sources[0]["source_file"]), "top-mutant-count"
+
+
+def mapped_tests_for_records(
+    records, tests_by_function: dict[str, list[str]]
+) -> list[str]:
+    test_names: set[str] = set()
+    for record in records:
+        for test_name in tests_by_function.get(record.base_key, []):
+            test_names.add(test_name)
+    return sorted(test_names)
+
+
+def test_files_from_mapped_tests(test_names: list[str]) -> list[str]:
+    return sorted({test_name.split("::", 1)[0] for test_name in test_names})
+
+
+def test_file_candidates_for_sources(
+    root: Path, matched_source_files: list[str]
+) -> list[str]:
+    tests_root = root / "tests"
+    if not tests_root.exists():
+        return []
+
+    candidates: set[str] = set()
+    for source_file in matched_source_files:
+        source_stem = Path(source_file).stem
+        exact = tests_root / f"test_{source_stem}.py"
+        if exact.exists():
+            candidates.add(relative_path_str(exact, root))
+        for path in tests_root.rglob(f"test_{source_stem}*.py"):
+            if path.is_file():
+                candidates.add(relative_path_str(path, root))
+    return sorted(candidates)
+
+
+def source_for_mutated_copy(root: Path, source_file: str) -> Path:
+    return root / "mutants" / source_file
+
+
+def extract_top_level_function_source(
+    path: Path, function_name: str
+) -> tuple[int | None, str | None]:
+    if not path.exists():
+        return None, None
+
+    try:
+        lines = path.read_text().splitlines()
+    except OSError:
+        return None, None
+
+    header = f"def {function_name}("
+    start_index: int | None = None
+    for index, line in enumerate(lines):
+        if line.startswith(header):
+            start_index = index
+            break
+
+    if start_index is None:
+        return None, None
+
+    end_index = len(lines)
+    for index in range(start_index + 1, len(lines)):
+        if lines[index].startswith("def ") or lines[index].startswith("class "):
+            end_index = index
+            break
+
+    snippet = "\n".join(lines[start_index:end_index]).rstrip()
+    return start_index + 1, snippet
+
+
+def mutant_function_name_from_key(mutant_key: str) -> str:
+    return mutant_key.rpartition(".")[2]
+
+
+def original_function_name(mutant_function_name: str) -> str | None:
+    if "__mutmut_" not in mutant_function_name:
+        return None
+    return f"{mutant_function_name.rsplit('__mutmut_', 1)[0]}__mutmut_orig"
+
+
+def indented_text(text: str, indent: str = "      ") -> str:
+    return "\n".join(
+        f"{indent}{line}" if line else indent.rstrip()
+        for line in text.splitlines()
+    )
+
+
+def surviving_mutant_source_rows(
+    surviving_records, root: Path
+) -> list[dict[str, str | int | None]]:
+    rows: list[dict[str, str | int | None]] = []
+    for record in surviving_records:
+        source_file = relative_path_str(record.source_path, root)
+        mutated_copy_path = source_for_mutated_copy(root, source_file)
+        mutant_name = mutant_function_name_from_key(record.key)
+        mutant_line, mutant_source = extract_top_level_function_source(
+            mutated_copy_path, mutant_name
+        )
+
+        original_name = original_function_name(mutant_name)
+        original_line: int | None = None
+        original_source: str | None = None
+        if original_name:
+            original_line, original_source = extract_top_level_function_source(
+                mutated_copy_path, original_name
+            )
+
+        rows.append(
+            {
+                "key": record.key,
+                "module": record.module,
+                "function": record.function,
+                "source_file": source_file,
+                "meta_file": relative_path_str(record.meta_path, root),
+                "mutant_source_file": relative_path_str(mutated_copy_path, root),
+                "mutant_function_name": mutant_name,
+                "mutant_line": mutant_line,
+                "mutant_source": mutant_source,
+                "original_function_name": original_name,
+                "original_line": original_line,
+                "original_source": original_source,
+            }
+        )
+    return rows
+
+
+def build_report(
+    root: Path, source_query: str | None, top_sources: int
+) -> dict[str, object]:
+    records = collect_mutants(root)
+    ranked_sources = rank_sources_by_no_tests(records, root)
+    selected_query, selection_mode = select_source_query(
+        ranked_sources, source_query
+    )
+    matched_records = filter_mutants_for_source(records, root, selected_query)
+    surviving_records = sorted(
+        (record for record in matched_records if record.status == "survived"),
+        key=lambda row: row.key,
+    )
+
+    matched_source_files = sorted(
+        {
+            relative_path_str(record.source_path, root)
+            for record in matched_records
+        }
+    )
+    surviving_mutant_sources = surviving_mutant_source_rows(
+        surviving_records, root
+    )
+
+    tests_by_function = load_tests_by_function(root)
+    mapped_test_names = mapped_tests_for_records(
+        matched_records, tests_by_function
+    )
+    mapped_test_files = test_files_from_mapped_tests(mapped_test_names)
+    candidate_test_files = test_file_candidates_for_sources(
+        root, matched_source_files
+    )
+
+    return {
+        "root": str(root),
+        "mutant_count": len(records),
+        "top_sources": ranked_sources[:top_sources],
+        "selected_query": selected_query,
+        "selection_mode": selection_mode,
+        "matched_count": len(matched_records),
+        "matched_source_files": matched_source_files,
+        "surviving_count": len(surviving_records),
+        "surviving_mutant_sources": surviving_mutant_sources,
+        "mapped_test_files": mapped_test_files,
+        "mapped_tests": mapped_test_names,
+        "candidate_test_files": candidate_test_files,
+    }
+
+
+def print_text_report(report: dict[str, object]) -> None:
+    print(f"Mutants scanned: {report['mutant_count']}")
+    print("")
+
+    top_sources = report["top_sources"]
+    if top_sources:
+        print("Top source files by no_tests concentration:")
+        for index, row in enumerate(top_sources, start=1):
+            print(
+                f"  {index}. {row['source_file']} | "
+                f"no_tests={row['no_tests']} | "
+                f"survived={row['survived']} | "
+                f"timeout={row['timeout']} | "
+                f"total={row['total_mutants']}"
+            )
+        print("")
+    else:
+        print("No mutant artifacts found. Run ./mutate first.")
+        return
+
+    print(
+        f"Selected source query: {report['selected_query']} "
+        f"({report['selection_mode']})"
+    )
+    print(f"Matched mutants: {report['matched_count']}")
+    print(f"Surviving mutants: {report['surviving_count']}")
+    print("")
+
+    matched_source_files = report["matched_source_files"]
+    if matched_source_files:
+        print("Matched source files:")
+        for source_file in matched_source_files:
+            print(f"  - {source_file}")
+        print("")
+
+    surviving_mutant_sources = report["surviving_mutant_sources"]
+    if not surviving_mutant_sources:
+        print("No surviving mutants for the selected source query.")
+        print("")
+    else:
+        print("Surviving mutation source code:")
+        for row in surviving_mutant_sources:
+            print(f"  - {row['key']}")
+            print(f"    source: {row['source_file']}")
+            print(f"    meta:   {row['meta_file']}")
+            print(f"    mutant file: {row['mutant_source_file']}")
+            if row["mutant_source"] is not None:
+                print(
+                    f"    mutated function line: {row['mutant_line']} "
+                    f"({row['mutant_function_name']})"
+                )
+                print(indented_text(row["mutant_source"]))
+            else:
+                print("    mutated function: (not found)")
+            if row["original_source"] is not None:
+                print(
+                    f"    original function line: {row['original_line']} "
+                    f"({row['original_function_name']})"
+                )
+                print(indented_text(row["original_source"]))
+            print("")
+
+    mapped_test_files = report["mapped_test_files"]
+    print("Mapped test files from mutmut stats:")
+    if mapped_test_files:
+        for test_file in mapped_test_files:
+            print(f"  - {test_file}")
+    else:
+        print("  - (none mapped)")
+    print("")
+
+    candidate_test_files = report["candidate_test_files"]
+    print("Candidate test files by naming convention:")
+    if candidate_test_files:
+        for test_file in candidate_test_files:
+            print(f"  - {test_file}")
+    else:
+        print("  - (none found under tests/)")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Show a fast mutant triage view: no_tests concentration, "
+            "surviving mutant source code for one file, and related tests."
+        )
+    )
+    parser.add_argument(
+        "source",
+        nargs="?",
+        default=None,
+        help=(
+            "Optional source file query (basename, relative path, or absolute "
+            "path). If omitted, the top no_tests source is selected."
+        ),
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--top-sources",
+        type=int,
+        default=10,
+        help="Number of top sources to show in concentration ranking.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON output.",
+    )
+    args = parser.parse_args()
+
+    if args.top_sources <= 0:
+        parser.error("--top-sources must be greater than zero.")
+
+    root = args.root.resolve()
+    report = build_report(
+        root=root, source_query=args.source, top_sources=args.top_sources
+    )
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print_text_report(report)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

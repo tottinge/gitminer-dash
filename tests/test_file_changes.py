@@ -1,12 +1,15 @@
 """Tests for `algorithms/file_changes.py`."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from algorithms.file_changes import (
     FileChangeStats,
+    _blob_size_at_commit,
+    _commits_touching_file,
+    _dt_arg,
     _lines_changed_in_commit,
     file_changes_over_period,
     files_changes_over_period,
@@ -116,6 +119,7 @@ def test_files_changes_over_period(mock_repo):
     )
     assert len(results) == 3
     assert isinstance(results["file1.py"], FileChangeStats)
+    assert results["file1.py"].file_path == "file1.py"
     assert results["file1.py"].commits == 5
     assert results["file1.py"].avg_changes == 10.0
     assert results["file1.py"].total_change == 200
@@ -215,6 +219,65 @@ def test_file_changes_over_period_passes_correct_args_to_blob_size(mock_repo):
         _COMMIT_SHAS[0],
     )
     assert path1 == path2 == "file1.py"
+
+
+def test_dt_arg_normalizes_microseconds_and_separator():
+    dt = datetime(2026, 5, 1, 12, 34, 56, 987654, tzinfo=timezone.utc)
+
+    result = _dt_arg(dt)
+
+    assert "T" not in result
+    assert "." not in result
+    assert ".000001" not in result
+
+
+def test_commits_touching_file_calls_rev_list_with_expected_flags(mock_repo):
+    start = datetime(2026, 5, 1, 0, 0, 0, tzinfo=timezone.utc)
+    end = datetime(2026, 5, 31, 23, 59, 59, tzinfo=timezone.utc)
+    mock_repo.git.rev_list.side_effect = None
+    mock_repo.git.rev_list.return_value = "sha1\n"
+
+    shas = _commits_touching_file(mock_repo, "src/file.py", start, end)
+
+    assert shas == ["sha1"]
+    mock_repo.git.rev_list.assert_called_once_with(
+        "--all",
+        f"--since={_dt_arg(start)}",
+        f"--until={_dt_arg(end)}",
+        "--",
+        "src/file.py",
+    )
+
+
+def test_commits_touching_file_trims_whitespace_and_ignores_blank_lines(
+    mock_repo,
+):
+    start = datetime(2026, 5, 1, tzinfo=timezone.utc)
+    end = datetime(2026, 5, 2, tzinfo=timezone.utc)
+    mock_repo.git.rev_list.side_effect = None
+    mock_repo.git.rev_list.return_value = " sha1 \n\n\tsha2\t\n"
+
+    shas = _commits_touching_file(mock_repo, "src/file.py", start, end)
+
+    assert shas == ["sha1", "sha2"]
+
+
+def test_blob_size_at_commit_calls_cat_file_with_expected_spec(mock_repo):
+    mock_repo.git.cat_file.side_effect = None
+    mock_repo.git.cat_file.return_value = "123\n"
+
+    size = _blob_size_at_commit(mock_repo, "abc123", "src/file.py")
+
+    assert size == 123
+    mock_repo.git.cat_file.assert_called_once_with("-s", "abc123:src/file.py")
+
+
+def test_blob_size_at_commit_returns_zero_when_cat_file_fails(mock_repo):
+    mock_repo.git.cat_file.side_effect = RuntimeError("missing blob")
+
+    size = _blob_size_at_commit(mock_repo, "abc123", "src/file.py")
+
+    assert size == 0
 
 
 def test_file_changes_over_period_no_lines_changed_keeps_avg_at_zero(mock_repo):
@@ -333,6 +396,16 @@ def test_lines_changed_in_commit_non_digit_dels_defaults_to_zero(mock_repo):
     total = _lines_changed_in_commit(mock_repo, "abc123", "file1.py")
 
     assert total == 3
+
+
+def test_lines_changed_in_commit_ignores_space_delimited_numstat(mock_repo):
+    """Only tab-delimited numstat rows should be parsed as valid counts."""
+    mock_repo.git.show.side_effect = None
+    mock_repo.git.show.return_value = "3 4 file1.py\n"
+
+    total = _lines_changed_in_commit(mock_repo, "abc123", "file1.py")
+
+    assert total == 0
 
 
 def test_files_changes_over_period_uses_default_window_when_start_end_none(

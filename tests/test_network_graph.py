@@ -11,12 +11,19 @@ import plotly.graph_objects as go
 from algorithms.affinity_network import AFFINITY_STATS_KEYS
 from visualization.common import create_empty_figure
 from visualization.network_graph import (
+    _build_edge_trace,
     _build_network_figure,
     _build_node_trace,
     _build_weighted_edge_traces,
+    _collect_edge_plot_data,
     _collect_node_plot_data,
+    _create_community_trace,
     _create_edge_traces,
+    _create_node_traces,
     _create_non_singleton_community_traces,
+    _create_single_community_trace,
+    _edge_segment_coordinates,
+    _empty_edge_trace,
     create_file_affinity_network,
     create_network_visualization,
 )
@@ -471,6 +478,54 @@ class TestNetworkGraph(unittest.TestCase):
         assert trace.showlegend is False
         assert trace.line.width == 0
 
+    def test_collect_edge_plot_data_happy_path(self):
+        """Collects segmented coordinates, weights, and hover labels per edge."""
+        graph = nx.Graph()
+        graph.add_edge("a.py", "b.py", weight=0.25)
+        graph.add_edge("a.py", "c.py", weight=0.50)
+        positions = {
+            "a.py": (0.0, 0.0),
+            "b.py": (1.0, 0.0),
+            "c.py": (0.0, 1.0),
+        }
+
+        edge_x, edge_y, edge_weights, edge_texts = _collect_edge_plot_data(
+            G=graph,
+            pos=positions,
+        )
+
+        assert edge_x == [0.0, 1.0, None, 0.0, 0.0, None]
+        assert edge_y == [0.0, 0.0, None, 0.0, 1.0, None]
+        assert edge_weights == [0.25, 0.50]
+        assert edge_texts == [
+            "a.py - b.py<br>Affinity: 0.25",
+            "a.py - c.py<br>Affinity: 0.50",
+        ]
+
+    def test_collect_edge_plot_data_empty_graph(self):
+        """Returns empty plotting payloads when graph has no edges."""
+        edge_x, edge_y, edge_weights, edge_texts = _collect_edge_plot_data(
+            G=nx.Graph(),
+            pos={},
+        )
+
+        assert edge_x == []
+        assert edge_y == []
+        assert edge_weights == []
+        assert edge_texts == []
+
+    def test_empty_edge_trace_contract(self):
+        """Constructs the explicit empty edge trace style contract."""
+        trace = _empty_edge_trace()
+
+        assert list(trace.x) == []
+        assert list(trace.y) == []
+        assert trace.mode == "lines"
+        assert trace.hoverinfo == "none"
+        assert trace.showlegend is False
+        assert trace.line.width == 0
+        assert trace.line.color == "#888"
+
     def test_create_edge_traces_non_empty_contract(self):
         """Edge traces should preserve geometry, text, and width scaling."""
         G = nx.Graph()
@@ -680,6 +735,10 @@ class TestNetworkGraph(unittest.TestCase):
         assert len(traces) == 2
         assert traces[0].text == "a-b"
         assert traces[1].text == "b-c"
+        assert list(traces[0].x) == [0.0, 1.0, None]
+        assert list(traces[0].y) == [0.0, 0.0, None]
+        assert list(traces[1].x) == [1.0, 2.0, None]
+        assert list(traces[1].y) == [0.0, 0.5, None]
         assert round(traces[0].line.width, 2) == 5.0
         assert round(traces[1].line.width, 2) == 8.0
 
@@ -700,6 +759,188 @@ class TestNetworkGraph(unittest.TestCase):
         assert list(trace.marker.size) == [12.0, 18.0]
         assert trace.marker.color == "#abcdef"
         assert trace.name == "Group X"
+
+    def test_edge_segment_coordinates_returns_exact_edge_triplet(self):
+        """Returns the exact x/y triplet for the requested edge index."""
+        edge_x = [0.0, 1.0, None, 2.0, 3.0, None]
+        edge_y = [4.0, 5.0, None, 6.0, 7.0, None]
+
+        second_edge_x, second_edge_y = _edge_segment_coordinates(
+            edge_x=edge_x,
+            edge_y=edge_y,
+            edge_idx=1,
+        )
+
+        assert second_edge_x == [2.0, 3.0, None]
+        assert second_edge_y == [6.0, 7.0, None]
+
+    def test_build_edge_trace_preserves_explicit_coordinates_and_text(self):
+        """Build edge trace keeps provided x/y/text payload unchanged."""
+        trace = _build_edge_trace(
+            edge_x=[0.0, 1.0, None],
+            edge_y=[1.0, 2.0, None],
+            width=3.5,
+            text="edge-a-b",
+        )
+
+        assert list(trace.x) == [0.0, 1.0, None]
+        assert list(trace.y) == [1.0, 2.0, None]
+        assert trace.text == "edge-a-b"
+        assert trace.mode == "lines"
+        assert trace.hoverinfo == "text"
+        assert trace.showlegend is False
+        assert trace.line.width == 3.5
+
+    def test_create_node_traces_uses_non_singleton_branch_when_communities_exist(
+        self,
+    ):
+        """Nodes with community IDs should use the grouped-community branch."""
+        graph = nx.Graph()
+        graph.add_node("a.py", community=0, commit_count=1)
+        graph.add_node("b.py", community=0, commit_count=2)
+        graph.add_edge("a.py", "b.py", weight=0.5)
+        positions = {"a.py": (0.0, 0.0), "b.py": (1.0, 1.0)}
+
+        grouped_trace = object()
+        with (
+            patch(
+                "visualization.network_graph._create_single_community_trace"
+            ) as mock_single,
+            patch(
+                "visualization.network_graph._create_non_singleton_community_traces",
+                return_value=[grouped_trace],
+            ) as mock_grouped,
+        ):
+            traces = _create_node_traces(
+                G=graph,
+                pos=positions,
+                communities=[],
+            )
+
+        assert traces == [grouped_trace]
+        mock_single.assert_not_called()
+        mock_grouped.assert_called_once()
+
+    def test_create_non_singleton_community_traces_does_not_break_after_singleton(
+        self,
+    ):
+        """A singleton community must be skipped without preventing later groups."""
+        graph = nx.Graph()
+        graph.add_node("solo.py", community=1, commit_count=1)
+        graph.add_node("a.py", community=0, commit_count=2)
+        graph.add_node("b.py", community=0, commit_count=3)
+        graph.add_edge("a.py", "b.py", weight=0.5)
+        positions = {
+            "solo.py": (2.0, 2.0),
+            "a.py": (0.0, 0.0),
+            "b.py": (1.0, 0.0),
+        }
+
+        grouped_trace = object()
+        with patch(
+            "visualization.network_graph._create_community_trace",
+            return_value=grouped_trace,
+        ) as mock_create:
+            traces = _create_non_singleton_community_traces(
+                G=graph,
+                pos=positions,
+                community_ids=[1, 0],
+                community_colors=["#111111", "#222222"],
+            )
+
+        assert traces == [grouped_trace]
+        mock_create.assert_called_once()
+
+    def test_collect_node_plot_data_defaults_missing_commit_count_to_zero(self):
+        """Missing commit_count should default to zero in tooltip and node size."""
+        graph = nx.Graph()
+        graph.add_node("lonely.py")
+        positions = {"lonely.py": (3.0, 4.0)}
+
+        node_x, node_y, node_text, node_size = _collect_node_plot_data(
+            G=graph,
+            pos=positions,
+            nodes=["lonely.py"],
+        )
+
+        assert node_x == [3.0]
+        assert node_y == [4.0]
+        assert node_text == ["File: lonely.py<br>Commits: 0<br>Connections: 0"]
+        assert node_size == [10.0]
+
+    def test_create_single_community_trace_passes_node_text_and_size_to_builder(
+        self,
+    ):
+        """Single-community trace passes collected text/size unchanged to builder."""
+        graph = nx.Graph()
+        graph.add_node("a.py", commit_count=1)
+        positions = {"a.py": (0.0, 0.0)}
+        sentinel_trace = object()
+
+        with (
+            patch(
+                "visualization.network_graph._collect_node_plot_data",
+                return_value=([0.0], [0.0], ["tooltip"], [11.0]),
+            ),
+            patch(
+                "visualization.network_graph._single_community_trace_style",
+                return_value={"color": "#abcdef", "name": "All Files"},
+            ),
+            patch(
+                "visualization.network_graph._build_node_trace",
+                return_value=sentinel_trace,
+            ) as mock_build,
+        ):
+            trace = _create_single_community_trace(graph, positions)
+
+        assert trace is sentinel_trace
+        mock_build.assert_called_once_with(
+            node_x=[0.0],
+            node_y=[0.0],
+            node_text=["tooltip"],
+            node_size=[11.0],
+            color="#abcdef",
+            name="All Files",
+        )
+
+    def test_create_community_trace_passes_y_text_and_size_to_builder(self):
+        """Community trace passes y/text/size unchanged to builder."""
+        graph = nx.Graph()
+        graph.add_node("a.py", community=0, commit_count=1)
+        positions = {"a.py": (0.0, 2.0)}
+        sentinel_trace = object()
+
+        with (
+            patch(
+                "visualization.network_graph._collect_node_plot_data",
+                return_value=([0.0], [2.0], ["community-tooltip"], [14.0]),
+            ),
+            patch(
+                "visualization.network_graph._community_trace_style",
+                return_value={"color": "#123456", "name": "Group 1"},
+            ),
+            patch(
+                "visualization.network_graph._build_node_trace",
+                return_value=sentinel_trace,
+            ) as mock_build,
+        ):
+            trace = _create_community_trace(
+                graph,
+                positions,
+                ["a.py"],
+                "#123456",
+                0,
+            )
+
+        assert trace is sentinel_trace
+        mock_build.assert_called_once_with(
+            node_x=[0.0],
+            node_y=[2.0],
+            node_text=["community-tooltip"],
+            node_size=[14.0],
+            color="#123456",
+            name="Group 1",
+        )
 
 
 if __name__ == "__main__":

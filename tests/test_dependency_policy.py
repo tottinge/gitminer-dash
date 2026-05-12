@@ -13,6 +13,11 @@ def test_normalize_dependency_name_with_extras_and_markers():
     assert normalize_dependency_name(spec) == "foo-bar"
 
 
+def test_normalize_dependency_name_empty_or_invalid_spec_returns_empty():
+    assert normalize_dependency_name("   ") == ""
+    assert normalize_dependency_name(">=1.2") == ""
+
+
 def test_collect_policy_violations_flags_optional_dev_and_overlap():
     pyproject_data = {
         "project": {
@@ -27,8 +32,14 @@ def test_collect_policy_violations_flags_optional_dev_and_overlap():
     violations = collect_policy_violations(pyproject_data)
 
     assert len(violations) == 2
-    assert any("optional-dependencies.dev" in message for message in violations)
-    assert any("Duplicate packages" in message for message in violations)
+    assert violations[0] == (
+        "Use `dependency-groups.dev` only; "
+        "`project.optional-dependencies.dev` is not allowed."
+    )
+    assert violations[1] == (
+        "Duplicate packages across `project.dependencies` and "
+        "`dependency-groups.dev`: ruff"
+    )
 
 
 def test_collect_policy_violations_accepts_single_dev_source():
@@ -44,6 +55,34 @@ def test_collect_policy_violations_accepts_single_dev_source():
     violations = collect_policy_violations(pyproject_data)
 
     assert violations == []
+
+
+def test_collect_policy_violations_empty_input_returns_no_violations():
+    assert collect_policy_violations({}) == []
+
+
+def test_collect_policy_violations_uses_comma_space_join_for_overlap():
+    pyproject_data = {
+        "project": {
+            "dependencies": [
+                "ruff>=0.14.2",
+                "black>=25.9.0",
+            ],
+        },
+        "dependency-groups": {
+            "dev": [
+                "black>=25.9.0",
+                "ruff>=0.14.2",
+            ],
+        },
+    }
+
+    violations = collect_policy_violations(pyproject_data)
+
+    assert violations == [
+        "Duplicate packages across `project.dependencies` and "
+        "`dependency-groups.dev`: black, ruff"
+    ]
 
 
 def test_validate_dependency_policy_reads_pyproject_file(tmp_path: Path):

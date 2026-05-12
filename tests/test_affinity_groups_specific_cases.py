@@ -111,6 +111,46 @@ class TestGetCachedAffinities:
         assert len(_AFFINITY_CACHE) == 2
 
 
+class TestErrorFigureHelpers:
+    """Tests for error figure helper argument contracts."""
+
+    @patch("pages.affinity_groups.create_empty_figure")
+    def test_create_repo_error_figure_uses_exact_message_and_title(
+        self, mock_create_empty
+    ):
+        from pages.affinity_groups import _create_repo_error_figure
+
+        sentinel_figure = Mock()
+        mock_create_empty.return_value = sentinel_figure
+
+        result = _create_repo_error_figure()
+
+        assert result is sentinel_figure
+        mock_create_empty.assert_called_once_with(
+            "No repository path provided. Please run the application with a repository path as a command-line argument.\n\nExample: python app.py /path/to/your/git/repository",
+            title="File Affinity Network - Repository Path Required",
+        )
+
+    @patch("pages.affinity_groups.create_empty_figure")
+    def test_create_error_figure_uses_exact_context_and_title(
+        self, mock_create_empty
+    ):
+        from pages.affinity_groups import _create_error_figure
+
+        sentinel_figure = Mock()
+        mock_create_empty.return_value = sentinel_figure
+
+        result = _create_error_figure(
+            context="Graph generation failed", error_msg="boom"
+        )
+
+        assert result is sentinel_figure
+        mock_create_empty.assert_called_once_with(
+            "Graph generation failed: boom",
+            title="File Affinity Network - Error",
+        )
+
+
 class TestBuildGraphDataStore:
     """Tests for _build_graph_data_store() function."""
 

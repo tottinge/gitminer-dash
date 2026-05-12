@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 from algorithms.weekly_commits import (
+    _normalize_datetime,
     calculate_weekly_commits,
     extract_commit_details,
     get_week_ending,
@@ -65,6 +66,28 @@ class TestGetWeekEnding(unittest.TestCase):
         result = get_week_ending(monday_utc)
         assert result.tzinfo is not None
         assert result.weekday() == 6
+
+    def test_sets_week_ending_microseconds_to_zero(self):
+        """Week-ending normalization should clear microseconds."""
+        dt = datetime(2025, 10, 27, 10, 0, 0, 654321)
+        result = get_week_ending(dt)
+        assert result.microsecond == 0
+
+
+class TestNormalizeDatetime(unittest.TestCase):
+    """Tests for `_normalize_datetime` helper behavior."""
+
+    def test_normalize_datetime_keeps_naive_datetime(self):
+        dt = datetime(2025, 10, 27, 10, 0, 0)
+        assert _normalize_datetime(dt) is dt
+
+    def test_normalize_datetime_converts_timezone_aware_datetime(self):
+        from datetime import timezone
+
+        dt = datetime(2025, 10, 27, 10, 0, 0, tzinfo=timezone.utc)
+        normalized = _normalize_datetime(dt)
+        assert normalized.tzinfo is not None
+        assert normalized == dt.astimezone()
 
 
 class TestCalculateWeeklyCommits(unittest.TestCase):
@@ -165,6 +188,35 @@ class TestCalculateWeeklyCommits(unittest.TestCase):
         total_weeks = len(result["weeks"])
         expected_avg = 10 / total_weeks
         assert abs(result["avg_commits"] - expected_avg) < 0.01
+
+    def test_week_entries_have_expected_keys_and_commit_objects(self):
+        """Each week row should expose stable keys and original commit objects."""
+        commit = Mock()
+        commit.committed_datetime = datetime(2025, 10, 15, 10, 0, 0)
+        begin = datetime(2025, 10, 1)
+        end = datetime(2025, 10, 31)
+
+        result = calculate_weekly_commits([commit], begin, end)
+        week_with_commit = [w for w in result["weeks"] if w["count"] == 1][0]
+
+        assert set(week_with_commit.keys()) == {
+            "week_ending",
+            "commits",
+            "count",
+        }
+        assert week_with_commit["commits"] == [commit]
+
+    def test_reversed_date_range_returns_empty_weeks_and_zero_stats(self):
+        """When begin is after end, no weeks should be generated."""
+        begin = datetime(2025, 11, 7)
+        end = datetime(2025, 10, 1)
+
+        result = calculate_weekly_commits([], begin, end)
+
+        assert result["weeks"] == []
+        assert result["min_commits"] == 0
+        assert result["max_commits"] == 0
+        assert result["avg_commits"] == 0.0
 
 
 class TestExtractCommitDetails(unittest.TestCase):

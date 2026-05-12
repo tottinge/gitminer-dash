@@ -1,7 +1,9 @@
 """Unit and regression tests for DataFrame builder."""
 
 from datetime import datetime, timezone
+from unittest.mock import patch
 
+import pandas as pd
 import pytest
 
 from algorithms.chain_models import TIMELINE_COLUMNS, TimelineRow
@@ -14,6 +16,13 @@ def test_empty_rows():
 
     assert len(df) == 0
     assert list(df.columns) == TIMELINE_COLUMNS
+
+
+def test_empty_rows_do_not_invoke_datetime_conversion():
+    with patch("pandas.to_datetime", wraps=pd.to_datetime) as mock_to_datetime:
+        create_timeline_dataframe([])
+
+    mock_to_datetime.assert_not_called()
 
 
 def test_single_row():
@@ -266,6 +275,26 @@ def test_column_types():
     assert df["tail"].dtype == object  # string
     assert df["duration"].dtype in ["int64", "int32"]
     assert df["density"].dtype in ["float64", "float32"]
+
+
+def test_datetime_conversion_uses_explicit_utc_true_for_first_and_last():
+    row = TimelineRow(
+        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        elevation=1,
+        commit_counts=5,
+        head="abc",
+        tail="def",
+        duration=9,
+        density=1.8,
+    )
+
+    with patch("pandas.to_datetime", wraps=pd.to_datetime) as mock_to_datetime:
+        create_timeline_dataframe([row])
+
+    assert mock_to_datetime.call_count == 2
+    for call in mock_to_datetime.call_args_list:
+        assert call.kwargs.get("utc") is True
 
 
 if __name__ == "__main__":
