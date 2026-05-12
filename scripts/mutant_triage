@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Triage one mutant-heavy source file and show surviving mutation source."""
+"""Triage one mutant-heavy source file and show surviving mutation patches."""
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import sys
 from collections import Counter, defaultdict
@@ -145,6 +146,28 @@ def original_function_name(mutant_function_name: str) -> str | None:
     return f"{mutant_function_name.rsplit('__mutmut_', 1)[0]}__mutmut_orig"
 
 
+def unified_patch(
+    *,
+    original_source: str | None,
+    mutant_source: str | None,
+    original_label: str,
+    mutant_label: str,
+) -> str | None:
+    if original_source is None or mutant_source is None:
+        return None
+    diff_lines = list(
+        difflib.unified_diff(
+            original_source.splitlines(),
+            mutant_source.splitlines(),
+            fromfile=original_label,
+            tofile=mutant_label,
+            lineterm="",
+        )
+    )
+    return "\n".join(diff_lines)
+
+
+
 def indented_text(text: str, indent: str = "      ") -> str:
     return "\n".join(
         f"{indent}{line}" if line else indent.rstrip()
@@ -171,6 +194,12 @@ def surviving_mutant_source_rows(
             original_line, original_source = extract_top_level_function_source(
                 mutated_copy_path, original_name
             )
+        patch = unified_patch(
+            original_source=original_source,
+            mutant_source=mutant_source,
+            original_label=original_name or "original",
+            mutant_label=mutant_name,
+        )
 
         rows.append(
             {
@@ -182,10 +211,9 @@ def surviving_mutant_source_rows(
                 "mutant_source_file": relative_path_str(mutated_copy_path, root),
                 "mutant_function_name": mutant_name,
                 "mutant_line": mutant_line,
-                "mutant_source": mutant_source,
                 "original_function_name": original_name,
                 "original_line": original_line,
-                "original_source": original_source,
+                "patch": patch,
             }
         )
     return rows
@@ -280,26 +308,19 @@ def print_text_report(report: dict[str, object]) -> None:
         print("No surviving mutants for the selected source query.")
         print("")
     else:
-        print("Surviving mutation source code:")
+        print("Surviving mutation patches:")
         for row in surviving_mutant_sources:
             print(f"  - {row['key']}")
             print(f"    source: {row['source_file']}")
             print(f"    meta:   {row['meta_file']}")
             print(f"    mutant file: {row['mutant_source_file']}")
-            if row["mutant_source"] is not None:
-                print(
-                    f"    mutated function line: {row['mutant_line']} "
-                    f"({row['mutant_function_name']})"
-                )
-                print(indented_text(row["mutant_source"]))
+            if row["patch"] is None:
+                print("    patch: (unavailable)")
+            elif row["patch"] == "":
+                print("    patch: (no textual change)")
             else:
-                print("    mutated function: (not found)")
-            if row["original_source"] is not None:
-                print(
-                    f"    original function line: {row['original_line']} "
-                    f"({row['original_function_name']})"
-                )
-                print(indented_text(row["original_source"]))
+                print("    patch:")
+                print(indented_text(row["patch"]))
             print("")
 
     mapped_test_files = report["mapped_test_files"]
@@ -324,7 +345,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Show a fast mutant triage view: no_tests concentration, "
-            "surviving mutant source code for one file, and related tests."
+            "surviving mutant patch diffs for one file, and related tests."
         )
     )
     parser.add_argument(

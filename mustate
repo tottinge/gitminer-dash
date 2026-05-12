@@ -5,7 +5,7 @@ PROJECT_ROOT="${SCRIPT_DIR}"
 
 echo "Mutation status summary"
 echo "======================="
-"${PROJECT_ROOT}/scripts/mutant_discover"
+"${PROJECT_ROOT}/scripts/mutant_discover" --survivors-only
 
 echo
 echo "Priority ranking (code_None,no_tests,survived,timeout,crash)"

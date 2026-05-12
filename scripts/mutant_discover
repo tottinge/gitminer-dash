@@ -17,6 +17,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from mutant_common import collect_mutants, find_meta_files, find_stats_files
+SURVIVING_STATUSES = ("no_tests", "survived")
 
 
 def build_report(root: Path, top: int) -> dict:
@@ -37,14 +38,27 @@ def build_report(root: Path, top: int) -> dict:
     }
 
 
-def print_text_report(report: dict) -> None:
+def print_text_report(report: dict, survivors_only: bool = False) -> None:
     print(f"Root: {report['root']}")
     print(f"Meta files: {len(report['meta_files'])}")
     print(f"Stats files: {len(report['stats_files'])}")
-    print(f"Mutants discovered: {report['mutant_count']}")
+    if survivors_only:
+        surviving_mutant_count = sum(
+            report["status_counts"].get(status, 0) for status in SURVIVING_STATUSES
+        )
+        print(f"Surviving mutants ({' + '.join(SURVIVING_STATUSES)}): {surviving_mutant_count}")
+    else:
+        print(f"Mutants discovered: {report['mutant_count']}")
     print("")
     print("Status counts:")
-    for status, count in report["status_counts"].items():
+    if survivors_only:
+        status_counts = [
+            (status, report["status_counts"].get(status, 0))
+            for status in SURVIVING_STATUSES
+        ]
+    else:
+        status_counts = report["status_counts"].items()
+    for status, count in status_counts:
         print(f"  - {status}: {count}")
     print("")
     print("Top modules by mutant count:")
@@ -73,6 +87,11 @@ def main() -> int:
         action="store_true",
         help="Emit JSON instead of a text report.",
     )
+    parser.add_argument(
+        "--survivors-only",
+        action="store_true",
+        help="Show surviving-mutant totals only (no_tests + survived) in the text report.",
+    )
     args = parser.parse_args()
 
     root = args.root.resolve()
@@ -81,7 +100,7 @@ def main() -> int:
     if args.json:
         print(json.dumps(report, indent=2))
     else:
-        print_text_report(report)
+        print_text_report(report, survivors_only=args.survivors_only)
 
     return 0
 
