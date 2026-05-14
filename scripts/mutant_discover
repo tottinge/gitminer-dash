@@ -24,6 +24,11 @@ def build_report(root: Path, top: int) -> dict:
     records = collect_mutants(root)
     status_counts = Counter(record.status for record in records)
     module_counts = Counter(record.module for record in records)
+    surviving_module_counts = Counter(
+        record.module
+        for record in records
+        if record.status in SURVIVING_STATUSES
+    )
 
     return {
         "root": str(root),
@@ -34,6 +39,10 @@ def build_report(root: Path, top: int) -> dict:
         "top_modules": [
             {"module": module, "count": count}
             for module, count in module_counts.most_common(top)
+        ],
+        "top_surviving_modules": [
+            {"module": module, "count": count}
+            for module, count in surviving_module_counts.most_common(top)
         ],
     }
 
@@ -61,8 +70,14 @@ def print_text_report(report: dict, survivors_only: bool = False) -> None:
     for status, count in status_counts:
         print(f"  - {status}: {count}")
     print("")
-    print("Top modules by mutant count:")
-    for entry in report["top_modules"]:
+    top_modules_key = "top_modules"
+    top_modules_heading = "Top modules by mutant count:"
+    if survivors_only:
+        top_modules_key = "top_surviving_modules"
+        top_modules_heading = "Top modules by surviving mutant count:"
+
+    print(top_modules_heading)
+    for entry in report[top_modules_key]:
         print(f"  - {entry['module']}: {entry['count']}")
 
 
