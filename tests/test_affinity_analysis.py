@@ -140,3 +140,42 @@ def test_get_top_files_and_affinities_honors_zero_max_nodes() -> None:
 
     assert top_files == set()
     assert relevant_affinities == []
+
+
+def test_get_top_files_and_affinities_max_nodes_one_excludes_all_pairs() -> (
+    None
+):
+    """Boundary: a single selected node cannot form an in-set pair."""
+
+    affinities = {
+        ("core.py", "helper.py"): 10.0,
+        ("core.py", "feature.py"): 1.0,
+    }
+
+    top_files, relevant_affinities = aa.get_top_files_and_affinities(
+        commits=[],
+        affinities=affinities,
+        max_nodes=1,
+    )
+
+    assert top_files == {"core.py"}
+    assert relevant_affinities == []
+
+
+def test_get_top_files_and_affinities_requires_both_files_in_top_set() -> None:
+    """Only pairs with both endpoints in the top set are included."""
+
+    affinities = {
+        ("core.py", "helper.py"): 10.0,
+        ("outside.py", "core.py"): 0.2,
+        ("helper.py", "leaf.py"): 0.1,
+    }
+
+    top_files, relevant_affinities = aa.get_top_files_and_affinities(
+        commits=[],
+        affinities=affinities,
+        max_nodes=2,
+    )
+
+    assert top_files == {"core.py", "helper.py"}
+    assert relevant_affinities == [10.0]
