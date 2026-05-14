@@ -221,6 +221,8 @@ Write and maintain micro/unit tests so they are:
 - Do not replace `./check` with separate ad-hoc tool calls for standard validation.
 - Prefer wrapper scripts to preserve project flags, behavior, and conventions.
 - After each change, run `./run_tests`; before commit/PR, run both `./check` and `./run_tests`.
+- Default post-edit workflow is `./fixup`, then `./run_tests`, then `./check`.
+- If `./check` fails, run `./fixup` once, then re-run `./run_tests` and `./check` before manual debugging.
 
 ## 10) Mutation-analysis helpers (`scripts/mutant*`)
 - Prefer `scripts/mutant_*` helpers over ad-hoc parsing of `*.py.meta` and `mutmut-stats.json`.

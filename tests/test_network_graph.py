@@ -17,6 +17,8 @@ from visualization.network_graph import (
     _build_weighted_edge_traces,
     _collect_edge_plot_data,
     _collect_node_plot_data,
+    _community_color,
+    _community_ids,
     _create_community_trace,
     _create_edge_traces,
     _create_node_traces,
@@ -25,6 +27,7 @@ from visualization.network_graph import (
     _edge_segment_coordinates,
     _empty_edge_trace,
     _single_community_trace_style,
+    calculate_node_size,
     create_file_affinity_network,
     create_network_visualization,
 )
@@ -922,6 +925,60 @@ class TestNetworkGraph(unittest.TestCase):
         assert node_y == [4.0]
         assert node_text == ["File: lonely.py<br>Commits: 0<br>Connections: 0"]
         assert node_size == [10.0]
+
+    def test_calculate_node_size_caps_commit_factor_at_boundary(self):
+        """Node-size commit contribution should clamp once commit_count reaches 40."""
+        assert calculate_node_size(commit_count=39, degree=1) == 31.5
+        assert calculate_node_size(commit_count=40, degree=1) == 32.0
+        assert calculate_node_size(commit_count=200, degree=1) == 32.0
+
+    def test_community_color_wraps_with_modulo(self):
+        """Community color selection should wrap once ID exceeds palette length."""
+        palette = ["#111111", "#222222", "#333333"]
+        assert _community_color(0, palette) == "#111111"
+        assert _community_color(2, palette) == "#333333"
+        assert _community_color(3, palette) == "#111111"
+        assert _community_color(4, palette) == "#222222"
+
+    def test_community_ids_ignores_nodes_without_community_attribute(self):
+        """Only nodes with explicit community IDs should contribute to the ID set."""
+        graph = nx.Graph()
+        graph.add_node("a.py", community=1)
+        graph.add_node("b.py")
+        graph.add_node("c.py", community=1)
+        graph.add_node("d.py", community=2)
+
+        assert _community_ids(graph) == {1, 2}
+
+    def test_edge_segment_coordinates_out_of_range_returns_empty_segments(self):
+        """Out-of-range edge indexes should produce empty coordinate slices."""
+        edge_x = [0.0, 1.0, None]
+        edge_y = [2.0, 3.0, None]
+
+        segment_x, segment_y = _edge_segment_coordinates(
+            edge_x=edge_x,
+            edge_y=edge_y,
+            edge_idx=1,
+        )
+
+        assert segment_x == []
+        assert segment_y == []
+
+    def test_create_non_singleton_community_traces_all_singletons(self):
+        """All-singleton communities should yield no grouped traces."""
+        graph = nx.Graph()
+        graph.add_node("a.py", community=0, commit_count=1)
+        graph.add_node("b.py", community=1, commit_count=1)
+        positions = {"a.py": (0.0, 0.0), "b.py": (1.0, 1.0)}
+
+        traces = _create_non_singleton_community_traces(
+            G=graph,
+            pos=positions,
+            community_ids={0, 1},
+            community_colors=["#111111", "#222222"],
+        )
+
+        assert traces == []
 
     def test_create_single_community_trace_passes_node_text_and_size_to_builder(
         self,
