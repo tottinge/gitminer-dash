@@ -8,10 +8,12 @@ from types import SimpleNamespace
 
 
 def _load_mutant_discover_namespace() -> dict:
-    script_path = (
-        Path(__file__).resolve().parents[1] / "scripts" / "mutant_discover"
-    )
-    return runpy.run_path(str(script_path))
+    current_path = Path(__file__).resolve()
+    for parent in current_path.parents:
+        script_path = parent / "scripts" / "mutant_discover"
+        if script_path.exists():
+            return runpy.run_path(str(script_path))
+    raise FileNotFoundError("Could not locate scripts/mutant_discover")
 
 
 def _record(module: str, status: str) -> SimpleNamespace:
