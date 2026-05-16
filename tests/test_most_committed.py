@@ -27,6 +27,17 @@ def populate_graph():
 
 
 @pytest.fixture
+def populate_selected_file_commit_classification():
+    """Import and return selected-file classification callback."""
+    with patch("dash.register_page"):
+        from pages.most_committed import (
+            populate_selected_file_commit_classification as callback_fn,
+        )
+
+        return callback_fn
+
+
+@pytest.fixture
 def mock_store_data():
     """Create mock store data for testing."""
     return {
@@ -100,6 +111,108 @@ def test_dataframe_columns_with_valid_data(
     assert table_data[0]["filename"] == "test.py"
     assert table_data[0]["count"] == 10
     assert table_data[0]["avg_changes"] == 5.5
+
+
+def test_selected_file_classification_hides_panel_without_date_range(
+    populate_selected_file_commit_classification,
+):
+    (
+        status_text,
+        intent_counts,
+        classifications,
+        holder_style,
+    ) = populate_selected_file_commit_classification(
+        active_cell={"row": 0},
+        table_data=[{"filename": "src/core.py"}],
+        date_range_data=None,
+    )
+
+    assert status_text == "Select a date range to classify commit messages."
+    assert intent_counts == []
+    assert classifications == []
+    assert holder_style == {"display": "none"}
+
+
+@patch(
+    "pages.most_committed.generate_table_selection_commit_classification_payload"
+)
+def test_selected_file_classification_returns_no_selection_contract(
+    mock_generate_payload,
+    populate_selected_file_commit_classification,
+    mock_store_data,
+):
+    mock_generate_payload.return_value = {
+        "status": "no_file_selected",
+        "status_detail": "Select a file to classify commit messages.",
+        "error_detail": "",
+        "filename": "",
+        "message_count": 0,
+        "intent_counts": [],
+        "classifications": [],
+    }
+
+    (
+        status_text,
+        intent_counts,
+        classifications,
+        holder_style,
+    ) = populate_selected_file_commit_classification(
+        active_cell=None,
+        table_data=[],
+        date_range_data=mock_store_data,
+    )
+
+    assert status_text == "Select a file to classify commit messages."
+    assert intent_counts == []
+    assert classifications == []
+    assert holder_style == {"display": "block"}
+
+
+@patch(
+    "pages.most_committed.generate_table_selection_commit_classification_payload"
+)
+def test_selected_file_classification_returns_success_payload(
+    mock_generate_payload,
+    populate_selected_file_commit_classification,
+    mock_store_data,
+):
+    mock_generate_payload.return_value = {
+        "status": "ok",
+        "status_detail": "Classification completed.",
+        "error_detail": "",
+        "filename": "src/core.py",
+        "message_count": 2,
+        "intent_counts": [
+            {"intent": "feat", "count": 1},
+            {"intent": "fix", "count": 1},
+        ],
+        "classifications": [
+            {"intent": "feat", "message": "feat(core): add support"},
+            {"intent": "fix", "message": "fix(core): patch bug"},
+        ],
+    }
+
+    (
+        status_text,
+        intent_counts,
+        classifications,
+        holder_style,
+    ) = populate_selected_file_commit_classification(
+        active_cell={"row": 0},
+        table_data=[{"filename": "src/core.py"}],
+        date_range_data=mock_store_data,
+    )
+
+    assert status_text == "src/core.py: classified 2 commit message(s)."
+    assert intent_counts == [
+        {"intent": "feat", "count": 1},
+        {"intent": "fix", "count": 1},
+    ]
+    assert classifications == [
+        {"intent": "feat", "message": "feat(core): add support"},
+        {"intent": "fix", "message": "fix(core): patch bug"},
+    ]
+    assert holder_style == {"display": "block"}
 
 
 if __name__ == "__main__":
