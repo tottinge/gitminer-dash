@@ -46,6 +46,13 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
   - `prepare_changes_by_date()` - Group commits by date and type
   - Standard categories: feat, fix, refactor, test, docs, chore, perf, etc.
 
+## Commit Message Classification
+**Purpose**: Classify and aggregate file-scoped commit messages for analysis workflows
+
+- `commit_message_classifier.py` - Processor for normalized intent classification
+  - `classify_commit_message()` - Classify one message into a normalized intent
+  - `classify_commit_messages()` - Return deterministic counts + row-level classifications
+
 ## Time-Based Analysis
 **Purpose**: Aggregate commits by time periods
 
