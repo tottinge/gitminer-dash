@@ -78,7 +78,6 @@ def prepare_changes_by_date(
             for commit in commits
             if commit.committed_datetime.date() >= lookback_start_date
         ]
-
     daily_change_counter = Counter()
     for commit in commits:
         match = conventional_commit_match_pattern.match(commit.message)

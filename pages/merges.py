@@ -45,7 +45,7 @@ def prepare_dataframe(start_date, end_date):
     Input("global-date-range", "data"),
     running=[(Output("merge-refresh-button", "disabled"), True, False)],
 )
-def update_merge_graph(n_clicks: int, store_data):
+def update_merge_graph(_n_clicks: int, store_data):
     start_date, end_date = date_utils.parse_date_range_from_store(store_data)
     data_frame = prepare_dataframe(start_date, end_date)
     if data_frame.empty:

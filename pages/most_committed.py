@@ -1,16 +1,13 @@
 import plotly.express as px
-from dash import Input, Output, State, callback, dcc, html, register_page
+from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 from pandas import DataFrame
 
 import repository_context as repo_context
 from algorithms.commit_frequency import calculate_file_commit_frequency
-from algorithms.word_frequency import calculate_word_frequency
 from utils import date_utils
-from utils.git import get_commit_messages_for_file
 from utils.plotly_utils import create_empty_figure
-from visualization.word_frequency import create_word_frequency_treemap
 
 register_page(
     module=__name__,  # Where it's found
@@ -34,84 +31,46 @@ layout = html.Div(
                 ),
             ],
         ),
-        html.Div(
-            style={
-                "display": "flex",
-                "gap": "20px",
-                "alignItems": "flex-start",
-            },
+        html.H3("Source Data", style={"margin": "10px 0"}),
+        dcc.Loading(
+            id="loading-table",
+            type="circle",
             children=[
-                # Left side: Table
-                html.Div(
-                    style={"flex": "1", "minWidth": "0"},
-                    children=[
-                        html.H3("Source Data", style={"margin": "10px 0"}),
-                        dcc.Loading(
-                            id="loading-table",
-                            type="circle",
-                            children=[
-                                DataTable(
-                                    id="table-data",
-                                    columns=[
-                                        {"name": "File", "id": "filename"},
-                                        {"name": "Commits", "id": "count"},
-                                        {
-                                            "name": "Avg Lines/Commit",
-                                            "id": "avg_changes",
-                                        },
-                                        {
-                                            "name": "Change (lines)",
-                                            "id": "total_change",
-                                        },
-                                        {
-                                            "name": "Change (percent)",
-                                            "id": "percent_change",
-                                        },
-                                    ],
-                                    style_table={
-                                        "maxHeight": "600px",
-                                        "overflowY": "auto",
-                                    },
-                                    style_cell_conditional=[
-                                        {
-                                            "if": {"column_id": "filename"},
-                                            "width": "20%",
-                                            "textAlign": "left",
-                                        },
-                                        {
-                                            "if": {"column_id": "count"},
-                                            "width": "10%",
-                                        },
-                                        {},
-                                    ],
-                                )
-                            ],
-                        ),
+                DataTable(
+                    id="table-data",
+                    columns=[
+                        {"name": "File", "id": "filename"},
+                        {"name": "Commits", "id": "count"},
+                        {
+                            "name": "Avg Lines/Commit",
+                            "id": "avg_changes",
+                        },
+                        {
+                            "name": "Change (lines)",
+                            "id": "total_change",
+                        },
+                        {
+                            "name": "Change (percent)",
+                            "id": "percent_change",
+                        },
                     ],
-                ),
-                # Right side: Word frequency
-                html.Div(
-                    style={"flex": "0 0 400px", "minWidth": "400px"},
-                    children=[
-                        html.H3(
-                            "Commit Message Word Frequency",
-                            style={"margin": "10px 0"},
-                        ),
-                        dcc.Loading(
-                            id="loading-word-frequency",
-                            type="circle",
-                            children=[
-                                dcc.Graph(
-                                    id="id-word-frequency-graph",
-                                    figure=create_empty_figure(
-                                        "Click on a file in the table to view word frequency"
-                                    ),
-                                    style={"height": "600px"},
-                                ),
-                            ],
-                        ),
+                    style_table={
+                        "maxHeight": "600px",
+                        "overflowY": "auto",
+                    },
+                    style_cell_conditional=[
+                        {
+                            "if": {"column_id": "filename"},
+                            "width": "20%",
+                            "textAlign": "left",
+                        },
+                        {
+                            "if": {"column_id": "count"},
+                            "width": "10%",
+                        },
+                        {},
                     ],
-                ),
+                )
             ],
         ),
     ]
@@ -158,46 +117,3 @@ def populate_graph(store_data):
 
     style_show = {"display": "block"}
     return figure, table_data, style_show
-
-
-@callback(
-    Output("id-word-frequency-graph", "figure"),
-    [
-        Input("table-data", "active_cell"),
-        Input("global-date-range", "data"),
-    ],
-    State("table-data", "data"),
-)
-def update_word_frequency(active_cell, store_data, table_data):
-    """Update word frequency visualization when a file is clicked."""
-    if not active_cell or not table_data or not store_data:
-        return create_empty_figure(
-            "Click on a file in the table to view word frequency"
-        )
-
-    # Get selected filename
-    row_index = active_cell["row"]
-    if row_index >= len(table_data):
-        return create_empty_figure("Invalid selection")
-
-    filename = table_data[row_index]["filename"]
-
-    # Get date range
-    begin, end = date_utils.parse_date_range_from_store(store_data)
-
-    # Get commit messages for the file
-    repo = repo_context.get_repo()
-    messages = list(get_commit_messages_for_file(repo, filename, begin, end))
-
-    if not messages:
-        return create_empty_figure(f"No commit messages found for {filename}")
-
-    # Calculate word frequency
-    word_counts = calculate_word_frequency(messages)
-
-    # Create visualization
-    return create_word_frequency_treemap(
-        word_counts,
-        title=f"Word Frequency for {filename} ({len(messages)} commits)",
-        top_n=30,
-    )

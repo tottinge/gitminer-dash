@@ -44,27 +44,6 @@ def tree_entry_size(repo: Repo, commit_ref, path: str) -> int:
         return 0
 
 
-def get_commit_messages_for_file(
-    repo: Repo, filepath: str, start_date, end_date
-):
-    """Get all commit messages for a specific file during the specified period.
-
-    Args:
-        repo: Git repository object
-        filepath: Path to the file
-        start_date: Start of date range
-        end_date: End of date range
-
-    Yields:
-        Commit messages (full text)
-    """
-    # Use GitPython's built-in filtering for efficiency
-    for commit in repo.iter_commits(
-        paths=filepath, since=start_date, until=end_date
-    ):
-        yield commit.message
-
-
 def get_commits_for_file_pair(
     repo: Repo,
     first_file_path: str,

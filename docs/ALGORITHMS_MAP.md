@@ -57,12 +57,6 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
 - `diff_analysis.py` - Daily diff statistics
   - `get_diffs_in_period()` - Break down insertions/deletions into modifications vs net changes
 
-## Text Analysis
-**Purpose**: Analyze text content of commits
-
-- `word_frequency.py` - Count word occurrences in commit messages
-  - `calculate_word_frequency()` - With stop word filtering and min length
-  - `STOP_WORDS` - Configurable exclusion list
 
 ## Data Transformation
 **Purpose**: Convert analysis results to visualization-ready formats
