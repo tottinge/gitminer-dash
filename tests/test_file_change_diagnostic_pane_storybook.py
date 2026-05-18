@@ -1,6 +1,9 @@
 """Storybook-focused tests for file-change diagnostic pane component states."""
 
-from visualization.file_change_diagnostic_pane import EMPTY_SELECTION_MESSAGE
+from visualization.file_change_diagnostic_pane import (
+    EMPTY_SELECTION_MESSAGE,
+    build_file_change_diagnostic_pane,
+)
 from visualization.file_change_diagnostic_pane_storybook import (
     FILE_CHANGE_DIAGNOSTIC_PANE_STORIES,
     build_file_change_diagnostic_pane_storybook,
@@ -163,3 +166,47 @@ def test_storybook_layout_contains_one_section_per_story():
         "feature-growth",
         "thrash-leaning",
     ]
+
+
+def test_neighbors_summary_uses_non_all_focus_label():
+    pane = build_file_change_diagnostic_pane(
+        payload={
+            "filename": "src/core.py",
+            "message_count": 3,
+            "filtered_message_count": 2,
+            "focused_intent": "fix",
+            "intent_counts": [{"intent": "fix", "count": 2}],
+            "evidence_rows": [
+                {
+                    "intent": "fix",
+                    "hash": "abc1111",
+                    "date": "2026-05-01 10:00",
+                    "message": "fix(core): patch parser",
+                }
+            ],
+            "advisory_labels": ["mixed_signal"],
+            "confidence_hint": "Low confidence: trend based on only 3 commit(s).",
+            "advisory_note": "Signals are advisory.",
+            "intent_leader": "fix",
+            "leader_coverage_percent": 67,
+            "fixlike_ratio_percent": 67,
+            "feature_ratio_percent": 0,
+            "maintenance_ratio_percent": 33,
+            "short_gap_followups": 1,
+            "short_gap_shared_hunk_followups": 0,
+            "median_revisit_days": 1.0,
+            "unique_cochange_neighbors": 2,
+            "cochange_commit_coverage_percent": 67,
+            "average_neighbors_per_commit": 1.0,
+            "coupling_signal_score": 1,
+            "top_cochange_neighbors": [{"path": "src/fix.py", "count": 2}],
+            "rework_episode_count": 0,
+            "rework_episodes": [],
+        },
+        component_id_prefix="id-story-file-change-diagnostic-focus-fix",
+    )
+    neighbors_summary = _find_by_id(
+        pane,
+        "id-story-file-change-diagnostic-focus-fix-neighbors-summary",
+    )
+    assert neighbors_summary.children == "Top co-change neighbors for fix (1)"
