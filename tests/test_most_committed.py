@@ -1,9 +1,4 @@
-"""
-Test file for the most_committed page module.
-
-This file contains tests for the populate_graph callback function,
-specifically testing edge cases like empty data.
-"""
+"""Behavioral tests for the refactored Most Committed page."""
 
 from tests import setup_path
 
@@ -17,29 +12,38 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
+def _walk_components(component):
+    if component is None:
+        return
+    yield component
+    children = getattr(component, "children", None)
+    if isinstance(children, (list, tuple)):
+        for child in children:
+            yield from _walk_components(child)
+        return
+    if children is None or isinstance(children, str):
+        return
+    yield from _walk_components(children)
+
+
+def _find_component_by_id(component, component_id):
+    for item in _walk_components(component):
+        if getattr(item, "id", None) == component_id:
+            return item
+    msg = f"Component not found for id={component_id}"
+    raise AssertionError(msg)
+
+
 @pytest.fixture
-def populate_graph():
-    """Import and return the populate_graph function with proper mocking."""
+def most_committed_module():
     with patch("dash.register_page"):
-        from pages.most_committed import populate_graph as pg
+        import pages.most_committed as module
 
-        return pg
-
-
-@pytest.fixture
-def populate_selected_file_commit_classification():
-    """Import and return selected-file classification callback."""
-    with patch("dash.register_page"):
-        from pages.most_committed import (
-            populate_selected_file_commit_classification as callback_fn,
-        )
-
-        return callback_fn
+        return module
 
 
 @pytest.fixture
 def mock_store_data():
-    """Create mock store data for testing."""
     return {
         "period": "30",
         "begin": "2024-01-01T00:00:00",
@@ -50,170 +54,177 @@ def mock_store_data():
 @patch("pages.most_committed.repo_context.commits_in_period")
 @patch("pages.most_committed.repo_context.get_repo")
 @patch("pages.most_committed.calculate_file_commit_frequency")
-def test_no_data_message_displayed(
-    mock_calc, mock_get_repo, mock_commits, mock_store_data, populate_graph
+def test_populate_ranked_table_returns_file_and_count_rows(
+    mock_calc,
+    mock_get_repo,
+    mock_commits,
+    mock_store_data,
+    most_committed_module,
 ):
-    """Test that graph displays 'No data in selected period' message when no commit data is available."""
-    mock_commits.return_value = []
-    mock_get_repo.return_value = MagicMock()
-    mock_calc.return_value = []
-    (figure, table_data, style) = populate_graph(mock_store_data)
-    assert len(figure.layout.annotations) == 1
-    assert figure.layout.annotations[0].text == "No data in selected period"
-    assert figure.layout.annotations[0].xref == "paper"
-    assert figure.layout.annotations[0].yref == "paper"
-    assert figure.layout.annotations[0].x == 0.5
-    assert figure.layout.annotations[0].y == 0.5
-    assert table_data == []
-    assert style == {"display": "block"}
-
-
-@patch("pages.most_committed.repo_context.commits_in_period")
-@patch("pages.most_committed.repo_context.get_repo")
-@patch("pages.most_committed.calculate_file_commit_frequency")
-def test_dataframe_initialized_with_correct_columns_when_empty(
-    mock_calc, mock_get_repo, mock_commits, mock_store_data, populate_graph
-):
-    """Test that DataFrame is initialized with correct columns even when the usages list is empty."""
-    mock_commits.return_value = []
-    mock_get_repo.return_value = MagicMock()
-    mock_calc.return_value = []
-    (figure, table_data, style) = populate_graph(mock_store_data)
-    assert isinstance(table_data, list)
-    assert len(table_data) == 0
-
-
-@patch("pages.most_committed.repo_context.commits_in_period")
-@patch("pages.most_committed.repo_context.get_repo")
-@patch("pages.most_committed.calculate_file_commit_frequency")
-def test_dataframe_columns_with_valid_data(
-    mock_calc, mock_get_repo, mock_commits, mock_store_data, populate_graph
-):
-    """Test that DataFrame contains correct columns when data is present."""
     mock_commits.return_value = [MagicMock()]
     mock_get_repo.return_value = MagicMock()
     mock_calc.return_value = [
-        {
-            "filename": "test.py",
-            "count": 10,
-            "avg_changes": 5.5,
-            "total_change": 55,
-            "percent_change": 10.0,
-        }
+        {"filename": "src/core.py", "count": 10},
+        {"filename": "src/utils.py", "count": 7},
     ]
-    (figure, table_data, style) = populate_graph(mock_store_data)
-    assert len(table_data) == 1
-    assert "filename" in table_data[0]
-    assert "count" in table_data[0]
-    assert "avg_changes" in table_data[0]
-    assert "total_change" in table_data[0]
-    assert "percent_change" in table_data[0]
-    assert table_data[0]["filename"] == "test.py"
-    assert table_data[0]["count"] == 10
-    assert table_data[0]["avg_changes"] == 5.5
+
+    table_data = most_committed_module.populate_ranked_table(mock_store_data)
+
+    assert table_data == [
+        {"filename": "src/core.py", "count": 10},
+        {"filename": "src/utils.py", "count": 7},
+    ]
 
 
-def test_selected_file_classification_hides_panel_without_date_range(
-    populate_selected_file_commit_classification,
+def test_build_ranked_table_style_data_conditional_contains_bars_and_selection(
+    most_committed_module,
 ):
-    (
-        status_text,
-        intent_counts,
-        classifications,
-        holder_style,
-    ) = populate_selected_file_commit_classification(
+    style_rules = (
+        most_committed_module.build_ranked_table_style_data_conditional(
+            active_cell={"row": 1, "column": 0},
+            table_data=[
+                {"filename": "src/core.py", "count": 10},
+                {"filename": "src/utils.py", "count": 5},
+            ],
+        )
+    )
+
+    assert len(style_rules) == 3
+    bar_rules = [
+        rule
+        for rule in style_rules
+        if rule.get("if", {}).get("column_id") == "count"
+    ]
+    assert len(bar_rules) == 2
+    selection_rule = next(
+        (
+            rule
+            for rule in style_rules
+            if rule.get("if", {}).get("row_index") == 1
+            and "backgroundColor" in rule
+        ),
+        None,
+    )
+    assert selection_rule is not None
+    assert selection_rule["backgroundColor"] == "#e6f3ff"
+
+
+def test_selected_file_diagnostic_uses_empty_state_without_date_range(
+    most_committed_module,
+):
+    status_text, pane = most_committed_module.populate_selected_file_diagnostic(
         active_cell={"row": 0},
-        table_data=[{"filename": "src/core.py"}],
+        table_data=[{"filename": "src/core.py", "count": 5}],
         date_range_data=None,
+        focused_intent="all",
     )
 
-    assert status_text == "Select a date range to classify commit messages."
-    assert intent_counts == []
-    assert classifications == []
-    assert holder_style == {"display": "none"}
+    assert status_text == "Select a date range to view file diagnostics."
+    empty_message = _find_component_by_id(
+        pane,
+        "id-most-committed-file-change-diagnostic-pane-empty-state-message",
+    )
+    assert (
+        empty_message.children
+        == "Select a date range to view file diagnostics."
+    )
 
 
 @patch(
-    "pages.most_committed.generate_table_selection_commit_classification_payload"
+    "pages.most_committed.generate_table_selection_file_change_diagnostic_payload"
 )
-def test_selected_file_classification_returns_no_selection_contract(
+def test_selected_file_diagnostic_renders_success_payload(
     mock_generate_payload,
-    populate_selected_file_commit_classification,
     mock_store_data,
-):
-    mock_generate_payload.return_value = {
-        "status": "no_file_selected",
-        "status_detail": "Select a file to classify commit messages.",
-        "error_detail": "",
-        "filename": "",
-        "message_count": 0,
-        "intent_counts": [],
-        "classifications": [],
-    }
-
-    (
-        status_text,
-        intent_counts,
-        classifications,
-        holder_style,
-    ) = populate_selected_file_commit_classification(
-        active_cell=None,
-        table_data=[],
-        date_range_data=mock_store_data,
-    )
-
-    assert status_text == "Select a file to classify commit messages."
-    assert intent_counts == []
-    assert classifications == []
-    assert holder_style == {"display": "block"}
-
-
-@patch(
-    "pages.most_committed.generate_table_selection_commit_classification_payload"
-)
-def test_selected_file_classification_returns_success_payload(
-    mock_generate_payload,
-    populate_selected_file_commit_classification,
-    mock_store_data,
+    most_committed_module,
 ):
     mock_generate_payload.return_value = {
         "status": "ok",
-        "status_detail": "Classification completed.",
+        "status_detail": "Diagnostics completed.",
         "error_detail": "",
         "filename": "src/core.py",
-        "message_count": 2,
-        "intent_counts": [
-            {"intent": "feat", "count": 1},
-            {"intent": "fix", "count": 1},
+        "message_count": 3,
+        "filtered_message_count": 3,
+        "focused_intent": "all",
+        "intent_counts": [{"intent": "fix", "count": 2}],
+        "classifications": [],
+        "evidence_rows": [
+            {
+                "intent": "fix",
+                "hash": "abc1234",
+                "date": "2026-05-10 10:00",
+                "message": "fix(core): patch regression",
+            }
         ],
-        "classifications": [
-            {"intent": "feat", "message": "feat(core): add support"},
-            {"intent": "fix", "message": "fix(core): patch bug"},
-        ],
+        "advisory_labels": ["possible_thrash"],
+        "confidence_hint": "Medium confidence: trend based on 3 commits.",
+        "advisory_note": "Signals are advisory.",
+        "intent_leader": "fix",
+        "leader_coverage_percent": 67,
+        "fixlike_ratio_percent": 67,
+        "feature_ratio_percent": 0,
+        "maintenance_ratio_percent": 33,
+        "short_gap_followups": 1,
+        "median_revisit_days": 1.0,
+        "unique_cochange_neighbors": 2,
+        "rework_episodes": [],
     }
 
-    (
-        status_text,
-        intent_counts,
-        classifications,
-        holder_style,
-    ) = populate_selected_file_commit_classification(
+    status_text, pane = most_committed_module.populate_selected_file_diagnostic(
         active_cell={"row": 0},
-        table_data=[{"filename": "src/core.py"}],
+        table_data=[{"filename": "src/core.py", "count": 3}],
         date_range_data=mock_store_data,
+        focused_intent="all",
     )
 
-    assert status_text == "src/core.py: classified 2 commit message(s)."
-    assert intent_counts == [
-        {"intent": "feat", "count": 1},
-        {"intent": "fix", "count": 1},
-    ]
-    assert classifications == [
-        {"intent": "feat", "message": "feat(core): add support"},
-        {"intent": "fix", "message": "fix(core): patch bug"},
-    ]
-    assert holder_style == {"display": "block"}
+    assert status_text == "src/core.py: analyzed 3 commit(s)."
+    filename_label = _find_component_by_id(
+        pane,
+        "id-most-committed-file-change-diagnostic-pane-filename",
+    )
+    assert filename_label.children == "src/core.py"
 
 
-if __name__ == "__main__":
-    pytest.main(["-v", __file__])
+@patch(
+    "pages.most_committed.generate_table_selection_file_change_diagnostic_payload"
+)
+def test_selected_file_diagnostic_uses_focused_intent_status_text(
+    mock_generate_payload,
+    mock_store_data,
+    most_committed_module,
+):
+    mock_generate_payload.return_value = {
+        "status": "ok",
+        "status_detail": "Diagnostics completed.",
+        "error_detail": "",
+        "filename": "src/core.py",
+        "message_count": 5,
+        "filtered_message_count": 2,
+        "focused_intent": "fix",
+        "intent_counts": [{"intent": "fix", "count": 2}],
+        "classifications": [],
+        "evidence_rows": [],
+        "advisory_labels": ["mixed_signal"],
+        "confidence_hint": "Medium confidence: trend based on 5 commits.",
+        "advisory_note": "Signals are advisory.",
+        "intent_leader": "fix",
+        "leader_coverage_percent": 40,
+        "fixlike_ratio_percent": 40,
+        "feature_ratio_percent": 20,
+        "maintenance_ratio_percent": 40,
+        "short_gap_followups": 2,
+        "median_revisit_days": 2.0,
+        "unique_cochange_neighbors": 3,
+        "rework_episodes": [],
+    }
+
+    status_text, _pane = (
+        most_committed_module.populate_selected_file_diagnostic(
+            active_cell={"row": 0},
+            table_data=[{"filename": "src/core.py", "count": 5}],
+            date_range_data=mock_store_data,
+            focused_intent="fix",
+        )
+    )
+
+    assert status_text == "src/core.py: showing 2 fix evidence row(s) out of 5."

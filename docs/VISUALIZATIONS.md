@@ -4,7 +4,16 @@ This document provides an overview of the various visualizations available in th
 
 ## Most Committed
 
-This visualization shows the most frequently committed files in your repository over different time periods (30, 60, or 90 days). It displays a bar chart of the files that have been modified most often, helping you identify which parts of your codebase are changing most frequently. This can be useful for identifying areas that might need refactoring or more attention.
+This view ranks the most frequently committed files in your repository over the selected period. The left pane is a two-column table where the first column renders commit-volume bars and the second column shows file paths. Clicking either the bar cell or filename cell selects that row and highlights it.
+
+The right pane shows file-change diagnostics for the selected file, including:
+- intent mix and dominant intent
+- fix-like / feature / maintenance ratios
+- short-gap revisit indicators and rework episodes
+- advisory labels (for example: possible thrash, feature growth, coupling pressure)
+- drill-down evidence rows (hash, date, intent, message)
+
+These diagnostics are advisory signals intended to support human investigation, not automatic conclusions.
 
 ## Change Types By Tag
 
