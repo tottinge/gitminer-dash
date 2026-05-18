@@ -232,13 +232,22 @@ def test_generate_file_payload_applies_intent_focus_to_evidence_rows():
     collect_file_commit_evidence_fn = Mock(
         return_value=[
             _evidence_row(
-                sha="aaa1111", day=1, message="feat(core): add parser"
+                sha="aaa1111",
+                day=1,
+                message="feat(core): add parser",
+                neighbors=["src/feat_only.py"],
             ),
             _evidence_row(
-                sha="bbb2222", day=2, message="fix(core): patch parser"
+                sha="bbb2222",
+                day=2,
+                message="fix(core): patch parser",
+                neighbors=["src/fix.py", "src/shared.py"],
             ),
             _evidence_row(
-                sha="ccc3333", day=4, message="fix(core): adjust parser"
+                sha="ccc3333",
+                day=4,
+                message="fix(core): adjust parser",
+                neighbors=["src/fix.py"],
             ),
         ]
     )
@@ -272,6 +281,10 @@ def test_generate_file_payload_applies_intent_focus_to_evidence_rows():
     assert payload["message_count"] == 3
     assert payload["filtered_message_count"] == 2
     assert {row["intent"] for row in payload["evidence_rows"]} == {"fix"}
+    assert payload["top_cochange_neighbors"] == [
+        {"path": "src/fix.py", "count": 2},
+        {"path": "src/shared.py", "count": 1},
+    ]
     assert len(payload["classifications"]) == 2
 
 

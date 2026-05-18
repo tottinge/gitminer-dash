@@ -648,6 +648,17 @@ def generate_file_change_diagnostic_payload(
         }
         for evidence_row in filtered_evidence_rows
     ]
+    filtered_top_cochange_neighbors = [
+        {"path": neighbor_path, "count": neighbor_count}
+        for neighbor_path, neighbor_count in sorted(
+            Counter(
+                neighbor_path
+                for evidence_row in filtered_evidence_rows
+                for neighbor_path in evidence_row.get("cochanged_neighbors", [])
+            ).items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:TOP_COCHANGE_NEIGHBORS_LIMIT]
+    ]
 
     return {
         "status": "ok",
@@ -691,7 +702,7 @@ def generate_file_change_diagnostic_payload(
             "average_neighbors_per_commit"
         ],
         "coupling_signal_score": coupling_signals["coupling_signal_score"],
-        "top_cochange_neighbors": coupling_signals["top_cochange_neighbors"],
+        "top_cochange_neighbors": filtered_top_cochange_neighbors,
         "rework_episode_count": revisit_signals["rework_episode_count"],
         "rework_episodes": revisit_signals["rework_episodes"],
     }
