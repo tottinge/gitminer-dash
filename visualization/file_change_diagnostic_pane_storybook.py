@@ -61,6 +61,14 @@ def _feature_growth_payload() -> FileChangeDiagnosticPanePayload:
         "cochange_commit_coverage_percent": 57,
         "average_neighbors_per_commit": 0.57,
         "coupling_signal_score": 1,
+        "top_cochange_neighbors": [
+            {"path": "pages/most_committed.py", "count": 2},
+            {"path": "tests/test_most_committed.py", "count": 1},
+            {
+                "path": "visualization/file_change_diagnostic_pane.py",
+                "count": 1,
+            },
+        ],
         "rework_episode_count": 0,
         "rework_episodes": [],
     }
@@ -115,6 +123,12 @@ def _thrash_leaning_payload() -> FileChangeDiagnosticPanePayload:
         "cochange_commit_coverage_percent": 89,
         "average_neighbors_per_commit": 1.78,
         "coupling_signal_score": 3,
+        "top_cochange_neighbors": [
+            {"path": "src/parser/tokenizer.py", "count": 4},
+            {"path": "src/parser/rules.py", "count": 3},
+            {"path": "src/parser/errors.py", "count": 2},
+            {"path": "src/core/config.py", "count": 1},
+        ],
         "rework_episode_count": 1,
         "rework_episodes": [
             {

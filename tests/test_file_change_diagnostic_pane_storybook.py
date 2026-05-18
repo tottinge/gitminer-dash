@@ -71,6 +71,10 @@ def test_feature_growth_story_shows_advisory_label_and_preview():
         story,
         "id-story-file-change-diagnostic-feature-growth-evidence-preview",
     )
+    neighbors_table = _find_by_id(
+        story,
+        "id-story-file-change-diagnostic-feature-growth-neighbors-table",
+    )
     assert leader_chip.children == "Leader: 'feat' %57"
     assert len(label_chips.children) == 1
     assert label_chips.children[0].children == "feature growth"
@@ -81,6 +85,7 @@ def test_feature_growth_story_shows_advisory_label_and_preview():
         == "Medium confidence: trend based on 7 commits."
     )
     assert len(evidence_preview.children) == 3
+    assert len(neighbors_table.data) == 3
 
 
 def test_thrash_story_shows_rework_and_drilldown_data():
@@ -109,8 +114,17 @@ def test_thrash_story_shows_rework_and_drilldown_data():
         story,
         "id-story-file-change-diagnostic-thrash-summary-coupling-score",
     )
+    neighbors_table = _find_by_id(
+        story,
+        "id-story-file-change-diagnostic-thrash-neighbors-table",
+    )
     assert len(drilldown_table.data) == 3
     assert len(rework_table.data) == 1
+    assert len(neighbors_table.data) == 4
+    assert neighbors_table.data[0] == {
+        "path": "src/parser/tokenizer.py",
+        "count": 4,
+    }
     assert rework_table.data[0]["followup_intent"] == "fix"
     assert len(label_help.children) == 2
     label_help_texts = [item.children for item in label_help.children]

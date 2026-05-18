@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from statistics import median
 from typing import Any
 
@@ -30,6 +31,7 @@ COUPLING_NEIGHBOR_FLOOR = 8
 COUPLING_NEIGHBOR_COVERAGE_THRESHOLD = 60
 COUPLING_AVERAGE_NEIGHBORS_THRESHOLD = 1.5
 COUPLING_MIN_SIGNAL_SCORE = 2
+TOP_COCHANGE_NEIGHBORS_LIMIT = 5
 DIAGNOSTIC_ADVISORY_NOTE = (
     "Signals are advisory. Review commit evidence before deciding whether "
     "to refactor."
@@ -362,15 +364,22 @@ def _coupling_signals(
             "cochange_commit_coverage_percent": 0,
             "average_neighbors_per_commit": 0.0,
             "coupling_signal_score": 0,
+            "top_cochange_neighbors": [],
         }
 
-    unique_cochange_neighbors = len(
-        {
-            neighbor_path
-            for evidence_row in evidence_rows
-            for neighbor_path in evidence_row.get("cochanged_neighbors", [])
-        }
-    )
+    all_cochange_neighbors = [
+        neighbor_path
+        for evidence_row in evidence_rows
+        for neighbor_path in evidence_row.get("cochanged_neighbors", [])
+    ]
+    unique_cochange_neighbors = len(set(all_cochange_neighbors))
+    top_cochange_neighbors = [
+        {"path": neighbor_path, "count": neighbor_count}
+        for neighbor_path, neighbor_count in sorted(
+            Counter(all_cochange_neighbors).items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:TOP_COCHANGE_NEIGHBORS_LIMIT]
+    ]
     commits_with_neighbors = sum(
         1
         for evidence_row in evidence_rows
@@ -403,6 +412,7 @@ def _coupling_signals(
         "cochange_commit_coverage_percent": cochange_commit_coverage_percent,
         "average_neighbors_per_commit": average_neighbors_per_commit,
         "coupling_signal_score": coupling_signal_score,
+        "top_cochange_neighbors": top_cochange_neighbors,
     }
 
 
@@ -514,6 +524,7 @@ def build_empty_file_change_diagnostic_payload(
         "cochange_commit_coverage_percent": 0,
         "average_neighbors_per_commit": 0.0,
         "coupling_signal_score": 0,
+        "top_cochange_neighbors": [],
         "rework_episode_count": 0,
         "rework_episodes": [],
     }
@@ -680,6 +691,7 @@ def generate_file_change_diagnostic_payload(
             "average_neighbors_per_commit"
         ],
         "coupling_signal_score": coupling_signals["coupling_signal_score"],
+        "top_cochange_neighbors": coupling_signals["top_cochange_neighbors"],
         "rework_episode_count": revisit_signals["rework_episode_count"],
         "rework_episodes": revisit_signals["rework_episodes"],
     }

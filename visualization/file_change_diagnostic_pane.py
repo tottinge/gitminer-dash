@@ -84,6 +84,13 @@ class ReworkEpisodeRow(TypedDict):
     rework_signal_score: int
 
 
+class CochangeNeighborRow(TypedDict):
+    """One co-change neighbor frequency row."""
+
+    path: str
+    count: int
+
+
 class FileChangeDiagnosticPanePayload(TypedDict):
     """Input payload for the file-change diagnostic pane."""
 
@@ -108,6 +115,7 @@ class FileChangeDiagnosticPanePayload(TypedDict):
     cochange_commit_coverage_percent: int
     average_neighbors_per_commit: float
     coupling_signal_score: int
+    top_cochange_neighbors: list[CochangeNeighborRow]
     rework_episode_count: int
     rework_episodes: list[ReworkEpisodeRow]
 
@@ -194,6 +202,18 @@ def _median_revisit_text(median_revisit_days: float | None) -> str:
     return f"Median revisit {median_revisit_days:.1f}d"
 
 
+def _cochange_neighbor_data(
+    top_cochange_neighbors: list[CochangeNeighborRow],
+) -> list[dict[str, str | int]]:
+    return [
+        {
+            "path": str(neighbor_row.get("path", "-")),
+            "count": int(neighbor_row.get("count", 0)),
+        }
+        for neighbor_row in top_cochange_neighbors
+    ]
+
+
 def build_file_change_diagnostic_pane(
     payload: FileChangeDiagnosticPanePayload | None,
     *,
@@ -233,6 +253,9 @@ def build_file_change_diagnostic_pane(
     leader_coverage_percent = int(payload.get("leader_coverage_percent", 0))
     drilldown_data = _evidence_data(evidence_rows)
     rework_data = _rework_data(rework_episodes)
+    cochange_neighbor_data = _cochange_neighbor_data(
+        payload.get("top_cochange_neighbors", [])
+    )
 
     return html.Div(
         id=_component_id(component_id_prefix, "container"),
@@ -470,6 +493,39 @@ def build_file_change_diagnostic_pane(
                             {"name": "Signal", "id": "rework_signal_score"},
                         ],
                         data=rework_data,
+                        style_cell={
+                            "textAlign": "left",
+                            "padding": "4px 6px",
+                            "fontSize": "12px",
+                        },
+                        style_table={
+                            "maxHeight": "170px",
+                            "overflowY": "auto",
+                            "marginTop": "6px",
+                        },
+                    ),
+                ]
+            ),
+            html.Details(
+                children=[
+                    html.Summary(
+                        (
+                            "Top co-change neighbors "
+                            f"({len(cochange_neighbor_data)})"
+                        ),
+                        id=_component_id(
+                            component_id_prefix, "neighbors-summary"
+                        ),
+                    ),
+                    DataTable(
+                        id=_component_id(
+                            component_id_prefix, "neighbors-table"
+                        ),
+                        columns=[
+                            {"name": "Path", "id": "path"},
+                            {"name": "Count", "id": "count"},
+                        ],
+                        data=cochange_neighbor_data,
                         style_cell={
                             "textAlign": "left",
                             "padding": "4px 6px",

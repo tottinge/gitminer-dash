@@ -9,6 +9,8 @@ from collections.abc import Iterable
 
 import networkx as nx
 
+LOUVAIN_COMMUNITY_SEED = 1
+
 
 def count_files_in_commits(commits: Iterable) -> dict[str, int]:
     """Count how many commits each file appears in."""
@@ -44,7 +46,9 @@ def detect_and_assign_communities(G: nx.Graph) -> tuple[list, dict[str, float]]:
     stats = {"communities": 0, "avg_community_size": 0}
 
     if len(G.nodes()) > 0:
-        communities = nx.community.louvain_communities(G)
+        communities = nx.community.louvain_communities(
+            G, seed=LOUVAIN_COMMUNITY_SEED
+        )
         stats["communities"] = len(communities)
 
         if communities:

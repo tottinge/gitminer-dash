@@ -206,6 +206,11 @@ def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
     assert payload["cochange_commit_coverage_percent"] == 100
     assert payload["average_neighbors_per_commit"] == 1.25
     assert payload["coupling_signal_score"] == 1
+    assert payload["top_cochange_neighbors"] == [
+        {"path": "src/a.py", "count": 3},
+        {"path": "src/b.py", "count": 1},
+        {"path": "src/c.py", "count": 1},
+    ]
     assert payload["rework_episode_count"] == 2
     assert "possible_thrash" in payload["advisory_labels"]
     assert "coupling_pressure" not in payload["advisory_labels"]
@@ -423,5 +428,12 @@ def test_generate_file_payload_adds_coupling_pressure_independently():
     assert payload["cochange_commit_coverage_percent"] == 100
     assert payload["average_neighbors_per_commit"] == 2.0
     assert payload["coupling_signal_score"] == 3
+    assert payload["top_cochange_neighbors"] == [
+        {"path": "src/a.py", "count": 1},
+        {"path": "src/b.py", "count": 1},
+        {"path": "src/c.py", "count": 1},
+        {"path": "src/d.py", "count": 1},
+        {"path": "src/e.py", "count": 1},
+    ]
     assert "coupling_pressure" in payload["advisory_labels"]
     assert "possible_thrash" not in payload["advisory_labels"]
