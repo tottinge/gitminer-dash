@@ -8,9 +8,11 @@ This view ranks the most frequently committed files in your repository over the 
 
 The right pane shows file-change diagnostics for the selected file, including:
 - intent mix and dominant intent
+- leader summary chip in the form `Leader: '<intent>' %<coverage>`
 - fix-like / feature / maintenance ratios
 - short-gap revisit indicators and rework episodes
 - co-change breadth signals (neighbor count, neighbor coverage, coupling score)
+- top co-change neighbors (path + frequency) for immediate coupling drill-down
 - advisory labels (for example: possible thrash, feature growth, coupling pressure)
 - drill-down evidence rows (hash, date, intent, message)
 
