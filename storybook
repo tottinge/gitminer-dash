@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+uv run python - <<'PY'
+from dash import Dash
+
+from visualization.common_pair_intent_pane_storybook import (
+    build_common_pair_intent_pane_storybook,
+)
+
+app = Dash(__name__)
+app.layout = build_common_pair_intent_pane_storybook()
+app.run(debug=True, use_reloader=False, port=8051)
+PY
