@@ -209,4 +209,11 @@ def test_neighbors_summary_uses_non_all_focus_label():
         pane,
         "id-story-file-change-diagnostic-focus-fix-neighbors-summary",
     )
-    assert neighbors_summary.children == "Top co-change neighbors for fix (1)"
+    focus_chip = _find_by_id(
+        pane,
+        "id-story-file-change-diagnostic-focus-fix-summary-focus",
+    )
+    assert focus_chip.children == "Focus fix-like"
+    assert (
+        neighbors_summary.children == "Top co-change neighbors for fix-like (1)"
+    )
