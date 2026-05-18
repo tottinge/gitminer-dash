@@ -203,8 +203,12 @@ def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
     assert payload["short_gap_shared_hunk_followups"] == 2
     assert payload["median_revisit_days"] == 1.0
     assert payload["unique_cochange_neighbors"] == 3
+    assert payload["cochange_commit_coverage_percent"] == 100
+    assert payload["average_neighbors_per_commit"] == 1.25
+    assert payload["coupling_signal_score"] == 1
     assert payload["rework_episode_count"] == 2
     assert "possible_thrash" in payload["advisory_labels"]
+    assert "coupling_pressure" not in payload["advisory_labels"]
     assert (
         payload["confidence_hint"]
         == "Medium confidence: trend based on 4 commits."
@@ -329,4 +333,95 @@ def test_generate_file_payload_avoids_false_thrash_without_shared_hunks():
     assert payload["short_gap_shared_hunk_followups"] == 0
     assert payload["rework_episode_count"] == 0
     assert payload["rework_episodes"] == []
+    assert "possible_thrash" not in payload["advisory_labels"]
+
+
+def test_generate_file_payload_adds_coupling_pressure_independently():
+    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
+    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    parse_date_range_fn = Mock(return_value=(period_start, period_end))
+    get_repo_fn = Mock(return_value=object())
+    collect_file_commit_evidence_fn = Mock(
+        return_value=[
+            _evidence_row(
+                sha="aaa1111",
+                day=1,
+                message="feat(core): add parser branch",
+                neighbors=["src/a.py", "src/b.py"],
+            ),
+            _evidence_row(
+                sha="bbb2222",
+                day=2,
+                message="feat(core): add parser cache",
+                neighbors=["src/c.py", "src/d.py"],
+            ),
+            _evidence_row(
+                sha="ccc3333",
+                day=4,
+                message="chore(core): move parser constants",
+                neighbors=["src/e.py", "src/f.py"],
+            ),
+            _evidence_row(
+                sha="ddd4444",
+                day=5,
+                message="feat(core): add parser tracing",
+                neighbors=["src/g.py", "src/h.py"],
+            ),
+            _evidence_row(
+                sha="eee5555",
+                day=7,
+                message="chore(core): tidy parser imports",
+                neighbors=["src/i.py", "src/j.py"],
+            ),
+            _evidence_row(
+                sha="fff6666",
+                day=8,
+                message="chore(core): rename parser helpers",
+                neighbors=["src/k.py", "src/l.py"],
+            ),
+        ]
+    )
+    classify_commit_messages_fn = Mock(
+        return_value={
+            "message_count": 6,
+            "intent_counts": [
+                {"intent": "feat", "count": 3},
+                {"intent": "chore", "count": 3},
+            ],
+            "classifications": [
+                {"intent": "feat", "message": "feat(core): add parser branch"},
+                {"intent": "feat", "message": "feat(core): add parser cache"},
+                {
+                    "intent": "chore",
+                    "message": "chore(core): move parser constants",
+                },
+                {"intent": "feat", "message": "feat(core): add parser tracing"},
+                {
+                    "intent": "chore",
+                    "message": "chore(core): tidy parser imports",
+                },
+                {
+                    "intent": "chore",
+                    "message": "chore(core): rename parser helpers",
+                },
+            ],
+        }
+    )
+
+    payload = generate_file_change_diagnostic_payload(
+        filename="src/core.py",
+        date_range_data={"period": "Last 30 days"},
+        focused_intent="all",
+        parse_date_range_fn=parse_date_range_fn,
+        get_repo_fn=get_repo_fn,
+        collect_file_commit_evidence_fn=collect_file_commit_evidence_fn,
+        classify_commit_messages_fn=classify_commit_messages_fn,
+    )
+
+    assert payload["status"] == "ok"
+    assert payload["unique_cochange_neighbors"] == 12
+    assert payload["cochange_commit_coverage_percent"] == 100
+    assert payload["average_neighbors_per_commit"] == 2.0
+    assert payload["coupling_signal_score"] == 3
+    assert "coupling_pressure" in payload["advisory_labels"]
     assert "possible_thrash" not in payload["advisory_labels"]

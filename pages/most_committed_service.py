@@ -25,6 +25,11 @@ REWORK_MIN_SHARED_HUNK_COUNT = 1
 REWORK_SHARED_HUNK_WEIGHT = 2
 REWORK_FIXLIKE_WEIGHT = 1
 REWORK_MIN_SIGNAL_SCORE = 2
+COUPLING_MIN_MESSAGES = 4
+COUPLING_NEIGHBOR_FLOOR = 8
+COUPLING_NEIGHBOR_COVERAGE_THRESHOLD = 60
+COUPLING_AVERAGE_NEIGHBORS_THRESHOLD = 1.5
+COUPLING_MIN_SIGNAL_SCORE = 2
 DIAGNOSTIC_ADVISORY_NOTE = (
     "Signals are advisory. Review commit evidence before deciding whether "
     "to refactor."
@@ -347,13 +352,58 @@ def _revisit_signals(evidence_rows) -> dict[str, Any]:
     }
 
 
-def _cochange_neighbor_count(evidence_rows) -> int:
-    neighbor_paths = {
-        neighbor_path
+def _coupling_signals(
+    evidence_rows: list[dict[str, Any]],
+    message_count: int,
+) -> dict[str, Any]:
+    if message_count <= 0:
+        return {
+            "unique_cochange_neighbors": 0,
+            "cochange_commit_coverage_percent": 0,
+            "average_neighbors_per_commit": 0.0,
+            "coupling_signal_score": 0,
+        }
+
+    unique_cochange_neighbors = len(
+        {
+            neighbor_path
+            for evidence_row in evidence_rows
+            for neighbor_path in evidence_row.get("cochanged_neighbors", [])
+        }
+    )
+    commits_with_neighbors = sum(
+        1
         for evidence_row in evidence_rows
-        for neighbor_path in evidence_row.get("cochanged_neighbors", [])
+        if evidence_row.get("cochanged_neighbors", [])
+    )
+    total_neighbor_events = sum(
+        len(evidence_row.get("cochanged_neighbors", []))
+        for evidence_row in evidence_rows
+    )
+    cochange_commit_coverage_percent = _ratio_percent(
+        commits_with_neighbors, message_count
+    )
+    average_neighbors_per_commit = round(
+        total_neighbor_events / message_count,
+        2,
+    )
+
+    coupling_signal_score = 0
+    if unique_cochange_neighbors >= max(COUPLING_NEIGHBOR_FLOOR, message_count):
+        coupling_signal_score += 1
+    if cochange_commit_coverage_percent >= COUPLING_NEIGHBOR_COVERAGE_THRESHOLD:
+        coupling_signal_score += 1
+    if average_neighbors_per_commit >= COUPLING_AVERAGE_NEIGHBORS_THRESHOLD:
+        coupling_signal_score += 1
+    if message_count < COUPLING_MIN_MESSAGES:
+        coupling_signal_score = 0
+
+    return {
+        "unique_cochange_neighbors": unique_cochange_neighbors,
+        "cochange_commit_coverage_percent": cochange_commit_coverage_percent,
+        "average_neighbors_per_commit": average_neighbors_per_commit,
+        "coupling_signal_score": coupling_signal_score,
     }
-    return len(neighbor_paths)
 
 
 def _diagnostic_labels(
@@ -366,7 +416,7 @@ def _diagnostic_labels(
     short_gap_shared_hunk_followups: int,
     fixlike_followups: int,
     rework_episode_count: int,
-    unique_cochange_neighbors: int,
+    coupling_signal_score: int,
 ) -> list[str]:
     labels = []
     if message_count >= 4 and (
@@ -389,7 +439,10 @@ def _diagnostic_labels(
         labels.append("feature_growth")
     if maintenance_ratio_percent >= 45 and feature_ratio_percent < 40:
         labels.append("maintenance_chore")
-    if unique_cochange_neighbors >= max(8, message_count):
+    if (
+        message_count >= COUPLING_MIN_MESSAGES
+        and coupling_signal_score >= COUPLING_MIN_SIGNAL_SCORE
+    ):
         labels.append("coupling_pressure")
     if not labels:
         labels.append("mixed_signal")
@@ -458,6 +511,9 @@ def build_empty_file_change_diagnostic_payload(
         "short_gap_shared_hunk_followups": 0,
         "median_revisit_days": None,
         "unique_cochange_neighbors": 0,
+        "cochange_commit_coverage_percent": 0,
+        "average_neighbors_per_commit": 0.0,
+        "coupling_signal_score": 0,
         "rework_episode_count": 0,
         "rework_episodes": [],
     }
@@ -552,8 +608,9 @@ def generate_file_change_diagnostic_payload(
     maintenance_ratio_percent = _ratio_percent(maintenance_count, message_count)
 
     revisit_signals = _revisit_signals(evidence_rows_with_intent)
-    unique_cochange_neighbors = _cochange_neighbor_count(
-        evidence_rows_with_intent
+    coupling_signals = _coupling_signals(
+        evidence_rows=evidence_rows_with_intent,
+        message_count=message_count,
     )
     advisory_labels = _diagnostic_labels(
         message_count=message_count,
@@ -566,7 +623,7 @@ def generate_file_change_diagnostic_payload(
         ],
         fixlike_followups=revisit_signals["fixlike_followups"],
         rework_episode_count=revisit_signals["rework_episode_count"],
-        unique_cochange_neighbors=unique_cochange_neighbors,
+        coupling_signal_score=coupling_signals["coupling_signal_score"],
     )
 
     filtered_evidence_rows = _filtered_evidence_rows(
@@ -613,7 +670,16 @@ def generate_file_change_diagnostic_payload(
             "short_gap_shared_hunk_followups"
         ],
         "median_revisit_days": revisit_signals["median_revisit_days"],
-        "unique_cochange_neighbors": unique_cochange_neighbors,
+        "unique_cochange_neighbors": coupling_signals[
+            "unique_cochange_neighbors"
+        ],
+        "cochange_commit_coverage_percent": coupling_signals[
+            "cochange_commit_coverage_percent"
+        ],
+        "average_neighbors_per_commit": coupling_signals[
+            "average_neighbors_per_commit"
+        ],
+        "coupling_signal_score": coupling_signals["coupling_signal_score"],
         "rework_episode_count": revisit_signals["rework_episode_count"],
         "rework_episodes": revisit_signals["rework_episodes"],
     }

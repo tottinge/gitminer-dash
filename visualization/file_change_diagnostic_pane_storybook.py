@@ -55,8 +55,13 @@ def _feature_growth_payload() -> FileChangeDiagnosticPanePayload:
         "feature_ratio_percent": 57,
         "maintenance_ratio_percent": 43,
         "short_gap_followups": 1,
+        "short_gap_shared_hunk_followups": 0,
         "median_revisit_days": 1.4,
         "unique_cochange_neighbors": 4,
+        "cochange_commit_coverage_percent": 57,
+        "average_neighbors_per_commit": 0.57,
+        "coupling_signal_score": 1,
+        "rework_episode_count": 0,
         "rework_episodes": [],
     }
 
@@ -104,8 +109,13 @@ def _thrash_leaning_payload() -> FileChangeDiagnosticPanePayload:
         "feature_ratio_percent": 22,
         "maintenance_ratio_percent": 22,
         "short_gap_followups": 3,
+        "short_gap_shared_hunk_followups": 2,
         "median_revisit_days": 0.8,
         "unique_cochange_neighbors": 12,
+        "cochange_commit_coverage_percent": 89,
+        "average_neighbors_per_commit": 1.78,
+        "coupling_signal_score": 3,
+        "rework_episode_count": 1,
         "rework_episodes": [
             {
                 "anchor_hash": "fix1111",
@@ -113,6 +123,8 @@ def _thrash_leaning_payload() -> FileChangeDiagnosticPanePayload:
                 "revisit_days": 0.95,
                 "followup_intent": "fix",
                 "followup_fixlike": True,
+                "shared_hunk_count": 2,
+                "rework_signal_score": 3,
             }
         ],
     }

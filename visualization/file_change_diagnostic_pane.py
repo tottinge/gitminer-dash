@@ -33,6 +33,27 @@ LABEL_CHIP_STYLE = {
     "borderRadius": "999px",
     "padding": "2px 8px",
 }
+ADVISORY_LABEL_HELP = {
+    "possible_thrash": (
+        "Possible thrash: repeated short-gap follow-ups suggest rework on "
+        "the same area."
+    ),
+    "feature_growth": (
+        "Feature growth: commit history is dominated by new capability work."
+    ),
+    "maintenance_chore": (
+        "Maintenance chore: commits trend toward upkeep tasks over net-new "
+        "features."
+    ),
+    "coupling_pressure": (
+        "Coupling pressure: this file changes with many neighbors and may be "
+        "too central."
+    ),
+    "mixed_signal": (
+        "Mixed signal: no single pattern dominates; inspect evidence rows for "
+        "context."
+    ),
+}
 
 
 class IntentCountRow(TypedDict):
@@ -84,6 +105,9 @@ class FileChangeDiagnosticPanePayload(TypedDict):
     short_gap_shared_hunk_followups: int
     median_revisit_days: float | None
     unique_cochange_neighbors: int
+    cochange_commit_coverage_percent: int
+    average_neighbors_per_commit: float
+    coupling_signal_score: int
     rework_episode_count: int
     rework_episodes: list[ReworkEpisodeRow]
 
@@ -103,6 +127,25 @@ def build_label_chips(advisory_labels: list[str]) -> list[html.Span]:
         html.Span(_label_text(label), style=LABEL_CHIP_STYLE)
         for label in advisory_labels
     ]
+
+
+def _label_help_text(label_value: str) -> str:
+    normalized_label = _normalized_intent(label_value)
+    if normalized_label == "unknown":
+        normalized_label = "mixed_signal"
+    return ADVISORY_LABEL_HELP.get(
+        normalized_label,
+        ADVISORY_LABEL_HELP["mixed_signal"],
+    )
+
+
+def build_label_help_items(advisory_labels: list[str]) -> list[html.Li]:
+    """Build concise helper-copy items for each advisory label."""
+    label_values = advisory_labels or ["mixed_signal"]
+    deduplicated_labels = list(
+        dict.fromkeys(_normalized_intent(label) for label in label_values)
+    )
+    return [html.Li(_label_help_text(label)) for label in deduplicated_labels]
 
 
 def _evidence_data(evidence_rows: list[EvidenceRow]) -> list[dict[str, str]]:
@@ -186,6 +229,8 @@ def build_file_change_diagnostic_pane(
     rework_episodes = payload.get("rework_episodes", [])
     focused_intent = _normalized_intent(payload.get("focused_intent", "all"))
     focus_label = "all intents" if focused_intent == "all" else focused_intent
+    leader_intent = _normalized_intent(payload.get("intent_leader", ""))
+    leader_coverage_percent = int(payload.get("leader_coverage_percent", 0))
     drilldown_data = _evidence_data(evidence_rows)
     rework_data = _rework_data(rework_episodes)
 
@@ -215,19 +260,9 @@ def build_file_change_diagnostic_pane(
                         style=METRIC_CHIP_STYLE,
                     ),
                     html.Span(
-                        f"Leader {_normalized_intent(payload.get('intent_leader', ''))}",
+                        f"Leader: '{leader_intent}' %{leader_coverage_percent}",
                         id=_component_id(
                             component_id_prefix, "summary-intent-leader"
-                        ),
-                        style=METRIC_CHIP_STYLE,
-                    ),
-                    html.Span(
-                        (
-                            "Leader coverage "
-                            f"{int(payload.get('leader_coverage_percent', 0))}%"
-                        ),
-                        id=_component_id(
-                            component_id_prefix, "summary-leader-coverage"
                         ),
                         style=METRIC_CHIP_STYLE,
                     ),
@@ -297,6 +332,39 @@ def build_file_change_diagnostic_pane(
                     ),
                     html.Span(
                         (
+                            "Neighbor coverage "
+                            f"{int(payload.get('cochange_commit_coverage_percent', 0))}%"
+                        ),
+                        id=_component_id(
+                            component_id_prefix,
+                            "summary-neighbor-coverage",
+                        ),
+                        style=METRIC_CHIP_STYLE,
+                    ),
+                    html.Span(
+                        (
+                            "Avg neighbors "
+                            f"{float(payload.get('average_neighbors_per_commit', 0.0)):.2f}"
+                        ),
+                        id=_component_id(
+                            component_id_prefix,
+                            "summary-average-neighbors",
+                        ),
+                        style=METRIC_CHIP_STYLE,
+                    ),
+                    html.Span(
+                        (
+                            "Coupling score "
+                            f"{int(payload.get('coupling_signal_score', 0))}"
+                        ),
+                        id=_component_id(
+                            component_id_prefix,
+                            "summary-coupling-score",
+                        ),
+                        style=METRIC_CHIP_STYLE,
+                    ),
+                    html.Span(
+                        (
                             "Rework episodes "
                             f"{int(payload.get('rework_episode_count', 0))}"
                         ),
@@ -315,6 +383,15 @@ def build_file_change_diagnostic_pane(
                 build_label_chips(payload.get("advisory_labels", [])),
                 id=_component_id(component_id_prefix, "advisory-label-chips"),
                 style=METRICS_ROW_STYLE,
+            ),
+            html.Div(
+                "How to read labels",
+                style={"fontWeight": "600", "marginBottom": "2px"},
+            ),
+            html.Ul(
+                build_label_help_items(payload.get("advisory_labels", [])),
+                id=_component_id(component_id_prefix, "advisory-label-help"),
+                style={"margin": "0 0 6px 18px", "padding": "0"},
             ),
             html.P(
                 str(payload.get("confidence_hint", "")),

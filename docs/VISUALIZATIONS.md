@@ -10,10 +10,17 @@ The right pane shows file-change diagnostics for the selected file, including:
 - intent mix and dominant intent
 - fix-like / feature / maintenance ratios
 - short-gap revisit indicators and rework episodes
+- co-change breadth signals (neighbor count, neighbor coverage, coupling score)
 - advisory labels (for example: possible thrash, feature growth, coupling pressure)
 - drill-down evidence rows (hash, date, intent, message)
 
 These diagnostics are advisory signals intended to support human investigation, not automatic conclusions.
+
+Advisory labels are intentionally independent and can appear together:
+- `possible_thrash`: repeated short-gap revisit evidence suggests rework pressure.
+- `feature_growth`: commit intent distribution is mostly feature work.
+- `maintenance_chore`: commit intent distribution is mostly upkeep work.
+- `coupling_pressure`: the selected file changes with many neighbors and may be too central.
 
 ## Change Types By Tag
 
