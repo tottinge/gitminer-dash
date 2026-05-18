@@ -15,6 +15,7 @@ def _evidence_row(
     day: int,
     message: str,
     neighbors: list[str] | None = None,
+    hunk_fingerprints: list[str] | None = None,
 ):
     timestamp = datetime(2026, 5, day, 12, 0, tzinfo=timezone.utc)
     return {
@@ -23,6 +24,7 @@ def _evidence_row(
         "message": message,
         "committed_at": timestamp,
         "cochanged_neighbors": neighbors or [],
+        "hunk_fingerprints": hunk_fingerprints or [],
     }
 
 
@@ -136,24 +138,28 @@ def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
                 day=1,
                 message="feat(core): add parser",
                 neighbors=["src/a.py"],
+                hunk_fingerprints=["hunk-a"],
             ),
             _evidence_row(
                 sha="bbb2222",
                 day=2,
                 message="fix(core): patch parser",
                 neighbors=["src/a.py", "src/b.py"],
+                hunk_fingerprints=["hunk-a"],
             ),
             _evidence_row(
                 sha="ccc3333",
                 day=4,
                 message="chore(core): tidy parser",
                 neighbors=["src/c.py"],
+                hunk_fingerprints=["hunk-c"],
             ),
             _evidence_row(
                 sha="ddd4444",
                 day=5,
                 message="fix(core): patch parser follow-up",
                 neighbors=["src/a.py"],
+                hunk_fingerprints=["hunk-c"],
             ),
         ]
     )
@@ -194,15 +200,19 @@ def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
     assert payload["intent_leader"] == "fix"
     assert payload["fixlike_ratio_percent"] == 50
     assert payload["short_gap_followups"] == 3
+    assert payload["short_gap_shared_hunk_followups"] == 2
     assert payload["median_revisit_days"] == 1.0
     assert payload["unique_cochange_neighbors"] == 3
+    assert payload["rework_episode_count"] == 2
     assert "possible_thrash" in payload["advisory_labels"]
     assert (
         payload["confidence_hint"]
         == "Medium confidence: trend based on 4 commits."
     )
-    assert len(payload["rework_episodes"]) == 3
+    assert len(payload["rework_episodes"]) == 2
     assert payload["rework_episodes"][0]["anchor_hash"] == "aaa1111"
+    assert payload["rework_episodes"][0]["shared_hunk_count"] == 1
+    assert payload["rework_episodes"][0]["rework_signal_score"] == 3
 
 
 def test_generate_file_payload_applies_intent_focus_to_evidence_rows():
@@ -254,3 +264,69 @@ def test_generate_file_payload_applies_intent_focus_to_evidence_rows():
     assert payload["filtered_message_count"] == 2
     assert {row["intent"] for row in payload["evidence_rows"]} == {"fix"}
     assert len(payload["classifications"]) == 2
+
+
+def test_generate_file_payload_avoids_false_thrash_without_shared_hunks():
+    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
+    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    parse_date_range_fn = Mock(return_value=(period_start, period_end))
+    get_repo_fn = Mock(return_value=object())
+    collect_file_commit_evidence_fn = Mock(
+        return_value=[
+            _evidence_row(
+                sha="aaa1111",
+                day=1,
+                message="feat(core): add parser",
+            ),
+            _evidence_row(
+                sha="bbb2222",
+                day=2,
+                message="fix(core): patch parser",
+            ),
+            _evidence_row(
+                sha="ccc3333",
+                day=3,
+                message="feat(core): expand parser",
+            ),
+            _evidence_row(
+                sha="ddd4444",
+                day=4,
+                message="fix(core): patch parser follow-up",
+            ),
+        ]
+    )
+    classify_commit_messages_fn = Mock(
+        return_value={
+            "message_count": 4,
+            "intent_counts": [
+                {"intent": "fix", "count": 2},
+                {"intent": "feat", "count": 2},
+            ],
+            "classifications": [
+                {"intent": "feat", "message": "feat(core): add parser"},
+                {"intent": "fix", "message": "fix(core): patch parser"},
+                {"intent": "feat", "message": "feat(core): expand parser"},
+                {
+                    "intent": "fix",
+                    "message": "fix(core): patch parser follow-up",
+                },
+            ],
+        }
+    )
+
+    payload = generate_file_change_diagnostic_payload(
+        filename="src/core.py",
+        date_range_data={"period": "Last 30 days"},
+        focused_intent="all",
+        parse_date_range_fn=parse_date_range_fn,
+        get_repo_fn=get_repo_fn,
+        collect_file_commit_evidence_fn=collect_file_commit_evidence_fn,
+        classify_commit_messages_fn=classify_commit_messages_fn,
+    )
+
+    assert payload["status"] == "ok"
+    assert payload["short_gap_followups"] == 3
+    assert payload["short_gap_shared_hunk_followups"] == 0
+    assert payload["rework_episode_count"] == 0
+    assert payload["rework_episodes"] == []
+    assert "possible_thrash" not in payload["advisory_labels"]

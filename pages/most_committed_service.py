@@ -5,6 +5,10 @@ from __future__ import annotations
 from statistics import median
 from typing import Any
 
+from insights.fixback_scanner import (
+    _hunk_fingerprints_from_patch as hunk_fingerprints_from_patch,
+)
+
 FIXLIKE_INTENTS = {"fix", "revert"}
 FEATURE_INTENTS = {"feat"}
 MAINTENANCE_INTENTS = {
@@ -17,6 +21,10 @@ MAINTENANCE_INTENTS = {
     "test",
 }
 SHORT_GAP_DAYS_THRESHOLD = 7.0
+REWORK_MIN_SHARED_HUNK_COUNT = 1
+REWORK_SHARED_HUNK_WEIGHT = 2
+REWORK_FIXLIKE_WEIGHT = 1
+REWORK_MIN_SIGNAL_SCORE = 2
 DIAGNOSTIC_ADVISORY_NOTE = (
     "Signals are advisory. Review commit evidence before deciding whether "
     "to refactor."
@@ -67,6 +75,25 @@ def _summary_line(commit_message: str) -> str:
     return "(empty commit message)"
 
 
+def _patch_text_for_selected_file(commit, filename: str) -> str:
+    if not commit.parents:
+        return ""
+    try:
+        diff_items = commit.diff(commit.parents[0], create_patch=True)
+    except Exception:
+        return ""
+
+    for diff_item in diff_items:
+        diff_file_path = diff_item.b_path or diff_item.a_path
+        if diff_file_path != filename:
+            continue
+        patch_bytes = diff_item.diff or b""
+        if isinstance(patch_bytes, bytes):
+            return patch_bytes.decode("utf-8", errors="replace")
+        return str(patch_bytes)
+    return ""
+
+
 def collect_file_commit_evidence(
     repo,
     filename: str,
@@ -80,6 +107,7 @@ def collect_file_commit_evidence(
         since=period_start,
         until=period_end,
     ):
+        patch_text = _patch_text_for_selected_file(commit, filename)
         changed_files = sorted(str(path) for path in commit.stats.files)
         evidence_rows.append(
             {
@@ -92,6 +120,7 @@ def collect_file_commit_evidence(
                     for changed_file in changed_files
                     if changed_file != filename
                 ],
+                "hunk_fingerprints": hunk_fingerprints_from_patch(patch_text),
             }
         )
 
@@ -244,13 +273,16 @@ def _revisit_signals(evidence_rows) -> dict[str, Any]:
     if len(evidence_rows) < 2:
         return {
             "short_gap_followups": 0,
+            "short_gap_shared_hunk_followups": 0,
             "fixlike_followups": 0,
             "median_revisit_days": None,
+            "rework_episode_count": 0,
             "rework_episodes": [],
         }
 
     revisit_day_gaps = []
     short_gap_followups = 0
+    short_gap_shared_hunk_followups = 0
     fixlike_followups = 0
     rework_episodes = []
 
@@ -272,6 +304,25 @@ def _revisit_signals(evidence_rows) -> dict[str, Any]:
         followup_fixlike = followup_intent in FIXLIKE_INTENTS
         if followup_fixlike:
             fixlike_followups += 1
+        anchor_hunk_fingerprints = set(
+            anchor_row.get("hunk_fingerprints", []) or []
+        )
+        followup_hunk_fingerprints = set(
+            followup_row.get("hunk_fingerprints", []) or []
+        )
+        shared_hunk_fingerprints = sorted(
+            anchor_hunk_fingerprints & followup_hunk_fingerprints
+        )
+        shared_hunk_count = len(shared_hunk_fingerprints)
+        if shared_hunk_count >= REWORK_MIN_SHARED_HUNK_COUNT:
+            short_gap_shared_hunk_followups += 1
+        rework_signal_score = 0
+        if shared_hunk_count >= REWORK_MIN_SHARED_HUNK_COUNT:
+            rework_signal_score += REWORK_SHARED_HUNK_WEIGHT
+        if followup_fixlike:
+            rework_signal_score += REWORK_FIXLIKE_WEIGHT
+        if rework_signal_score < REWORK_MIN_SIGNAL_SCORE:
+            continue
 
         rework_episodes.append(
             {
@@ -280,13 +331,18 @@ def _revisit_signals(evidence_rows) -> dict[str, Any]:
                 "revisit_days": round(revisit_days, 2),
                 "followup_intent": followup_intent,
                 "followup_fixlike": followup_fixlike,
+                "shared_hunk_count": shared_hunk_count,
+                "shared_hunk_fingerprints": shared_hunk_fingerprints,
+                "rework_signal_score": rework_signal_score,
             }
         )
 
     return {
         "short_gap_followups": short_gap_followups,
+        "short_gap_shared_hunk_followups": short_gap_shared_hunk_followups,
         "fixlike_followups": fixlike_followups,
         "median_revisit_days": round(float(median(revisit_day_gaps)), 2),
+        "rework_episode_count": len(rework_episodes),
         "rework_episodes": rework_episodes,
     }
 
@@ -307,14 +363,26 @@ def _diagnostic_labels(
     feature_ratio_percent: int,
     maintenance_ratio_percent: int,
     short_gap_followups: int,
+    short_gap_shared_hunk_followups: int,
     fixlike_followups: int,
+    rework_episode_count: int,
     unique_cochange_neighbors: int,
 ) -> list[str]:
     labels = []
-    if (
-        message_count >= 4
-        and short_gap_followups >= 2
-        and (fixlike_ratio_percent >= 35 or fixlike_followups >= 2)
+    if message_count >= 4 and (
+        rework_episode_count >= 2
+        or (
+            rework_episode_count >= 1
+            and (fixlike_ratio_percent >= 35 or fixlike_followups >= 2)
+        )
+        or (
+            short_gap_shared_hunk_followups >= 2 and fixlike_ratio_percent >= 30
+        )
+        or (
+            short_gap_followups >= 3
+            and fixlike_followups >= 2
+            and short_gap_shared_hunk_followups >= 1
+        )
     ):
         labels.append("possible_thrash")
     if feature_ratio_percent >= 40 and fixlike_ratio_percent < 35:
@@ -387,8 +455,10 @@ def build_empty_file_change_diagnostic_payload(
         "feature_ratio_percent": 0,
         "maintenance_ratio_percent": 0,
         "short_gap_followups": 0,
+        "short_gap_shared_hunk_followups": 0,
         "median_revisit_days": None,
         "unique_cochange_neighbors": 0,
+        "rework_episode_count": 0,
         "rework_episodes": [],
     }
 
@@ -491,7 +561,11 @@ def generate_file_change_diagnostic_payload(
         feature_ratio_percent=feature_ratio_percent,
         maintenance_ratio_percent=maintenance_ratio_percent,
         short_gap_followups=revisit_signals["short_gap_followups"],
+        short_gap_shared_hunk_followups=revisit_signals[
+            "short_gap_shared_hunk_followups"
+        ],
         fixlike_followups=revisit_signals["fixlike_followups"],
+        rework_episode_count=revisit_signals["rework_episode_count"],
         unique_cochange_neighbors=unique_cochange_neighbors,
     )
 
@@ -535,8 +609,12 @@ def generate_file_change_diagnostic_payload(
         "feature_ratio_percent": feature_ratio_percent,
         "maintenance_ratio_percent": maintenance_ratio_percent,
         "short_gap_followups": revisit_signals["short_gap_followups"],
+        "short_gap_shared_hunk_followups": revisit_signals[
+            "short_gap_shared_hunk_followups"
+        ],
         "median_revisit_days": revisit_signals["median_revisit_days"],
         "unique_cochange_neighbors": unique_cochange_neighbors,
+        "rework_episode_count": revisit_signals["rework_episode_count"],
         "rework_episodes": revisit_signals["rework_episodes"],
     }
 

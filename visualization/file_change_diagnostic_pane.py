@@ -59,6 +59,8 @@ class ReworkEpisodeRow(TypedDict):
     revisit_days: float
     followup_intent: str
     followup_fixlike: bool
+    shared_hunk_count: int
+    rework_signal_score: int
 
 
 class FileChangeDiagnosticPanePayload(TypedDict):
@@ -79,8 +81,10 @@ class FileChangeDiagnosticPanePayload(TypedDict):
     feature_ratio_percent: int
     maintenance_ratio_percent: int
     short_gap_followups: int
+    short_gap_shared_hunk_followups: int
     median_revisit_days: float | None
     unique_cochange_neighbors: int
+    rework_episode_count: int
     rework_episodes: list[ReworkEpisodeRow]
 
 
@@ -129,6 +133,12 @@ def _rework_data(
             ),
             "followup_fixlike": bool(
                 rework_episode.get("followup_fixlike", False)
+            ),
+            "shared_hunk_count": int(
+                rework_episode.get("shared_hunk_count", 0)
+            ),
+            "rework_signal_score": int(
+                rework_episode.get("rework_signal_score", 0)
             ),
         }
         for rework_episode in rework_episodes
@@ -256,6 +266,17 @@ def build_file_change_diagnostic_pane(
                         style=METRIC_CHIP_STYLE,
                     ),
                     html.Span(
+                        (
+                            "Shared-hunk follow-ups "
+                            f"{int(payload.get('short_gap_shared_hunk_followups', 0))}"
+                        ),
+                        id=_component_id(
+                            component_id_prefix,
+                            "summary-shared-hunk-followups",
+                        ),
+                        style=METRIC_CHIP_STYLE,
+                    ),
+                    html.Span(
                         _median_revisit_text(
                             payload.get("median_revisit_days")
                         ),
@@ -271,6 +292,16 @@ def build_file_change_diagnostic_pane(
                         ),
                         id=_component_id(
                             component_id_prefix, "summary-neighbors"
+                        ),
+                        style=METRIC_CHIP_STYLE,
+                    ),
+                    html.Span(
+                        (
+                            "Rework episodes "
+                            f"{int(payload.get('rework_episode_count', 0))}"
+                        ),
+                        id=_component_id(
+                            component_id_prefix, "summary-rework-episodes"
                         ),
                         style=METRIC_CHIP_STYLE,
                     ),
@@ -358,6 +389,8 @@ def build_file_change_diagnostic_pane(
                             {"name": "Days", "id": "revisit_days"},
                             {"name": "Intent", "id": "followup_intent"},
                             {"name": "Fix-like", "id": "followup_fixlike"},
+                            {"name": "Shared Hunks", "id": "shared_hunk_count"},
+                            {"name": "Signal", "id": "rework_signal_score"},
                         ],
                         data=rework_data,
                         style_cell={
