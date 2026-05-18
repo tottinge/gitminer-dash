@@ -71,6 +71,10 @@ def test_feature_growth_story_shows_advisory_label_and_preview():
         story,
         "id-story-file-change-diagnostic-feature-growth-evidence-preview",
     )
+    neighbors_summary = _find_by_id(
+        story,
+        "id-story-file-change-diagnostic-feature-growth-neighbors-summary",
+    )
     neighbors_table = _find_by_id(
         story,
         "id-story-file-change-diagnostic-feature-growth-neighbors-table",
@@ -85,6 +89,10 @@ def test_feature_growth_story_shows_advisory_label_and_preview():
         == "Medium confidence: trend based on 7 commits."
     )
     assert len(evidence_preview.children) == 3
+    assert (
+        neighbors_summary.children
+        == "Top co-change neighbors for all intents (3)"
+    )
     assert len(neighbors_table.data) == 3
 
 
@@ -114,6 +122,10 @@ def test_thrash_story_shows_rework_and_drilldown_data():
         story,
         "id-story-file-change-diagnostic-thrash-summary-coupling-score",
     )
+    neighbors_summary = _find_by_id(
+        story,
+        "id-story-file-change-diagnostic-thrash-neighbors-summary",
+    )
     neighbors_table = _find_by_id(
         story,
         "id-story-file-change-diagnostic-thrash-neighbors-table",
@@ -133,6 +145,10 @@ def test_thrash_story_shows_rework_and_drilldown_data():
     assert neighbor_coverage_chip.children == "Neighbor coverage 89%"
     assert average_neighbors_chip.children == "Avg neighbors 1.78"
     assert coupling_score_chip.children == "Coupling score 3"
+    assert (
+        neighbors_summary.children
+        == "Top co-change neighbors for all intents (4)"
+    )
 
 
 def test_storybook_layout_contains_one_section_per_story():

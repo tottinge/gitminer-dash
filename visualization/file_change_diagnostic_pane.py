@@ -510,7 +510,7 @@ def build_file_change_diagnostic_pane(
                 children=[
                     html.Summary(
                         (
-                            "Top co-change neighbors "
+                            f"Top co-change neighbors for {focus_label} "
                             f"({len(cochange_neighbor_data)})"
                         ),
                         id=_component_id(
