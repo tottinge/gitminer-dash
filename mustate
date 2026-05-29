@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -e
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${SCRIPT_DIR}"
 
 echo "Mutation status summary"
 echo "======================="
-/Users/timottinger/Projects/gitminer-dash/scripts/mutant_discover
+"${PROJECT_ROOT}/scripts/mutant_discover"
 
 echo
 echo "Priority ranking (code_None,no_tests,survived,timeout,crash)"
 echo "============================================================="
-/Users/timottinger/Projects/gitminer-dash/scripts/mutant_rank --statuses code_None,no_tests,survived,timeout,crash --top 10
+"${PROJECT_ROOT}/scripts/mutant_rank" --statuses code_None,no_tests,survived,timeout,crash --top 10
