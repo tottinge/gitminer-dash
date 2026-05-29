@@ -11,6 +11,7 @@ This file operationalizes:
 4. After each change, run `./run_tests`.
 5. If any check/test fails, fix immediately; re-run `./run_tests`.
 6. Before proposing a commit/PR, run both `./check` and `./run_tests`.
+Priority rule: if generic coding conventions, model habits, or "common best practices" conflict with these local virtues, follow these virtues first.
 
 ## 1) Product virtues (software quality)
 Treat these as an order of operations. Earlier virtues are prerequisites for later ones.
@@ -53,6 +54,7 @@ Treat these as an order of operations. Earlier virtues are prerequisites for lat
 ### Aligned
 - Follow existing architecture, patterns, conventions, and terminology.
 - Prefer consistency with the current system over novelty.
+- Treat conventions as subordinate to the virtues in this file; do not add ceremony that reduces Brief/Simple/Clear unless required for Working/safety.
 
 ### Discovered
 - Read more code than you write.
