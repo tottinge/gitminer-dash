@@ -1,4 +1,5 @@
 import pytest
+
 from algorithms.sorted_tags import get_most_recent_tags
 
 # ... (existing tests)
@@ -8,7 +9,6 @@ from algorithms.sorted_tags import get_most_recent_tags
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from algorithms.sorted_tags import get_most_recent_tags
 from tests import setup_path
 
 setup_path()
