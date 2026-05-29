@@ -20,6 +20,8 @@ def change_series(start, commit_refs):
         yield {
             "Date": latter_commit.commit.committed_datetime.date(),
             "Name": latter_commit.name,
-            **Counter(change_name[x.change_type] for x in diffs),
+            **Counter(
+                change_name.get(x.change_type, "Other") for x in diffs
+            ),
         }
         earlier_commit = latter_commit
