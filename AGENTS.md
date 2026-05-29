@@ -1,48 +1,120 @@
-# Warp agent coding rules (7 Code Virtues + FIRST unit tests)
+# Warp agent coding rules (11 Virtues + Naming + FIRST unit tests)
 Apply these rules whenever you edit, create, or refactor code in this repo.
+This file operationalizes:
+- `~/Downloads/CodeVirtuesForAgents.md`
+- `~/Downloads/NamingShortGuide.md`
 
-## 1) Prefer virtuous code (Industrial Logic: 7 Code Virtues)
+## 0) Default execution loop for every task
+1. Discover before changing: search standard library, framework, codebase, and nearby modules before creating new code.
+2. Make the smallest conservative change that solves the problem.
+3. Keep names intention-revealing, domain-aligned, and team-familiar.
+4. After each change, run `./run_tests`.
+5. If any check/test fails, fix immediately; re-run `./run_tests`.
+6. Before proposing a commit/PR, run both `./check` and `./run_tests`.
+
+## 1) Product virtues (software quality)
 Treat these as an order of operations. Earlier virtues are prerequisites for later ones.
 
 ### Working (as opposed to incomplete)
 - Keep the codebase in a working state at all times.
-- Prove it works *recently* via automated tests; do not rely on “it should work.”
+- Prove correctness recently with automated tests; never rely on assumptions.
 - Treat lint/format/security checks as part of “Working”, not optional polish.
-- Before proposing a commit/PR, run `./check` and `./run_tests`.
-- If `ruff` (or any check) fails, fix it immediately and re-run `./run_tests` after the fix.
 - If you break something, stop and fix it before continuing.
 
 ### Unique (as opposed to duplicated)
 - Preserve a Single Point of Truth (SPOT): each fact/algorithm should have one authoritative definition.
-- Remove duplication by extracting shared logic (functions/modules/helpers) rather than copying.
-- When de-duplicating, keep behavior identical and covered by tests.
+- Before creating, search existing code and reuse existing capabilities, types, and vocabulary.
+- Remove duplication by extracting shared logic (functions/modules/helpers).
 
 ### Simple (as opposed to complicated)
 - Reduce local complexity: fewer operations, operands, and execution paths.
 - Prefer small functions with straightforward control flow.
-- When faced with complexity, split responsibilities and name intermediate concepts.
+- Split responsibilities when complexity rises.
 
 ### Clear (as opposed to puzzling)
 - Optimize for the next maintainer: readable names, idiomatic patterns, and consistent style.
-- Make intent obvious; avoid cleverness.
-- Keep related concepts together; avoid “reverse engineering” requirements.
+- Make intent obvious; avoid cleverness and surprising behavior.
 
 ### Easy (as opposed to difficult)
-- Optimize for change: structure code so new features and fixes are easy to introduce.
-- Prefer designs that localize changes and minimize ripple effects.
-- Reduce incidental coupling; inject/stub dependencies to enable safe modification.
+- Optimize for safe future change: localize behavior and minimize ripple effects.
+- Reduce incidental coupling; inject/stub boundaries where it lowers change risk.
 
 ### Developed (as opposed to primitive)
-- Avoid primitive obsession: introduce domain-focused types/abstractions where they simplify usage.
-- Move operations to the place they belong (data + behavior together when appropriate).
-- Create a small, expressive “DSL” for the problem domain when it improves clarity and ease.
+- Avoid primitive obsession: use domain-focused types and abstractions.
+- Place behavior with the concept that owns it.
+- Extend existing domain abstractions before adding procedural helpers.
 
 ### Brief (as opposed to chatty)
-- Prefer concise, high signal-to-noise code.
-- Remove unnecessary ceremony, repetition, and boilerplate.
-- Do not sacrifice clarity for brevity; “brief” must not become “cryptic.”
+- Keep code concise and high signal-to-noise.
+- Remove unnecessary ceremony and repeated context.
+- Do not trade away clarity for brevity.
 
-## 2) Tests must be FIRST (Pragmatic Programmers)
+## 2) Stewardship virtues (change quality in agentic development)
+### Aligned
+- Follow existing architecture, patterns, conventions, and terminology.
+- Prefer consistency with the current system over novelty.
+
+### Discovered
+- Read more code than you write.
+- Understand existing behavior and constraints before modifying.
+- Search before creating.
+
+### Traceable
+- Significant behavior must be explainable by requirement, defect, architecture, policy, or domain need.
+- Avoid unexplained magic values and arbitrary constraints.
+
+### Conservative
+- Change only what is necessary.
+- Prefer focused, incremental improvements over broad rewrites.
+
+## 3) Naming operational rules
+### Name for audience and context
+- Optimize naming for current/future maintainers and agent tooling, not personal preference.
+- Match team/domain vocabulary used in tests, tickets, and architecture discussions.
+- Favor ecosystem idioms when they are already familiar in this codebase.
+
+### Use context, avoid redundancy
+- Let module/class/function context carry meaning; avoid repeating obvious prefixes.
+- Use just enough words to disambiguate.
+- Front-load distinguishing information.
+
+### Prefer intention over composition
+- Use names that describe purpose (“what for”) more than implementation detail (“what made of”).
+- Prefer domain terms over generic labels.
+
+### Match name length to scope
+- Short scope and short-lived variables may use short names.
+- Wider scope or long-lived concepts must use more descriptive names.
+
+### Remove naming noise
+- Avoid low-information words unless they add distinction (for example: `data`, `info`, `manager`, `result`, `processing`).
+- Ensure neighboring names are clearly distinguishable.
+
+### Use naming friction as a design signal
+- If naming is hard, check cohesion/responsibility boundaries before inventing clever names.
+- Extract code that needs explanatory comments and use intention-revealing extracted names.
+- Rename incrementally and safely when understanding improves.
+
+### Grammar defaults
+- Nouns for entities/types.
+- Verbs for commands/actions.
+- Adjective-like names for interfaces/protocol-style roles when appropriate.
+
+## 4) Agent review checklist (pre-response / pre-PR)
+- Working: Does this solve the real problem and pass tests/checks?
+- Unique: Did I reuse existing code and avoid duplication?
+- Simple: Can I reduce local operations, facts, or paths further?
+- Clear: Is intent obvious without reverse engineering?
+- Easy: Will the next change be safer because of this design?
+- Developed: Am I using domain concepts rather than primitive manipulation?
+- Brief: What unnecessary code or words can be removed?
+- Aligned: Does this fit existing architecture and conventions?
+- Discovered: Did I understand surrounding code before modifying?
+- Traceable: Can I explain why this change exists?
+- Conservative: Is there a smaller safe change with equivalent outcome?
+- Naming: Are names domain-aligned, intention-revealing, and scoped appropriately?
+
+## 5) Tests must be FIRST (Pragmatic Programmers)
 Write and maintain micro/unit tests so they are:
 
 ### Fast
@@ -62,21 +134,20 @@ Write and maintain micro/unit tests so they are:
 
 ### Self-verifying
 - Tests must assert outcomes automatically (pass/fail) with no manual inspection.
-- Avoid “tests” that only exercise code without checking results.
+- Avoid tests that only exercise code without checking results.
 
 ### Timely
-- Prefer writing tests first (TDD) or at least alongside the production code change.
-- Treat tests as “specifications by example” that document behavior.
-- Let tests shape better APIs (names, parameter lists, seams for dependencies).
+- Prefer writing tests first (TDD) or at least alongside production changes.
+- Treat tests as specifications by example and API design feedback.
 
-## 3) Refactoring safety rule
+## 6) Refactoring safety rule
 - Refactor only with a passing test baseline.
 - After each small refactor, re-run tests to confirm the code remains Working.
 
-## 4) Canonical script entrypoints (prefer scripts over ad-hoc commands)
+## 7) Canonical script entrypoints (prefer scripts over ad-hoc commands)
 - Use executable scripts in the repository root as the default workflow entrypoints.
 - Before running raw `uv run ...` commands, check whether a dedicated script exists.
-- If a project script exists for the task, use it unless the user explicitly asks for a raw command.
+- If a project script exists for the task, use it unless explicitly asked for a raw command.
 - Use raw `uv run ...` only for focused one-off commands not covered by scripts.
 - If a script is missing needed behavior, propose updating the script rather than bypassing it.
 
@@ -93,13 +164,13 @@ Write and maintain micro/unit tests so they are:
 - `./fixup`: experimental auto-fix/format/upgrade pass (opt-in; review changes carefully).
 - `colors_def.sh`: shared shell utility sourced by scripts; not a direct workflow entrypoint.
 
-## 5) Wrapper precedence for validation workflows
+## 8) Wrapper precedence for validation workflows
 - Do not replace `./run_tests` with direct `uv run pytest` for standard validation.
 - Do not replace `./check` with separate ad-hoc tool calls for standard validation.
 - Prefer wrapper scripts to preserve project flags, behavior, and conventions.
 - After each change, run `./run_tests`; before commit/PR, run both `./check` and `./run_tests`.
 
-## 6) Mutation-analysis helpers (`scripts/mutant*`)
+## 9) Mutation-analysis helpers (`scripts/mutant*`)
 - Prefer `scripts/mutant_*` helpers over ad-hoc parsing of `*.py.meta` and `mutmut-stats.json`.
 - When renaming files, also update related documentation and mutation-testing configuration/references in the same change.
 - Mutation-analysis workflow:

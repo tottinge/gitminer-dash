@@ -16,7 +16,7 @@ from utils import date_utils
 from utils.global_date_store import build_store_payload
 
 if len(sys.argv) < 2:
-    print("Usage: app.py <repo_name>")
+    print("Usage: app.py <repo_path>")
     sys.exit(1)
 
 app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
