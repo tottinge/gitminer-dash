@@ -821,6 +821,60 @@ class TestNetworkGraph(unittest.TestCase):
         mock_single.assert_not_called()
         mock_grouped.assert_called_once()
 
+    def test_create_node_traces_empty_graph_without_communities_returns_empty(
+        self,
+    ):
+        """Empty graphs without community IDs should not create a singleton trace."""
+        graph = nx.Graph()
+        positions: dict[str, tuple[float, float]] = {}
+
+        with (
+            patch(
+                "visualization.network_graph._create_single_community_trace"
+            ) as mock_single,
+            patch(
+                "visualization.network_graph._create_non_singleton_community_traces",
+                return_value=[],
+            ) as mock_grouped,
+        ):
+            traces = _create_node_traces(
+                G=graph,
+                pos=positions,
+                communities=[],
+            )
+
+        assert traces == []
+        mock_single.assert_not_called()
+        mock_grouped.assert_called_once()
+
+    def test_create_node_traces_single_node_without_community_uses_singleton(
+        self,
+    ):
+        """Single-node graphs without community IDs should use singleton trace."""
+        graph = nx.Graph()
+        graph.add_node("solo.py", commit_count=1)
+        positions = {"solo.py": (0.0, 0.0)}
+        singleton_trace = object()
+
+        with (
+            patch(
+                "visualization.network_graph._create_single_community_trace",
+                return_value=singleton_trace,
+            ) as mock_single,
+            patch(
+                "visualization.network_graph._create_non_singleton_community_traces"
+            ) as mock_grouped,
+        ):
+            traces = _create_node_traces(
+                G=graph,
+                pos=positions,
+                communities=[],
+            )
+
+        assert traces == [singleton_trace]
+        mock_single.assert_called_once_with(graph, positions)
+        mock_grouped.assert_not_called()
+
     def test_create_non_singleton_community_traces_does_not_break_after_singleton(
         self,
     ):
