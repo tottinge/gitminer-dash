@@ -163,7 +163,7 @@ Write and maintain micro/unit tests so they are:
 - `./run <path-to-git-repository>`: run the app against a target local git repo.
 - `./run_with_coverage.sh <args>`: run app with coverage and generate reports.
 - `./annotate`: collect and apply runtime-guided type annotations.
-- `./fixup`: experimental auto-fix/format/upgrade pass (opt-in; review changes carefully).
+- `./tidy`: experimental auto-fix/format/upgrade pass (opt-in; review changes carefully).
 - `colors_def.sh`: shared shell utility sourced by scripts; not a direct workflow entrypoint.
 
 ## 8) Wrapper precedence for validation workflows
