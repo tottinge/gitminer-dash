@@ -3,7 +3,7 @@ Unit tests for the network graph visualization module.
 """
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 import networkx as nx
 import plotly.graph_objects as go
@@ -24,6 +24,7 @@ from visualization.network_graph import (
     _create_single_community_trace,
     _edge_segment_coordinates,
     _empty_edge_trace,
+    _single_community_trace_style,
     create_file_affinity_network,
     create_network_visualization,
 )
@@ -956,6 +957,27 @@ class TestNetworkGraph(unittest.TestCase):
             color="#abcdef",
             name="All Files",
         )
+
+    def test_single_community_trace_style_contract(self):
+        """Singleton style should expose stable keys and non-empty color text."""
+        style = _single_community_trace_style()
+        assert set(style.keys()) == {"color", "name"}
+        assert style["name"] == "All Files"
+        assert isinstance(style["color"], str)
+        assert style["color"]
+
+    def test_single_community_trace_style_calls_community_color_with_defaults(
+        self,
+    ):
+        """Singleton style should ask helper for the singleton community color."""
+        with patch(
+            "visualization.network_graph._community_color",
+            return_value="#abc123",
+        ) as mock_community_color:
+            style = _single_community_trace_style()
+        mock_community_color.assert_called_once_with(0, ANY)
+        assert set(style.keys()) == {"color", "name"}
+        assert style["name"] == "All Files"
 
     def test_create_community_trace_passes_y_text_and_size_to_builder(self):
         """Community trace passes y/text/size unchanged to builder."""
