@@ -60,7 +60,7 @@ def make_figure(diffs_in_period, start_date=None, end_date=None):
 def update_graph(_, store_data):
     start, end = date_utils.parse_date_range_from_store(store_data)
     commits_data = repo_context.commits_in_period(start, end)
-    diffs_in_period = get_diffs_in_period(commits_data, start, end)
+    diffs_in_period = get_diffs_in_period(commits_data)
     return make_figure(diffs_in_period, start, end)
 
 

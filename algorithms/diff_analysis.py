@@ -5,14 +5,11 @@ This module provides functions for analyzing diffs and changes across commits.
 """
 
 from collections import defaultdict
-from datetime import datetime
 
 import pandas as pd
 
 
-def get_diffs_in_period(
-    commits_data, start: datetime, end: datetime
-) -> pd.DataFrame:
+def get_diffs_in_period(commits_data) -> pd.DataFrame:
     """
     Calculate diff statistics for commits in a given time period.
 
@@ -23,8 +20,6 @@ def get_diffs_in_period(
 
     Args:
         commits_data: Iterable of commit objects
-        start: Start datetime for the period
-        end: End datetime for the period
 
     Returns:
         A pandas DataFrame with columns: date, kind, count

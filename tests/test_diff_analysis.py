@@ -23,9 +23,7 @@ from algorithms.diff_analysis import get_diffs_in_period
 def test_dataframe_initialized_with_correct_columns_when_empty():
     """Test that DataFrame is initialized with correct columns even when the commits list is empty."""
     commits_data = []
-    start = datetime(2024, 1, 1)
-    end = datetime(2024, 1, 31)
-    result = get_diffs_in_period(commits_data, start, end)
+    result = get_diffs_in_period(commits_data)
     assert isinstance(result, DataFrame)
     assert list(result.columns) == ["date", "kind", "count"]
     assert len(result) == 0
@@ -40,9 +38,7 @@ def test_dataframe_with_single_commit():
     ).date()
     mock_commit.stats.total = {"insertions": 10, "deletions": 5}
     commits_data = [mock_commit]
-    start = datetime(2024, 1, 1)
-    end = datetime(2024, 1, 31)
-    result = get_diffs_in_period(commits_data, start, end)
+    result = get_diffs_in_period(commits_data)
     assert isinstance(result, DataFrame)
     assert list(result.columns) == ["date", "kind", "count"]
     assert len(result) == 3
@@ -72,9 +68,7 @@ def test_dataframe_with_multiple_commits_same_day():
     ).date()
     mock_commit2.stats.total = {"insertions": 20, "deletions": 15}
     commits_data = [mock_commit1, mock_commit2]
-    start = datetime(2024, 1, 1)
-    end = datetime(2024, 1, 31)
-    result = get_diffs_in_period(commits_data, start, end)
+    result = get_diffs_in_period(commits_data)
     assert isinstance(result, DataFrame)
     assert list(result.columns) == ["date", "kind", "count"]
     assert len(result) == 3
@@ -99,9 +93,7 @@ def test_dataframe_with_commits_different_days():
     ).date()
     mock_commit2.stats.total = {"insertions": 20, "deletions": 25}
     commits_data = [mock_commit1, mock_commit2]
-    start = datetime(2024, 1, 1)
-    end = datetime(2024, 1, 31)
-    result = get_diffs_in_period(commits_data, start, end)
+    result = get_diffs_in_period(commits_data)
     assert isinstance(result, DataFrame)
     assert list(result.columns) == ["date", "kind", "count"]
     assert len(result) == 6
