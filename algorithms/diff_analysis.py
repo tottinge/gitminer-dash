@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from datetime import date
 
 import pandas as pd
+
 POSSIBLE_MODIFICATIONS_KIND = "possible mods"
 NET_INSERTIONS_KIND = "net inserts"
 NET_DELETIONS_KIND = "net deletes"
