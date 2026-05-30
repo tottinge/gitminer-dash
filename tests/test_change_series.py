@@ -9,7 +9,9 @@ setup_path()
 
 
 def _build_tag_ref(name: str, committed_at, change_types: list[str]):
-    diffs = [SimpleNamespace(change_type=change_type) for change_type in change_types]
+    diffs = [
+        SimpleNamespace(change_type=change_type) for change_type in change_types
+    ]
     commit = SimpleNamespace(
         committed_datetime=committed_at,
         diff=lambda _other: diffs,
@@ -35,6 +37,7 @@ def test_change_series_groups_unknown_change_type_under_other():
     row = rows[0]
     assert row["Files Modified"] == 1
     assert row["Other"] == 1
+
 
 def test_change_series_uses_expected_diff_targets_across_refs():
     start_commit = SimpleNamespace(committed_datetime=None)
@@ -65,7 +68,9 @@ def test_change_series_uses_expected_diff_targets_across_refs():
     middle_ref = SimpleNamespace(name="v1.0.1", commit=middle_commit)
     end_ref = SimpleNamespace(name="v1.0.2", commit=end_commit)
 
-    rows = list(change_series(start=start_ref, commit_refs=[middle_ref, end_ref]))
+    rows = list(
+        change_series(start=start_ref, commit_refs=[middle_ref, end_ref])
+    )
 
     assert len(rows) == 2
     assert diff_targets == [middle_commit, end_commit]

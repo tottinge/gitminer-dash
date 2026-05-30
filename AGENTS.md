@@ -1,4 +1,4 @@
-# Warp agent coding rules (11 Virtues + Naming + FIRST unit tests)
+# Warp agent coding rules (8 Virtues + Naming + FIRST unit tests)
 Apply these rules whenever you edit, create, or refactor code in this repo.
 This file operationalizes:
 - `~/Downloads/CodeVirtuesForAgents.md`
@@ -13,63 +13,95 @@ This file operationalizes:
 6. Before proposing a commit/PR, run both `./check` and `./run_tests`.
 Priority rule: if generic coding conventions, model habits, or "common best practices" conflict with these local virtues, follow these virtues first.
 
-## 1) Product virtues (software quality)
-Treat these as an order of operations. Earlier virtues are prerequisites for later ones.
+## 1) Foundational framing from the virtues
+- The virtues describe software qualities, not a rigid methodology.
+- `Working` is foundational. Software that does not work has failed regardless of other qualities.
+- Beyond `Working`, virtues reinforce each other rather than being a strict ranking.
+- Improving representation is often higher leverage than adding procedural logic.
+- Readability is relational: optimize clarity for this team’s domain vocabulary and ecosystem familiarity.
+- Coherence matters: prefer changes that make the system feel more like one language and less like disconnected local styles.
 
-### Working (as opposed to incomplete)
-- Keep the codebase in a working state at all times.
-- Prove correctness recently with automated tests; never rely on assumptions.
-- Treat lint/format/security checks as part of “Working”, not optional polish.
-- If you break something, stop and fix it before continuing.
+## 2) Eight code virtues (software quality)
+### Working
+- Keep behavior correct, reliable, and recently verified with automated checks.
+- Never rely on assumed correctness; prove it with tests/checks.
+- If a change breaks behavior, stop and fix it before continuing.
 
-### Unique (as opposed to duplicated)
-- Preserve a Single Point of Truth (SPOT): each fact/algorithm should have one authoritative definition.
-- Before creating, search existing code and reuse existing capabilities, types, and vocabulary.
-- Remove duplication by extracting shared logic (functions/modules/helpers).
+### Unique
+- Keep one authoritative representation per fact/rule/concept (SPOT).
+- Reuse standard library, framework, and project capabilities before creating new code.
+- Avoid parallel implementations, parallel domain models, and competing names for the same concept.
 
-### Simple (as opposed to complicated)
-- Reduce local complexity: fewer operations, operands, and execution paths.
-- Prefer small functions with straightforward control flow.
-- Split responsibilities when complexity rises.
+### Simple
+- Minimize local operands, operations, state, and execution paths.
+- Reduce branching and incidental machinery where possible.
+- Prefer better representations (tables, mappings, state machines, domain concepts) when they reduce local complexity.
 
-### Clear (as opposed to puzzling)
-- Optimize for the next maintainer: readable names, idiomatic patterns, and consistent style.
-- Make intent obvious; avoid cleverness and surprising behavior.
+### Clear
+- Make intent obvious with purpose-revealing names and familiar terminology.
+- Use consistent domain vocabulary and framework idioms.
+- Avoid cleverness, surprise, and mechanism-first naming.
 
-### Easy (as opposed to difficult)
-- Optimize for safe future change: localize behavior and minimize ripple effects.
-- Reduce incidental coupling; inject/stub boundaries where it lowers change risk.
+### Easy
+- Optimize for safe future modification: localized changes, low coupling, fast feedback.
+- Prefer solutions that are easy to test and evolve.
+- Avoid fragility and wide-ranging side effects.
 
-### Developed (as opposed to primitive)
-- Avoid primitive obsession: use domain-focused types and abstractions.
+### Developed
+- Express solutions through domain concepts, not primitive manipulation.
 - Place behavior with the concept that owns it.
-- Extend existing domain abstractions before adding procedural helpers.
+- Look for hidden concepts when values repeatedly travel together; model concepts that already exist in the domain.
 
-### Brief (as opposed to chatty)
-- Keep code concise and high signal-to-noise.
-- Remove unnecessary ceremony and repeated context.
-- Do not trade away clarity for brevity.
+### Brief
+- Maximize signal and minimize noise.
+- Remove unnecessary words, code, scaffolding, and ceremony.
+- Be concise without sacrificing clarity.
 
-## 2) Stewardship virtues (change quality in agentic development)
-### Aligned
-- Follow existing architecture, patterns, conventions, and terminology.
-- Prefer consistency with the current system over novelty.
-- Treat conventions as subordinate to the virtues in this file; do not add ceremony that reduces Brief/Simple/Clear unless required for Working/safety.
+### Coherent
+- Reinforce existing architecture, vocabulary, patterns, and representations.
+- Prefer consistency with the system over novel one-off approaches.
+- Make each change increase unity across the codebase.
 
-### Discovered
-- Read more code than you write.
-- Understand existing behavior and constraints before modifying.
-- Search before creating.
+## 3) Agent operating instructions (virtue execution)
+Before creating code:
+1. Read before writing.
+2. Search before creating.
+3. Reuse before implementing.
+4. Understand before changing.
 
-### Traceable
-- Significant behavior must be explainable by requirement, defect, architecture, policy, or domain need.
-- Avoid unexplained magic values and arbitrary constraints.
+Before introducing anything new, ask:
+- Does this already exist in language/framework/project?
+- Can an existing concept be extended instead?
+- Is there a hidden concept to discover rather than adding a new helper/type?
+- Is there a better representation of the problem?
 
-### Conservative
-- Change only what is necessary.
-- Prefer focused, incremental improvements over broad rewrites.
+When introducing constants:
+1. Name the value.
+2. Look for related values.
+3. Check whether they collectively describe a concept.
+4. Represent the concept when meaningful.
+5. Avoid meaningless grouping-only wrappers.
 
-## 3) Naming operational rules
+When complexity grows:
+1. Look first for a better representation.
+2. Look for values that travel together.
+3. Look for hidden domain concepts.
+4. Prefer representation improvements before adding more branching/state.
+
+Before completing a change, verify:
+- Does it work?
+- Is it unique?
+- Is it simple?
+- Is it clear?
+- Is it easy to change?
+- Is it developed?
+- Is it brief?
+- Is it coherent?
+
+High-leverage reminder:
+- Extraction + naming + domain ownership often improve `Simple`, `Clear`, and `Developed` simultaneously.
+
+## 4) Naming operational rules
 ### Name for audience and context
 - Optimize naming for current/future maintainers and agent tooling, not personal preference.
 - Match team/domain vocabulary used in tests, tickets, and architecture discussions.
@@ -102,7 +134,7 @@ Treat these as an order of operations. Earlier virtues are prerequisites for lat
 - Verbs for commands/actions.
 - Adjective-like names for interfaces/protocol-style roles when appropriate.
 
-## 4) Agent review checklist (pre-response / pre-PR)
+## 5) Agent review checklist (pre-response / pre-PR)
 - Working: Does this solve the real problem and pass tests/checks?
 - Unique: Did I reuse existing code and avoid duplication?
 - Simple: Can I reduce local operations, facts, or paths further?
@@ -110,13 +142,10 @@ Treat these as an order of operations. Earlier virtues are prerequisites for lat
 - Easy: Will the next change be safer because of this design?
 - Developed: Am I using domain concepts rather than primitive manipulation?
 - Brief: What unnecessary code or words can be removed?
-- Aligned: Does this fit existing architecture and conventions?
-- Discovered: Did I understand surrounding code before modifying?
-- Traceable: Can I explain why this change exists?
-- Conservative: Is there a smaller safe change with equivalent outcome?
+- Coherent: Does this reinforce existing architecture, vocabulary, and patterns?
 - Naming: Are names domain-aligned, intention-revealing, and scoped appropriately?
 
-## 5) Tests must be FIRST (Pragmatic Programmers)
+## 6) Tests must be FIRST (Pragmatic Programmers)
 Write and maintain micro/unit tests so they are:
 
 ### Fast
@@ -142,11 +171,11 @@ Write and maintain micro/unit tests so they are:
 - Prefer writing tests first (TDD) or at least alongside production changes.
 - Treat tests as specifications by example and API design feedback.
 
-## 6) Refactoring safety rule
+## 7) Refactoring safety rule
 - Refactor only with a passing test baseline.
 - After each small refactor, re-run tests to confirm the code remains Working.
 
-## 7) Canonical script entrypoints (prefer scripts over ad-hoc commands)
+## 8) Canonical script entrypoints (prefer scripts over ad-hoc commands)
 - Use executable scripts in the repository root as the default workflow entrypoints.
 - Before running raw `uv run ...` commands, check whether a dedicated script exists.
 - If a project script exists for the task, use it unless explicitly asked for a raw command.
@@ -166,13 +195,13 @@ Write and maintain micro/unit tests so they are:
 - `./tidy`: experimental auto-fix/format/upgrade pass (opt-in; review changes carefully).
 - `colors_def.sh`: shared shell utility sourced by scripts; not a direct workflow entrypoint.
 
-## 8) Wrapper precedence for validation workflows
+## 9) Wrapper precedence for validation workflows
 - Do not replace `./run_tests` with direct `uv run pytest` for standard validation.
 - Do not replace `./check` with separate ad-hoc tool calls for standard validation.
 - Prefer wrapper scripts to preserve project flags, behavior, and conventions.
 - After each change, run `./run_tests`; before commit/PR, run both `./check` and `./run_tests`.
 
-## 9) Mutation-analysis helpers (`scripts/mutant*`)
+## 10) Mutation-analysis helpers (`scripts/mutant*`)
 - Prefer `scripts/mutant_*` helpers over ad-hoc parsing of `*.py.meta` and `mutmut-stats.json`.
 - When renaming files, also update related documentation and mutation-testing configuration/references in the same change.
 - Mutation-analysis workflow:

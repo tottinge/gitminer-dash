@@ -88,7 +88,9 @@ def test_get_top_files_and_affinities_filters_to_edges_inside_top_set() -> None:
     assert relevant_affinities == [0.8]
 
 
-def test_get_top_files_and_affinities_returns_all_pairs_when_all_files_selected() -> None:
+def test_get_top_files_and_affinities_returns_all_pairs_when_all_files_selected() -> (
+    None
+):
     """When max_nodes covers all files, every affinity value is relevant."""
 
     affinities = {
@@ -107,7 +109,9 @@ def test_get_top_files_and_affinities_returns_all_pairs_when_all_files_selected(
     assert sorted(relevant_affinities) == [0.2, 0.3, 0.4]
 
 
-def test_get_top_files_and_affinities_returns_empty_outputs_for_empty_input() -> None:
+def test_get_top_files_and_affinities_returns_empty_outputs_for_empty_input() -> (
+    None
+):
     """With no affinities, top files and relevant affinities must both be empty."""
 
     top_files, relevant_affinities = aa.get_top_files_and_affinities(
