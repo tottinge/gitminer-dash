@@ -5,13 +5,28 @@ This module provides functions for analyzing diffs and changes across commits.
 """
 
 from collections import defaultdict
+from collections.abc import Iterable
+from datetime import date
 
 import pandas as pd
+POSSIBLE_MODIFICATIONS_KIND = "possible mods"
+NET_INSERTIONS_KIND = "net inserts"
+NET_DELETIONS_KIND = "net deletes"
+RESULT_COLUMNS = ["date", "kind", "count"]
 
 
-def get_diffs_in_period(commits_data) -> pd.DataFrame:
+def _calculate_diff_breakdown(
+    insertions: int, deletions: int
+) -> tuple[int, int, int]:
+    possible_modifications = min(insertions, deletions)
+    net_insertions = max(insertions - possible_modifications, 0)
+    net_deletions = max(deletions - possible_modifications, 0)
+    return possible_modifications, net_insertions, net_deletions
+
+
+def get_diffs_in_period(commits_data: Iterable[object]) -> pd.DataFrame:
     """
-    Calculate diff statistics for commits in a given time period.
+    Calculate daily diff statistics for a pre-filtered commit iterable.
 
     This function analyzes insertions and deletions to estimate:
     - Possible modifications (min of insertions and deletions)
@@ -24,19 +39,31 @@ def get_diffs_in_period(commits_data) -> pd.DataFrame:
     Returns:
         A pandas DataFrame with columns: date, kind, count
     """
-    counts = defaultdict(int)
-    for commit in commits_data:
-        day = commit.committed_datetime.date()
-        inserted = commit.stats.total["insertions"]
-        deleted = commit.stats.total["deletions"]
-
-        possible_mods = min(inserted, deleted)
-        counts[day, "possible mods"] += possible_mods
-        counts[day, "net inserts"] += max(inserted - possible_mods, 0)
-        counts[day, "net deletes"] += max(deleted - possible_mods, 0)
-
-    source_data = sorted(
-        (day, kind, count) for ((day, kind), count) in counts.items()
+    diff_counts_by_day_and_kind: defaultdict[tuple[date, str], int] = (
+        defaultdict(int)
     )
-    result = pd.DataFrame(source_data, columns=["date", "kind", "count"])
-    return result
+    for commit in commits_data:
+        commit_day = commit.committed_datetime.date()
+        insertions = commit.stats.total["insertions"]
+        deletions = commit.stats.total["deletions"]
+
+        (
+            possible_modifications,
+            net_insertions,
+            net_deletions,
+        ) = _calculate_diff_breakdown(insertions, deletions)
+        diff_counts_by_day_and_kind[
+            commit_day, POSSIBLE_MODIFICATIONS_KIND
+        ] += possible_modifications
+        diff_counts_by_day_and_kind[
+            commit_day, NET_INSERTIONS_KIND
+        ] += net_insertions
+        diff_counts_by_day_and_kind[
+            commit_day, NET_DELETIONS_KIND
+        ] += net_deletions
+
+    daily_kind_counts = sorted(
+        (day, kind, count)
+        for ((day, kind), count) in diff_counts_by_day_and_kind.items()
+    )
+    return pd.DataFrame(daily_kind_counts, columns=RESULT_COLUMNS)
