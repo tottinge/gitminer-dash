@@ -4,6 +4,7 @@ Word Frequency Visualization Module
 Provides visualization functions for word frequency data from commit messages.
 """
 
+import plotly.express as px
 import plotly.graph_objects as go
 
 from visualization.common import create_empty_figure
@@ -45,7 +46,10 @@ def create_word_frequency_treemap(
             parents=[""] * len(words),  # All at root level
             values=counts,
             textposition="middle center",
-            marker=dict(colorscale="Blues", line=dict(width=2, color="white")),
+            marker=dict(
+                colorscale=px.colors.sequential.Blues,
+                line=dict(width=2, color="white"),
+            ),
             hovertemplate="<b>%{label}</b><br>Count: %{value}<br><extra></extra>",
         )
     )
