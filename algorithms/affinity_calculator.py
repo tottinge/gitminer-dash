@@ -36,7 +36,7 @@ def _calculate_affinities_from_commits(
 
         weight = weight_fn(files_in_commit)
         for file1, file2 in combinations(files, 2):
-            ordered_key = (file1, file2) if file1 <= file2 else (file2, file1)
+            ordered_key = tuple(sorted((file1, file2)))
             affinities[ordered_key] += weight
 
 

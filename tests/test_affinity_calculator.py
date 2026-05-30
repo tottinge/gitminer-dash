@@ -4,7 +4,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from algorithms.affinity_calculator import calculate_affinities
+from algorithms.affinity_calculator import (
+    _default_weight_fn,
+    calculate_affinities,
+)
 
 
 def test_empty_list():
@@ -25,6 +28,16 @@ def test_single_file_commits_ignored():
     commit.stats.files = {"a.py": {}}
     affinities = calculate_affinities([commit])
     assert len(affinities) == 0
+
+
+@pytest.mark.parametrize(
+    ("file_count", "expected_weight"),
+    [(2, 1.0), (3, 1 / 3), (4, 1 / 6)],
+)
+def test_default_weight_fn_matches_combinatorial_formula(
+    file_count: int, expected_weight: float
+):
+    assert _default_weight_fn(file_count) == pytest.approx(expected_weight)
 
 
 def test_single_file_commit_does_not_stop_later_commits():
