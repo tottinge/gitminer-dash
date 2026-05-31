@@ -7,6 +7,7 @@ and categorizing them by intent/type.
 
 import re
 from collections import Counter
+from datetime import timedelta
 
 import pandas as pd
 
@@ -50,19 +51,36 @@ def normalize_intent(intent: str):
     return "unknown"
 
 
-def prepare_changes_by_date(commits_data, weeks=12) -> pd.DataFrame:
+def prepare_changes_by_date(
+    commits_data, weeks: int | None = None
+) -> pd.DataFrame:
     """
     Prepare a DataFrame of changes grouped by date and conventional commit type.
 
     Args:
         commits_data: Iterable of commit objects to analyze
-        weeks: Number of weeks to look back (default: 12)
+        weeks: Number of weeks to look back (default behavior: 12)
 
     Returns:
         A pandas DataFrame with columns: date, reason, count
     """
+    commits = list(commits_data)
+    if commits:
+        lookback_weeks = 12 if weeks is None else weeks
+        latest_commit_date = max(
+            commit.committed_datetime.date() for commit in commits
+        )
+        lookback_start_date = latest_commit_date - timedelta(
+            weeks=lookback_weeks
+        )
+        commits = [
+            commit
+            for commit in commits
+            if commit.committed_datetime.date() >= lookback_start_date
+        ]
+
     daily_change_counter = Counter()
-    for commit in commits_data:
+    for commit in commits:
         match = conventional_commit_match_pattern.match(commit.message)
         if match:
             intent = normalize_intent(match.group(1))

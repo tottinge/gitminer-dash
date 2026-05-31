@@ -1,5 +1,5 @@
 import inspect
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pandas as pd
@@ -90,9 +90,40 @@ def test_prepare_changes_by_date_aggregates_counts_by_date_and_reason():
     pd.testing.assert_frame_equal(result.reset_index(drop=True), expected)
 
 
-def test_prepare_changes_by_date_default_weeks_is_twelve():
+def test_prepare_changes_by_date_default_weeks_parameter_is_none():
     default_weeks = (
         inspect.signature(prepare_changes_by_date).parameters["weeks"].default
     )
+    assert default_weeks is None
 
-    assert default_weeks == 12
+
+def test_prepare_changes_by_date_default_excludes_commit_older_than_twelve_weeks():
+    latest = datetime(2026, 4, 1, 12, 0, tzinfo=timezone.utc)
+    older_than_default = latest - timedelta(weeks=13)
+
+    commits = [
+        _commit("feat(core): latest", latest),
+        _commit("fix(core): old", older_than_default),
+    ]
+
+    result = prepare_changes_by_date(commits)
+
+    assert list(result["date"]) == [latest.date()]
+    assert list(result["reason"]) == ["feat"]
+    assert list(result["count"]) == [1]
+
+
+def test_prepare_changes_by_date_includes_commit_exactly_at_lookback_boundary():
+    latest = datetime(2026, 4, 1, 12, 0, tzinfo=timezone.utc)
+    exactly_at_boundary = latest - timedelta(weeks=12)
+
+    commits = [
+        _commit("feat(core): latest", latest),
+        _commit("fix(core): boundary", exactly_at_boundary),
+    ]
+
+    result = prepare_changes_by_date(commits)
+
+    assert list(result["date"]) == [exactly_at_boundary.date(), latest.date()]
+    assert list(result["reason"]) == ["fix", "feat"]
+    assert list(result["count"]) == [1, 1]

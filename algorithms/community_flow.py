@@ -10,9 +10,7 @@ import networkx as nx
 def _normalized_community_pair(
     first_community: int, second_community: int
 ) -> tuple[int, int]:
-    if first_community <= second_community:
-        return first_community, second_community
-    return second_community, first_community
+    return tuple(sorted((first_community, second_community)))
 
 
 def count_nodes_by_community(graph: nx.Graph) -> dict[int, int]:

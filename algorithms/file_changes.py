@@ -80,7 +80,7 @@ def file_changes_over_period(
     end = end or datetime.now()
     repo = repo or get_repo_util()
 
-    shas = _commits_touching_file(repo, target_file, start, end)
+    shas = list(_commits_touching_file(repo, target_file, start, end))
     if not shas:
         return 0, 0.0, 0, 0.0
 
@@ -88,7 +88,7 @@ def file_changes_over_period(
         _lines_changed_in_commit(repo, sha, target_file) for sha in shas
     ]
     commits = len(shas)
-    avg_changes = mean(lines_changed) if lines_changed else 0.0
+    avg_changes = mean(lines_changed)
 
     newest_sha = shas[0]
     oldest_sha = shas[-1]

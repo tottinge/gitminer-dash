@@ -90,7 +90,8 @@ def traverse_linear_chain(
                 "Maximum traversal depth exceeded while walking commit chain"
             )
 
-        parents = list(getattr(current, "parents", []) or [])
+        parent_candidates = getattr(current, "parents", None)
+        parents = [] if parent_candidates is None else list(parent_candidates)
         if not parents:
             raise LinearChainTraversalError(
                 "Reached a commit with no parents before finding earliest_sha"
@@ -145,7 +146,7 @@ def commits_to_chain_rows(
 
         # First line of message, truncated
         message_full = commit.message or ""
-        first_line = message_full.split("\n", 1)[0]
+        first_line, _separator, _rest = message_full.partition("\n")
         message = first_line[:100]
 
         rows.append(

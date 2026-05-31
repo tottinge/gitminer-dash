@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from algorithms.change_series import change_series
+from algorithms.change_series import _summarize_change_types, change_series
 from tests import setup_path
 
 setup_path()
@@ -78,6 +78,16 @@ def test_change_series_uses_expected_diff_targets_across_refs():
     assert "Files Deleted" not in rows[0]
     assert rows[1]["Files Modified"] == 1
     assert "Files Renamed" not in rows[1]
+
+
+def test_summarize_change_types_handles_missing_change_type_as_other():
+    diffs = [SimpleNamespace(change_type="M"), SimpleNamespace()]
+
+    counts = _summarize_change_types(diffs)
+
+    assert counts["Files Modified"] == 1
+    assert counts["Other"] == 1
+    assert None not in counts
 
 
 if __name__ == "__main__":

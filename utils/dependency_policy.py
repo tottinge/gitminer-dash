@@ -47,7 +47,7 @@ def collect_policy_violations(pyproject_data: dict[str, Any]) -> list[str]:
     """Return dependency policy violations found in pyproject data."""
     project = pyproject_data.get("project", {})
     dependency_groups = pyproject_data.get("dependency-groups", {})
-    optional_dependencies = project.get("optional-dependencies", {})
+    optional_dependencies = project.get("optional-dependencies")
 
     violations: list[str] = []
 

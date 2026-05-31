@@ -15,9 +15,14 @@ change_name = {
 
 
 def _summarize_change_types(diffs: Iterable[Any]) -> Counter[str]:
-    return Counter(
-        change_name.get(diff.change_type, OTHER_CHANGE_KEY) for diff in diffs
-    )
+    summarized_change_types: list[str] = []
+    for diff in diffs:
+        diff_change_type = getattr(diff, "change_type", None)
+        if diff_change_type in change_name:
+            summarized_change_types.append(change_name[diff_change_type])
+        else:
+            summarized_change_types.append(OTHER_CHANGE_KEY)
+    return Counter(summarized_change_types)
 
 
 def _build_change_row(
