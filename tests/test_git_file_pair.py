@@ -171,6 +171,26 @@ class TestGetCommitsForFilePair(unittest.TestCase):
         self.assertEqual(80, len(result[0]["message"]))
         self.assertEqual("a" * 80, result[0]["message"])
 
+    def test_message_uses_only_first_line_when_short(self):
+        start = datetime(2025, 1, 1)
+        end = datetime(2025, 12, 31)
+        commit = create_mock_commit_with_diffs(
+            hexsha="abc123def",
+            message="short summary\ndetails should not be included",
+            date=datetime(2025, 6, 15, 10, 30),
+            modified_files=["file1.py", "file2.py"],
+        )
+        repo = Mock()
+        repo.iter_commits = Mock(return_value=[commit])
+
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
+
+        self.assertEqual(1, len(result))
+        self.assertEqual("short summary", result[0]["message"])
+        self.assertNotIn("\n", result[0]["message"])
+
     def test_initial_commit_no_parents(self):
         """Test handling of initial commit with no parents."""
         start = datetime(2025, 1, 1)
@@ -187,6 +207,32 @@ class TestGetCommitsForFilePair(unittest.TestCase):
             repo, "file1.py", "file2.py", start, end
         )
         self.assertEqual(0, len(result))
+
+    def test_diff_is_requested_from_first_parent(self):
+        start = datetime(2025, 1, 1)
+        end = datetime(2025, 12, 31)
+        parent = Mock()
+        commit = Mock()
+        commit.hexsha = "abc123def456"
+        commit.message = "feat: update both"
+        commit.committed_datetime = datetime(2025, 6, 15, 10, 30)
+        commit.parents = [parent]
+
+        first = Mock()
+        first.a_path = "file1.py"
+        second = Mock()
+        second.a_path = "file2.py"
+        commit.diff = Mock(return_value=[first, second])
+
+        repo = Mock()
+        repo.iter_commits = Mock(return_value=[commit])
+
+        result = get_commits_for_file_pair(
+            repo, "file1.py", "file2.py", start, end
+        )
+
+        commit.diff.assert_called_once_with(parent)
+        self.assertEqual(1, len(result))
 
 
 if __name__ == "__main__":

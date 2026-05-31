@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from utils.git import tree_entry_size
 
@@ -57,6 +57,29 @@ class TestTreeEntrySize(unittest.TestCase):
         result = tree_entry_size(repo, "HEAD", "src/main.py")
 
         self.assertEqual(0, result)
+
+    def test_tree_entry_size_passes_zero_default_to_getattr(self):
+        repo = Mock()
+        entry = object()
+        commit = Mock()
+        commit.tree = {"src/main.py": entry}
+        repo.commit.return_value = commit
+
+        seen_defaults = []
+
+        def fake_getattr(target, name, *default_values):
+            self.assertIs(entry, target)
+            self.assertEqual("size", name)
+            seen_defaults.append(default_values)
+            if default_values:
+                return default_values[0]
+            return 999
+
+        with patch("utils.git.getattr", side_effect=fake_getattr, create=True):
+            result = tree_entry_size(repo, "HEAD", "src/main.py")
+
+        self.assertEqual(0, result)
+        self.assertEqual([(0,)], seen_defaults)
 
 
 if __name__ == "__main__":
