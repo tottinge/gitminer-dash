@@ -67,6 +67,23 @@ class MyTestCase(unittest.TestCase):
         )
         self.assertEqual(9, len(result))
 
+    def test_caps_affinity_results_at_fifty_rows(self):
+        affinities = {
+            (f"file_{i}_a", f"file_{i}_b"): float(200 - i)
+            for i in range(55)
+        }
+
+        with patch(
+            "pages.strongest_pairings.calculate_affinities",
+            return_value=affinities,
+        ):
+            result = self.create_affinity_list([commit_with("a", "b")])
+
+        self.assertEqual(50, len(result))
+        pairings = {row["Pairing"] for row in result}
+        self.assertIn("file_49_a\nfile_49_b", pairings)
+        self.assertNotIn("file_50_a\nfile_50_b", pairings)
+
 
 if __name__ == "__main__":
     unittest.main()

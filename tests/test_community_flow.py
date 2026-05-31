@@ -3,6 +3,7 @@
 import networkx as nx
 
 from algorithms.community_flow import (
+    _normalized_community_pair,
     community_flow_rows,
     count_nodes_by_community,
 )
@@ -145,3 +146,15 @@ def test_community_flow_rows_sorts_by_edge_count_desc_when_strength_ties():
     assert rows[1]["source_community"] == 0
     assert rows[1]["target_community"] == 1
     assert rows[1]["edge_count"] == 1
+
+
+def test_normalized_community_pair_keeps_sorted_order():
+    assert _normalized_community_pair(1, 3) == (1, 3)
+
+
+def test_normalized_community_pair_swaps_unsorted_order():
+    assert _normalized_community_pair(4, 2) == (2, 4)
+
+
+def test_normalized_community_pair_handles_equal_values():
+    assert _normalized_community_pair(2, 2) == (2, 2)

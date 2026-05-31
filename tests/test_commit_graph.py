@@ -91,6 +91,44 @@ class TestBuildCommitGraph(unittest.TestCase):
         # Merge commit should be skipped, resulting in empty graph
         assert len(graph.nodes) == 0
         assert len(graph.edges) == 0
+    def test_merge_commit_skip_does_not_stop_later_commits(self):
+        """Merge commits should be skipped without aborting the commit loop."""
+        merge_parent_1 = Mock()
+        merge_parent_1.hexsha = "merge_parent_1"
+        merge_parent_1.committed_datetime = datetime(
+            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
+        )
+
+        merge_parent_2 = Mock()
+        merge_parent_2.hexsha = "merge_parent_2"
+        merge_parent_2.committed_datetime = datetime(
+            2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc
+        )
+
+        merge_commit = Mock()
+        merge_commit.hexsha = "merge_commit"
+        merge_commit.committed_datetime = datetime(
+            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
+        )
+        merge_commit.parents = [merge_parent_1, merge_parent_2]
+
+        regular_parent = Mock()
+        regular_parent.hexsha = "regular_parent"
+        regular_parent.committed_datetime = datetime(
+            2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc
+        )
+
+        regular_commit = Mock()
+        regular_commit.hexsha = "regular_commit"
+        regular_commit.committed_datetime = datetime(
+            2024, 1, 4, 12, 0, 0, tzinfo=timezone.utc
+        )
+        regular_commit.parents = [regular_parent]
+
+        graph = build_commit_graph([merge_commit, regular_commit])
+
+        assert graph.has_edge("regular_parent", "regular_commit")
+        assert "merge_commit" not in graph.nodes
 
     def test_linear_chain(self):
         """Test a linear chain of commits."""

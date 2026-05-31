@@ -1,3 +1,4 @@
+import inspect
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
@@ -87,3 +88,11 @@ def test_prepare_changes_by_date_aggregates_counts_by_date_and_reason():
     )
 
     pd.testing.assert_frame_equal(result.reset_index(drop=True), expected)
+
+
+def test_prepare_changes_by_date_default_weeks_is_twelve():
+    default_weeks = inspect.signature(prepare_changes_by_date).parameters[
+        "weeks"
+    ].default
+
+    assert default_weeks == 12

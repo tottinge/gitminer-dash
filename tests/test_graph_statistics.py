@@ -62,6 +62,16 @@ def test_filter_low_degree_nodes_with_non_positive_min_degree_is_noop():
     assert set(G.nodes()) == {"a", "b"}
     assert set(G.edges()) == {("a", "b")}
 
+def test_filter_low_degree_nodes_with_zero_min_degree_does_not_attempt_removal():
+    G = nx.Graph()
+    G.add_edge("a", "b", weight=1.0)
+
+    with patch.object(G, "remove_nodes_from") as mock_remove_nodes:
+        removed = filter_low_degree_nodes(G, min_degree=0)
+
+    assert removed == 0
+    mock_remove_nodes.assert_not_called()
+
 
 def test_detect_and_assign_communities_assigns_community_ids_to_nodes_and_returns_stats():
     G = nx.Graph()
@@ -98,6 +108,32 @@ def test_detect_and_assign_communities_with_empty_graph_returns_no_communities_a
     assert stats == {"communities": 0, "avg_community_size": 0}
     assert nx.get_node_attributes(G, "community") == {}
 
+def test_detect_and_assign_communities_empty_graph_does_not_call_louvain():
+    G = nx.Graph()
+
+    with patch("networkx.community.louvain_communities") as mock_louvain:
+        communities, stats = detect_and_assign_communities(G)
+
+    assert communities == []
+    assert stats == {"communities": 0, "avg_community_size": 0}
+    mock_louvain.assert_not_called()
+
+
+def test_detect_and_assign_communities_single_node_still_runs_louvain():
+    G = nx.Graph()
+    G.add_node("solo")
+
+    with patch(
+        "networkx.community.louvain_communities",
+        return_value=[{"solo"}],
+    ) as mock_louvain:
+        communities, stats = detect_and_assign_communities(G)
+
+    mock_louvain.assert_called_once_with(G)
+    assert communities == [{"solo"}]
+    assert stats == {"communities": 1, "avg_community_size": 1.0}
+    assert G.nodes["solo"]["community"] == 0
+
 
 def test_calculate_graph_statistics_computes_avg_degree_and_avg_edge_weight():
     # A - B - C with weights 2 and 4
@@ -114,3 +150,12 @@ def test_calculate_graph_statistics_computes_avg_degree_and_avg_edge_weight():
 def test_calculate_graph_statistics_with_empty_graph_returns_zeros():
     stats = calculate_graph_statistics(nx.Graph())
     assert stats == {"avg_node_degree": 0, "avg_edge_weight": 0}
+
+
+def test_calculate_graph_statistics_with_single_node_self_loop():
+    G = nx.Graph()
+    G.add_edge("solo", "solo", weight=2.5)
+
+    stats = calculate_graph_statistics(G)
+
+    assert stats == {"avg_node_degree": 2.0, "avg_edge_weight": 2.5}

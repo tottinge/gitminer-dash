@@ -153,6 +153,35 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         assert chain.earliest_sha == "c1"
         assert chain.latest_sha == "c3"
         assert chain.commit_count == 3
+    def test_chain_ordering_uses_commit_timestamps_not_node_ids(self):
+        """Earliest/latest boundaries must be derived from committed timestamps."""
+        graph = nx.Graph()
+
+        graph.add_node(
+            "sha_z",
+            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            sha="sha_z",
+        )
+        graph.add_node(
+            "sha_a",
+            committed=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+            sha="sha_a",
+        )
+        graph.add_node(
+            "sha_m",
+            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc),
+            sha="sha_m",
+        )
+        graph.add_edge("sha_z", "sha_m")
+        graph.add_edge("sha_m", "sha_a")
+
+        chains = analyze_commit_chains(graph)
+
+        assert len(chains) == 1
+        chain = chains[0]
+        assert chain.earliest_sha == "sha_z"
+        assert chain.latest_sha == "sha_a"
+        assert chain.commit_count == 3
 
     def test_chain_data_is_immutable(self):
         """Test that ChainData is immutable (frozen dataclass)."""

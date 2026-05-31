@@ -90,3 +90,16 @@ def test_get_commits_for_group_files_skips_bad_commit_and_continues():
     assert len(rows) == 1
     assert rows[0]["hash"] == "abcdef1"
     assert rows[0]["group_files"] == "src/a.py, src/b.py"
+
+
+def test_get_modified_files_ignores_none_b_path_values():
+    parent = object()
+    commit = SimpleNamespace(parents=[parent])
+    commit.diff = Mock(
+        return_value=[SimpleNamespace(a_path="src/a.py", b_path=None)]
+    )
+
+    modified_files = _get_modified_files(commit)
+
+    assert modified_files == {"src/a.py"}
+    assert None not in modified_files
