@@ -91,8 +91,8 @@ def test_prepare_changes_by_date_aggregates_counts_by_date_and_reason():
 
 
 def test_prepare_changes_by_date_default_weeks_is_twelve():
-    default_weeks = inspect.signature(prepare_changes_by_date).parameters[
-        "weeks"
-    ].default
+    default_weeks = (
+        inspect.signature(prepare_changes_by_date).parameters["weeks"].default
+    )
 
     assert default_weeks == 12

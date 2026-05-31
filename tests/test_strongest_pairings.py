@@ -69,8 +69,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_caps_affinity_results_at_fifty_rows(self):
         affinities = {
-            (f"file_{i}_a", f"file_{i}_b"): float(200 - i)
-            for i in range(55)
+            (f"file_{i}_a", f"file_{i}_b"): float(200 - i) for i in range(55)
         }
 
         with patch(

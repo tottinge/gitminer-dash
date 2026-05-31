@@ -91,6 +91,7 @@ class TestBuildCommitGraph(unittest.TestCase):
         # Merge commit should be skipped, resulting in empty graph
         assert len(graph.nodes) == 0
         assert len(graph.edges) == 0
+
     def test_merge_commit_skip_does_not_stop_later_commits(self):
         """Merge commits should be skipped without aborting the commit loop."""
         merge_parent_1 = Mock()

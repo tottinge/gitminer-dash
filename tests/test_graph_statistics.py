@@ -62,6 +62,7 @@ def test_filter_low_degree_nodes_with_non_positive_min_degree_is_noop():
     assert set(G.nodes()) == {"a", "b"}
     assert set(G.edges()) == {("a", "b")}
 
+
 def test_filter_low_degree_nodes_with_zero_min_degree_does_not_attempt_removal():
     G = nx.Graph()
     G.add_edge("a", "b", weight=1.0)
@@ -107,6 +108,7 @@ def test_detect_and_assign_communities_with_empty_graph_returns_no_communities_a
     assert communities == []
     assert stats == {"communities": 0, "avg_community_size": 0}
     assert nx.get_node_attributes(G, "community") == {}
+
 
 def test_detect_and_assign_communities_empty_graph_does_not_call_louvain():
     G = nx.Graph()

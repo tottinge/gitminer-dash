@@ -2,6 +2,7 @@ from dash import Input, Output, callback, dcc, html, register_page
 from dash.dash_table import DataTable
 
 import repository_context as repo_context
+from algorithms.branch_resolution import branch_for_commit
 from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_clamper import clamp_chains_to_period
 from algorithms.chain_layout import calculate_chain_layout
@@ -103,39 +104,6 @@ def update_code_lines_graph(_: int, store_data):
     figure = create_timeline_figure(df)
 
     return figure, show
-
-
-def branch_for_commit(commit):
-    """Return a representative branch name for this commit, if any.
-
-    When commits originate from ``iter_commits('--all', ...)``, GitPython attaches reference
-    information that we can use directly. We first try ``commit.refs`` (references that point
-    at this commit), and fall back to ``commit.name_rev`` if needed. No extra git commands are
-    issued per commit.
-    """
-    # Prefer explicit refs attached to the commit
-    refs = getattr(commit, "refs", None)
-    if refs:
-        for ref in refs:
-            name = getattr(ref, "name", "")
-            if not name:
-                continue
-            # For names like "origin/main" or "heads/main", keep the leaf.
-            if "/" in name:
-                name = name.split("/")[-1]
-            return name
-
-    # Fallback: parse name_rev if available, e.g. "<sha> main" or "<sha> tags/v1.0^0"
-    name_rev = getattr(commit, "name_rev", "")
-    if isinstance(name_rev, str) and name_rev:
-        parts = name_rev.split()
-        if len(parts) > 1:
-            ref_part = parts[1]
-            if "/" in ref_part:
-                ref_part = ref_part.split("/")[-1]
-            return ref_part
-
-    return ""
 
 
 @callback(

@@ -153,6 +153,7 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         assert chain.earliest_sha == "c1"
         assert chain.latest_sha == "c3"
         assert chain.commit_count == 3
+
     def test_chain_ordering_uses_commit_timestamps_not_node_ids(self):
         """Earliest/latest boundaries must be derived from committed timestamps."""
         graph = nx.Graph()
