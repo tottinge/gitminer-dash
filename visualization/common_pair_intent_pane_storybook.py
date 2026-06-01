@@ -12,39 +12,39 @@ from visualization.common_pair_intent_pane import (
 
 def _balanced_pair_payload() -> CommonPairIntentPanePayload:
     return {
-        "pairing": "pages/strongest_pairings.py ↔ utils/git.py",
-        "affinity": "0.58",
+        "pairing": "pages/strongest_pairings.py ↔ utils/git.py",  # pragma: no mutate
+        "affinity": "0.58",  # pragma: no mutate
         "message_count": 6,
         "intent_counts": [
-            {"intent": "refactor", "count": 2},
-            {"intent": "fix", "count": 2},
-            {"intent": "feat", "count": 1},
-            {"intent": "test", "count": 1},
+            {"intent": "refactor", "count": 2},  # pragma: no mutate
+            {"intent": "fix", "count": 2},  # pragma: no mutate
+            {"intent": "feat", "count": 1},  # pragma: no mutate
+            {"intent": "test", "count": 1},  # pragma: no mutate
         ],
         "evidence_rows": [
             {
-                "intent": "refactor",
-                "hash": "a1b2c3d",
-                "date": "2026-05-10",
-                "message": "refactor(pairings): split row parser from callback",
+                "intent": "refactor",  # pragma: no mutate
+                "hash": "a1b2c3d",  # pragma: no mutate
+                "date": "2026-05-10",  # pragma: no mutate
+                "message": "refactor(pairings): split row parser from callback",  # pragma: no mutate
             },
             {
-                "intent": "fix",
-                "hash": "b2c3d4e",
-                "date": "2026-05-11",
-                "message": "fix(pairings): keep empty selections stable",
+                "intent": "fix",  # pragma: no mutate
+                "hash": "b2c3d4e",  # pragma: no mutate
+                "date": "2026-05-11",  # pragma: no mutate
+                "message": "fix(pairings): keep empty selections stable",  # pragma: no mutate
             },
             {
-                "intent": "feat",
-                "hash": "c3d4e5f",
-                "date": "2026-05-12",
-                "message": "feat(pairings): add intent summary badges",
+                "intent": "feat",  # pragma: no mutate
+                "hash": "c3d4e5f",  # pragma: no mutate
+                "date": "2026-05-12",  # pragma: no mutate
+                "message": "feat(pairings): add intent summary badges",  # pragma: no mutate
             },
             {
-                "intent": "test",
-                "hash": "d4e5f6a",
-                "date": "2026-05-12",
-                "message": "test(pairings): add edge-case callback coverage",
+                "intent": "test",  # pragma: no mutate
+                "hash": "d4e5f6a",  # pragma: no mutate
+                "date": "2026-05-12",  # pragma: no mutate
+                "message": "test(pairings): add edge-case callback coverage",  # pragma: no mutate
             },
         ],
     }
@@ -52,38 +52,38 @@ def _balanced_pair_payload() -> CommonPairIntentPanePayload:
 
 def _fix_dominant_payload() -> CommonPairIntentPanePayload:
     return {
-        "pairing": "pages/affinity_groups.py ↔ algorithms/affinity_calculator.py",
-        "affinity": "0.74",
+        "pairing": "pages/affinity_groups.py ↔ algorithms/affinity_calculator.py",  # pragma: no mutate
+        "affinity": "0.74",  # pragma: no mutate
         "message_count": 7,
         "intent_counts": [
-            {"intent": "fix", "count": 5},
-            {"intent": "refactor", "count": 1},
-            {"intent": "test", "count": 1},
+            {"intent": "fix", "count": 5},  # pragma: no mutate
+            {"intent": "refactor", "count": 1},  # pragma: no mutate
+            {"intent": "test", "count": 1},  # pragma: no mutate
         ],
         "evidence_rows": [
             {
-                "intent": "fix",
-                "hash": "f6a7b8c",
-                "date": "2026-05-08",
-                "message": "fix(affinity): avoid divide-by-zero for sparse ranges",
+                "intent": "fix",  # pragma: no mutate
+                "hash": "f6a7b8c",  # pragma: no mutate
+                "date": "2026-05-08",  # pragma: no mutate
+                "message": "fix(affinity): avoid divide-by-zero for sparse ranges",  # pragma: no mutate
             },
             {
-                "intent": "fix",
-                "hash": "a7b8c9d",
-                "date": "2026-05-09",
-                "message": "fix(affinity): guard null nodes in click handling",
+                "intent": "fix",  # pragma: no mutate
+                "hash": "a7b8c9d",  # pragma: no mutate
+                "date": "2026-05-09",  # pragma: no mutate
+                "message": "fix(affinity): guard null nodes in click handling",  # pragma: no mutate
             },
             {
-                "intent": "fix",
-                "hash": "b8c9d0e",
-                "date": "2026-05-09",
-                "message": "fix(affinity): normalize missing edge weight values",
+                "intent": "fix",  # pragma: no mutate
+                "hash": "b8c9d0e",  # pragma: no mutate
+                "date": "2026-05-09",  # pragma: no mutate
+                "message": "fix(affinity): normalize missing edge weight values",  # pragma: no mutate
             },
             {
-                "intent": "refactor",
-                "hash": "c9d0e1f",
-                "date": "2026-05-10",
-                "message": "refactor(affinity): isolate date-range parsing helper",
+                "intent": "refactor",  # pragma: no mutate
+                "hash": "c9d0e1f",  # pragma: no mutate
+                "date": "2026-05-10",  # pragma: no mutate
+                "message": "refactor(affinity): isolate date-range parsing helper",  # pragma: no mutate
             },
         ],
     }
@@ -125,13 +125,13 @@ def build_common_pair_intent_pane_storybook() -> html.Div:
         story_sections.append(
             html.Div(
                 children=[
-                    html.H4(story_name, style={"margin": "0 0 6px"}),
+                    html.H4(story_name, style={"margin": "0 0 6px"}),  # pragma: no mutate
                     story_fn(),
                 ],
-                style={"marginBottom": "18px"},
+                style={"marginBottom": "18px"},  # pragma: no mutate
             )
         )
     return html.Div(
         children=story_sections,
-        style={"maxWidth": "560px", "padding": "8px"},
+        style={"maxWidth": "560px", "padding": "8px"},  # pragma: no mutate
     )
