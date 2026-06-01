@@ -2,10 +2,45 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypedDict
 
 import networkx as nx
 import plotly.graph_objects as go
+
+
+class GraphNodeData(TypedDict):
+    """Serialized node metadata for affinity graph stores."""
+
+    commit_count: int
+    degree: int
+    community: int
+    connected_communities: list[int]
+
+
+class GraphDataStore(TypedDict):
+    """Serializable graph data used by affinity page callbacks."""
+
+    nodes: dict[str, GraphNodeData]
+    communities: dict[int, list[str]]
+
+
+GraphDataPayload = GraphDataStore | dict[Any, Any]
+
+
+def _empty_graph_payload() -> dict[Any, Any]:
+    return {}
+
+
+def _graph_error_result(create_error_figure_fn, title: str, error: Exception):
+    return create_error_figure_fn(title, str(error)), _empty_graph_payload()
+
+
+def _repo_error_result(create_repo_error_figure_fn):
+    return create_repo_error_figure_fn(), _empty_graph_payload()
+
+
+def _is_missing_repository_path_error(error: ValueError) -> bool:
+    return "No repository path provided" in str(error)
 
 
 def get_or_compute_affinities(
@@ -24,31 +59,39 @@ def get_or_compute_affinities(
     return affinities
 
 
+def _connected_communities_for_node(
+    graph: nx.Graph, node_name: str
+) -> list[int]:
+    connected_communities = {
+        int(graph.nodes[neighbor].get("community", 0))
+        for neighbor in graph.neighbors(node_name)
+    }
+    return sorted(connected_communities)
+
+
+def _build_graph_node_data(graph: nx.Graph, node_name: str) -> GraphNodeData:
+    node_data = graph.nodes[node_name]
+    return {
+        "commit_count": int(node_data.get("commit_count", 0)),
+        "degree": int(graph.degree(node_name)),
+        "community": int(node_data.get("community", 0)),
+        "connected_communities": _connected_communities_for_node(
+            graph, node_name
+        ),
+    }
+
+
 def build_graph_data_store(
     G: nx.Graph, communities: list[set[str]]
-) -> dict[str, dict[Any, Any]]:
+) -> GraphDataStore:
     """Transform graph into serializable store format."""
-    graph_data = {"nodes": {}, "communities": {}}
+    graph_data: GraphDataStore = {"nodes": {}, "communities": {}}
 
-    for node in G.nodes():
-        node_community = G.nodes[node].get("community", 0)
-        commit_count = G.nodes[node].get("commit_count", 0)
-        degree = G.degree(node)
+    for node_name in G.nodes():
+        graph_data["nodes"][node_name] = _build_graph_node_data(G, node_name)
 
-        connected_communities = set()
-        for neighbor in G.neighbors(node):
-            neighbor_community = G.nodes[neighbor].get("community", 0)
-            connected_communities.add(neighbor_community)
-
-        graph_data["nodes"][node] = {
-            "commit_count": commit_count,
-            "degree": degree,
-            "community": node_community,
-            "connected_communities": sorted(list(connected_communities)),
-        }
-
-    for i, community in enumerate(communities):
-        graph_data["communities"][i] = list(community)
+    for community_id, community_files in enumerate(communities):
+        graph_data["communities"][community_id] = list(community_files)
 
     return graph_data
 
@@ -60,7 +103,7 @@ def build_affinity_graph_output(
     affinities: dict[tuple[str, str], float],
     create_network_fn,
     create_visualization_fn,
-) -> tuple[go.Figure, dict[str, dict[Any, Any]]]:
+) -> tuple[go.Figure, GraphDataStore]:
     """Build figure + serialized graph data for affinity groups page."""
     G, communities, _ = create_network_fn(
         commits_data,
@@ -86,18 +129,20 @@ def generate_affinity_graph_result(
     create_visualization_fn,
     create_repo_error_figure_fn,
     create_error_figure_fn,
-) -> tuple[go.Figure, dict[str, dict[Any, Any]]]:
+) -> tuple[go.Figure, GraphDataPayload]:
     """Generate affinity graph callback result using injected dependencies."""
     try:
         starting, ending = parse_date_range_fn(store_data)
     except ValueError as error:
-        return create_error_figure_fn("Invalid date range", str(error)), {}
+        return _graph_error_result(
+            create_error_figure_fn, "Invalid date range", error
+        )
 
     try:
         commits_data = ensure_list_fn(commits_in_period_fn(starting, ending))
     except ValueError as error:
-        if "No repository path provided" in str(error):
-            return create_repo_error_figure_fn(), {}
+        if _is_missing_repository_path_error(error):
+            return _repo_error_result(create_repo_error_figure_fn)
         raise
 
     affinities = get_cached_affinities_fn(starting, ending, commits_data)
@@ -112,9 +157,8 @@ def generate_affinity_graph_result(
             create_visualization_fn=create_visualization_fn,
         )
     except Exception as error:
-        return (
-            create_error_figure_fn("Graph generation failed", str(error)),
-            {},
+        return _graph_error_result(
+            create_error_figure_fn, "Graph generation failed", error
         )
 
 
@@ -129,20 +173,35 @@ def extract_clicked_node_name(click_data) -> str:
     return node_name
 
 
+def _graph_nodes(
+    graph_data: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    nodes = graph_data.get("nodes")
+    if isinstance(nodes, dict):
+        return nodes
+    return {}
+
+
+def _clicked_node_community(
+    nodes_by_name: dict[str, dict[str, Any]], node_name: str
+) -> Any:
+    clicked_node_data = nodes_by_name[node_name]
+    return clicked_node_data.get("community", 0)
+
+
 def files_in_clicked_community(
-    graph_data: dict[str, dict[Any, Any]], node_name: str
+    graph_data: dict[str, Any], node_name: str
 ) -> list[str]:
     """Return files in the same community as the clicked node."""
-    if not node_name or "nodes" not in graph_data:
+    if not node_name:
         return []
-    if node_name not in graph_data["nodes"]:
+    nodes_by_name = _graph_nodes(graph_data)
+    if node_name not in nodes_by_name:
         return []
-
-    clicked_node_data = graph_data["nodes"][node_name]
-    node_community = clicked_node_data.get("community", 0)
+    node_community = _clicked_node_community(nodes_by_name, node_name)
     return [
-        node
-        for node, node_info in graph_data["nodes"].items()
+        file_path
+        for file_path, node_info in nodes_by_name.items()
         if node_info.get("community", -1) == node_community
     ]
 

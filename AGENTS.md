@@ -1,25 +1,34 @@
 # Warp agent coding rules (8 Virtues + Naming + FIRST unit tests)
 Apply these rules whenever you edit, create, or refactor code in this repo.
 This file operationalizes:
-- `~/Downloads/CodeVirtuesForAgents.md`
+- `~/Downloads/Eight_Virtues_Agentic_Software_Development_FINAL(1).md`
 - `~/Downloads/NamingShortGuide.md`
 
 ## 0) Default execution loop for every task
-1. Discover before changing: search standard library, framework, codebase, and nearby modules before creating new code.
-2. Make the smallest conservative change that solves the problem.
+1. Discover before changing: read nearby modules and search language/framework/project capabilities before creating new code.
+2. Make the smallest conservative change that solves the problem; prefer better representation before adding branching or state.
 3. Keep names intention-revealing, domain-aligned, and team-familiar.
 4. After each change, run `./run_tests`.
 5. If any check/test fails, fix immediately; re-run `./run_tests`.
 6. Before proposing a commit/PR, run both `./check` and `./run_tests`.
 Priority rule: if generic coding conventions, model habits, or "common best practices" conflict with these local virtues, follow these virtues first.
-
-## 1) Foundational framing from the virtues
+## 1) Foundational framing and purpose
 - The virtues describe software qualities, not a rigid methodology.
+- The virtues should transfer burden from human carefulness into software structure, representation, vocabulary, and behavior.
 - `Working` is foundational. Software that does not work has failed regardless of other qualities.
 - Beyond `Working`, virtues reinforce each other rather than being a strict ranking.
-- Improving representation is often higher leverage than adding procedural logic.
+- Better representation, naming, and organization are often the highest-leverage improvements.
 - Readability is relational: optimize clarity for this team’s domain vocabulary and ecosystem familiarity.
-- Coherence matters: prefer changes that make the system feel more like one language and less like disconnected local styles.
+- Coherent systems make learning more profitable because knowledge from one area transfers to others.
+
+### Representation matters
+- Many improvements come from better representation rather than additional behavior.
+- Prefer representations such as tables, mappings, state machines, value objects, and domain concepts when they reduce duplicated truth and local complexity.
+- When complexity grows, look for representation improvements before procedural expansion.
+
+### Cardinality reveals design
+- When a concept changes from Zero→One or One→Many, re-check whether representation still fits.
+- Numbered variables, repeated parameter clusters, repeated conditionals, and expanding related fields usually indicate a missing concept or outdated representation.
 
 ## 2) Eight code virtues (software quality)
 ### Working
@@ -29,13 +38,16 @@ Priority rule: if generic coding conventions, model habits, or "common best prac
 
 ### Unique
 - Keep one authoritative representation per fact/rule/concept (SPOT).
-- Reuse standard library, framework, and project capabilities before creating new code.
-- Avoid parallel implementations, parallel domain models, and competing names for the same concept.
+- Ask “What knowledge is represented here?” before judging textual duplication.
+- Coincidental duplication is acceptable when business truths differ.
+- Prefer duplication over the wrong abstraction.
+- Reuse language/framework/project capabilities before creating new code.
+- Avoid parallel representations of the same fact, rule, algorithm, or concept.
 
 ### Simple
-- Minimize local operands, operations, state, and execution paths.
-- Reduce branching and incidental machinery where possible.
-- Prefer better representations (tables, mappings, state machines, domain concepts) when they reduce local complexity.
+- Minimize local operands, operations, and execution paths.
+- Every additional fact, transformation, and path increases complexity.
+- Prefer better representation over incremental control-flow growth.
 
 ### Clear
 - Make intent obvious with purpose-revealing names and familiar terminology.
@@ -50,7 +62,8 @@ Priority rule: if generic coding conventions, model habits, or "common best prac
 ### Developed
 - Express solutions through domain concepts, not primitive manipulation.
 - Place behavior with the concept that owns it.
-- Look for hidden concepts when values repeatedly travel together; model concepts that already exist in the domain.
+- Discover hidden concepts when values repeatedly travel together through parameters, returns, fields, constants, or variables.
+- Model concepts that already exist in the domain rather than preserving repeated primitive bundles.
 
 ### Brief
 - Maximize signal and minimize noise.
@@ -70,10 +83,17 @@ Before creating code:
 4. Understand before changing.
 
 Before introducing anything new, ask:
-- Does this already exist in language/framework/project?
+- Does this already exist?
+- Does the language already provide it?
+- Does the framework already provide it?
+- Does the project already provide it?
 - Can an existing concept be extended instead?
-- Is there a hidden concept to discover rather than adding a new helper/type?
+- Is a hidden concept already present that should be discovered?
 - Is there a better representation of the problem?
+Before creating an abstraction:
+- What knowledge is shared?
+- Is the duplication coincidental or conceptual?
+- Will this abstraction reduce duplicated truth or merely duplicated text?
 
 When introducing constants:
 1. Name the value.
@@ -86,14 +106,15 @@ When complexity grows:
 1. Look first for a better representation.
 2. Look for values that travel together.
 3. Look for hidden domain concepts.
-4. Prefer representation improvements before adding more branching/state.
+4. Watch cardinality changes (Zero→One, One→Many).
+5. Consider tables, mappings, state machines, value objects, and domain concepts before adding additional branching or state.
 
 Before completing a change, verify:
 - Does it work?
 - Is it unique?
 - Is it simple?
 - Is it clear?
-- Is it easy to change?
+- Is it easy?
 - Is it developed?
 - Is it brief?
 - Is it coherent?

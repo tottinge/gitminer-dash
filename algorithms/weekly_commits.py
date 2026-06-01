@@ -8,9 +8,11 @@ weekly commit statistics.
 from collections import defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import Any, TypedDict
+from typing import TypedDict
 
 from git import Commit
+
+WEEK_STEP_DAYS = 7
 
 
 class WeekSummary(TypedDict):
@@ -68,6 +70,62 @@ def _normalize_datetime(dt: datetime) -> datetime:
     return dt.astimezone()
 
 
+def _week_key(week_ending: datetime) -> datetime:
+    """Normalize week-ending keys for dictionary lookup consistency."""
+    if week_ending.tzinfo:
+        return week_ending.replace(tzinfo=None)
+    return week_ending
+
+
+def _group_commits_by_week(
+    commits_data: Iterable[Commit],
+) -> dict[datetime, list[Commit]]:
+    """Group commits by normalized week-ending key."""
+    weeks_map: dict[datetime, list[Commit]] = defaultdict(list)
+    for commit in commits_data:
+        commit_date = _normalize_datetime(commit.committed_datetime)
+        week_ending = get_week_ending(commit_date)
+        weeks_map[_week_key(week_ending)].append(commit)
+    return weeks_map
+
+
+def _week_endings_in_period(begin: datetime, end: datetime) -> list[datetime]:
+    """Return all normalized week-ending datetimes in [begin, end]."""
+    week_endings: list[datetime] = []
+    current = _week_key(get_week_ending(begin))
+    final = _week_key(get_week_ending(end))
+    while current <= final:
+        week_endings.append(current)
+        current += timedelta(days=WEEK_STEP_DAYS)
+    return week_endings
+
+
+def _build_week_summaries(
+    week_endings: list[datetime],
+    weeks_map: dict[datetime, list[Commit]],
+) -> list[WeekSummary]:
+    """Build week summary rows including explicit empty weeks."""
+    summaries: list[WeekSummary] = []
+    for week_ending in week_endings:
+        commits_in_week = weeks_map.get(week_ending, [])
+        summaries.append(
+            {
+                "week_ending": week_ending,
+                "commits": commits_in_week,
+                "count": len(commits_in_week),
+            }
+        )
+    return summaries
+
+
+def _commit_count_stats(weeks: list[WeekSummary]) -> tuple[int, int, float]:
+    """Calculate min, max, and average commit counts across week rows."""
+    counts = [week["count"] for week in weeks]
+    if not counts:
+        return 0, 0, 0.0
+    return min(counts), max(counts), sum(counts) / len(counts)
+
+
 def calculate_weekly_commits(
     commits_data: Iterable[Commit], begin: datetime, end: datetime
 ) -> WeeklyCommitsResult:
@@ -90,50 +148,10 @@ def calculate_weekly_commits(
     begin = _normalize_datetime(begin)
     end = _normalize_datetime(end)
 
-    # Group commits by week ending date
-    weeks_map: dict[datetime, list[Commit]] = defaultdict(list)
-
-    for commit in commits_data:
-        commit_date = _normalize_datetime(commit.committed_datetime)
-        week_ending = get_week_ending(commit_date)
-        # Normalize the key for consistent lookup
-        week_key = (
-            week_ending.replace(tzinfo=None)
-            if week_ending.tzinfo
-            else week_ending
-        )
-        weeks_map[week_key].append(commit)
-
-    # Generate all weeks in the period (including empty weeks)
-    all_weeks: list[datetime] = []
-    current = get_week_ending(begin)
-    final = get_week_ending(end)
-
-    # Normalize to naive datetime for dictionary keys
-    current = current.replace(tzinfo=None) if current.tzinfo else current
-    final = final.replace(tzinfo=None) if final.tzinfo else final
-
-    while current <= final:
-        all_weeks.append(current)
-        current += timedelta(days=7)
-
-    # Build week data structures
-    weeks_list = []
-    for week_ending in all_weeks:
-        commits_in_week = weeks_map.get(week_ending, [])
-        weeks_list.append(
-            {
-                "week_ending": week_ending,
-                "commits": commits_in_week,
-                "count": len(commits_in_week),
-            }
-        )
-
-    # Calculate statistics
-    counts = [w["count"] for w in weeks_list]
-    min_commits = min(counts) if counts else 0
-    max_commits = max(counts) if counts else 0
-    avg_commits = sum(counts) / len(counts) if counts else 0.0
+    weeks_map = _group_commits_by_week(commits_data)
+    week_endings = _week_endings_in_period(begin, end)
+    weeks_list = _build_week_summaries(week_endings, weeks_map)
+    min_commits, max_commits, avg_commits = _commit_count_stats(weeks_list)
 
     return {
         "weeks": weeks_list,

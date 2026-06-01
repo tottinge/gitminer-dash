@@ -7,6 +7,8 @@ import git
 
 from utils.git import get_repo as get_repo_util
 
+DEFAULT_LOOKBACK_DAYS = 365
+
 
 class FileChangeStats(NamedTuple):
     """Statistics about changes to a file over a period of time."""
@@ -16,6 +18,59 @@ class FileChangeStats(NamedTuple):
     avg_changes: float
     total_change: int
     percent_change: float
+
+
+def _resolve_period_bounds(
+    start: datetime | None, end: datetime | None
+) -> tuple[datetime, datetime]:
+    if start is not None and end is not None:
+        return start, end
+
+    now = datetime.now()
+    period_start = (
+        start
+        if start is not None
+        else now - timedelta(days=DEFAULT_LOOKBACK_DAYS)
+    )
+    period_end = end if end is not None else now
+    return period_start, period_end
+
+
+def _build_file_change_stats(
+    file_path: str,
+    commits: int,
+    avg_changes: float,
+    total_change: int,
+    percent_change: float,
+) -> FileChangeStats:
+    return FileChangeStats(
+        file_path=file_path,
+        commits=commits,
+        avg_changes=avg_changes,
+        total_change=total_change,
+        percent_change=percent_change,
+    )
+
+
+def zero_file_change_stats(file_path: str) -> FileChangeStats:
+    """Return a zeroed file-change record for the requested file path."""
+    return _build_file_change_stats(
+        file_path=file_path,
+        commits=0,
+        avg_changes=0.0,
+        total_change=0,
+        percent_change=0.0,
+    )
+
+
+def _as_legacy_tuple(stats: FileChangeStats) -> tuple[int, float, int, float]:
+    """Return tuple shape used by legacy callers of file_changes_over_period."""
+    return (
+        stats.commits,
+        stats.avg_changes,
+        stats.total_change,
+        stats.percent_change,
+    )
 
 
 def _dt_arg(dt: datetime) -> str:
@@ -69,20 +124,17 @@ def _blob_size_at_commit(repo: git.Repo, sha: str, target_file: str) -> int:
         return 0
 
 
-def file_changes_over_period(
-    target_file: str,
-    start: datetime | None = None,
-    end: datetime | None = None,
-    repo: git.Repo | None = None,
-) -> tuple[int, float, int, float]:
-    """Calculate statistics about changes to a file over a period of time."""
-    start = start or datetime.now() - timedelta(days=365)
-    end = end or datetime.now()
-    repo = repo or get_repo_util()
+def _calculate_percent_change(original_size: int, final_size: int) -> float:
+    if original_size <= 0:
+        return 0.0
+    return (final_size - original_size) / original_size * 100
 
-    shas = list(_commits_touching_file(repo, target_file, start, end))
+
+def _summarize_file_change_stats(
+    repo: git.Repo, target_file: str, shas: list[str]
+) -> FileChangeStats:
     if not shas:
-        return 0, 0.0, 0, 0.0
+        return zero_file_change_stats(target_file)
 
     lines_changed = [
         _lines_changed_in_commit(repo, sha, target_file) for sha in shas
@@ -98,13 +150,30 @@ def file_changes_over_period(
     )
 
     total_change = abs(final_size - original_size)
-    percent_change = (
-        (final_size - original_size) / original_size * 100
-        if original_size > 0
-        else 0.0
+    percent_change = _calculate_percent_change(original_size, final_size)
+    return _build_file_change_stats(
+        file_path=target_file,
+        commits=commits,
+        avg_changes=avg_changes,
+        total_change=total_change,
+        percent_change=percent_change,
     )
 
-    return commits, avg_changes, total_change, percent_change
+
+def file_changes_over_period(
+    target_file: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+    repo: git.Repo | None = None,
+) -> tuple[int, float, int, float]:
+    """Calculate statistics about changes to a file over a period of time."""
+    start, end = _resolve_period_bounds(start, end)
+    repo = repo or get_repo_util()
+    shas = list(_commits_touching_file(repo, target_file, start, end))
+    stats = _summarize_file_change_stats(
+        repo=repo, target_file=target_file, shas=shas
+    )
+    return _as_legacy_tuple(stats)
 
 
 def files_changes_over_period(
@@ -125,24 +194,21 @@ def files_changes_over_period(
     Returns:
         A dictionary mapping file paths to FileChangeStats objects
     """
-    start = start or datetime.now() - timedelta(days=365)
-    end = end or datetime.now()
+    start, end = _resolve_period_bounds(start, end)
     repo = repo or get_repo_util()
-
-    results = {}
+    results: dict[str, FileChangeStats] = {}
 
     for file_path in target_files:
         try:
-            commits, avg_changes, total_change, percent_change = (
-                file_changes_over_period(file_path, start, end, repo)
+            change_summary = file_changes_over_period(
+                file_path, start, end, repo
             )
-
-            stats = FileChangeStats(
+            stats = _build_file_change_stats(
                 file_path=file_path,
-                commits=commits,
-                avg_changes=avg_changes,
-                total_change=total_change,
-                percent_change=percent_change,
+                commits=change_summary[0],
+                avg_changes=change_summary[1],
+                total_change=change_summary[2],
+                percent_change=change_summary[3],
             )
 
             results[file_path] = stats
@@ -151,12 +217,6 @@ def files_changes_over_period(
             logging.getLogger(__name__).exception(
                 f"Error processing file {file_path}"
             )
-            results[file_path] = FileChangeStats(
-                file_path=file_path,
-                commits=0,
-                avg_changes=0.0,
-                total_change=0,
-                percent_change=0.0,
-            )
+            results[file_path] = zero_file_change_stats(file_path)
 
     return results
