@@ -10,4 +10,4 @@ set -ex
 
 uv run ruff check --fix
 uv run black .
-find . -name "*.py" -type f -not -path "*/.venv/*" -not -path "*/mutants" -exec uv run pyupgrade --py310-plus {} +
+find . -name "*.py" -type f -not -path "*/.venv/*" -not -path "*/mutants/*" -exec uv run pyupgrade --py310-plus {} +
