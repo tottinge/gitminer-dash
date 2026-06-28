@@ -137,6 +137,7 @@ def test_detect_and_assign_communities_single_node_still_runs_louvain():
     assert stats == {"communities": 1, "avg_community_size": 1.0}
     assert G.nodes["solo"]["community"] == 0
 
+
 def test_detect_and_assign_communities_is_stable_across_repeated_runs():
     G = nx.Graph()
     # Two clear clusters with one light bridge edge.

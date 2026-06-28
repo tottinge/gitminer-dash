@@ -4,6 +4,8 @@ Commit filtering utilities for finding commits that modify specific file groups.
 
 from datetime import datetime
 
+from algorithms.commit_presentation import present_commit
+
 
 def get_commits_for_group_files(
     commits_in_period, group_files: list[str]
@@ -62,9 +64,14 @@ def _get_modified_files(commit) -> set[str]:
 
 def _format_commit_data(commit, group_files_in_commit: list[str]) -> dict:
     """Format commit data for display."""
+    presentation = present_commit(
+        commit,
+        timestamp_format="%Y-%m-%d %H:%M",
+        actor_attribute_name="author",
+    )
     return {
-        "hash": commit.hexsha[:7],
-        "timestamp": commit.committed_datetime.strftime("%Y-%m-%d %H:%M"),
-        "message": commit.message.split("\n")[0][:100],  # First line, truncated
+        "hash": presentation.short_hash,
+        "timestamp": presentation.timestamp,
+        "message": presentation.message,
         "group_files": ", ".join(sorted(group_files_in_commit)),
     }

@@ -402,7 +402,9 @@ def _create_single_community_trace(G: nx.Graph, pos: dict) -> go.Scatter:
 def _single_community_trace_style() -> dict[str, str]:
     """Return cosmetic style attributes for the singleton community trace."""
     return {  # pragma: no mutate
-        "color": _community_color(0, px.colors.qualitative.D3),  # pragma: no mutate
+        "color": _community_color(
+            0, px.colors.qualitative.D3
+        ),  # pragma: no mutate
         "name": "All Files",  # pragma: no mutate
     }
 

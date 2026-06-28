@@ -125,7 +125,9 @@ def build_common_pair_intent_pane_storybook() -> html.Div:
         story_sections.append(
             html.Div(
                 children=[
-                    html.H4(story_name, style={"margin": "0 0 6px"}),  # pragma: no mutate
+                    html.H4(
+                        story_name, style={"margin": "0 0 6px"}
+                    ),  # pragma: no mutate
                     story_fn(),
                 ],
                 style={"marginBottom": "18px"},  # pragma: no mutate

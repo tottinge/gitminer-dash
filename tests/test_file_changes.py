@@ -12,6 +12,7 @@ from algorithms.file_changes import (
     _dt_arg,
     _lines_changed_in_commit,
     file_changes_over_period,
+    file_changes_over_period_legacy_tuple,
     files_changes_over_period,
 )
 from tests import setup_path
@@ -73,8 +74,42 @@ def mock_repo():
 
 
 def test_file_changes_over_period(mock_repo):
-    (commits, avg_changes, total_change, percent_change) = (
-        file_changes_over_period(
+    stats = file_changes_over_period(
+        "file1.py",
+        start=datetime.now() - timedelta(days=30),
+        end=datetime.now(),
+        repo=mock_repo,
+    )
+
+    assert stats.file_path == "file1.py"
+    assert stats.commits == 5
+    assert stats.avg_changes == 10.0
+    assert stats.total_change == 200
+    assert stats.percent_change == 20.0
+
+    # Primary contract: we query git for commits and per-commit stats.
+    assert mock_repo.git.rev_list.called
+    assert mock_repo.git.show.called
+    assert mock_repo.git.cat_file.called
+
+
+def test_file_changes_over_period_no_commits(mock_repo):
+    stats = file_changes_over_period(
+        "nonexistent.py",
+        start=datetime.now() - timedelta(days=30),
+        end=datetime.now(),
+        repo=mock_repo,
+    )
+
+    assert stats.commits == 0
+    assert stats.avg_changes == 0.0
+    assert stats.total_change == 0
+    assert stats.percent_change == 0.0
+
+
+def test_file_changes_over_period_legacy_tuple_wrapper(mock_repo):
+    commits, avg_changes, total_change, percent_change = (
+        file_changes_over_period_legacy_tuple(
             "file1.py",
             start=datetime.now() - timedelta(days=30),
             end=datetime.now(),
@@ -86,27 +121,6 @@ def test_file_changes_over_period(mock_repo):
     assert avg_changes == 10.0
     assert total_change == 200
     assert percent_change == 20.0
-
-    # Primary contract: we query git for commits and per-commit stats.
-    assert mock_repo.git.rev_list.called
-    assert mock_repo.git.show.called
-    assert mock_repo.git.cat_file.called
-
-
-def test_file_changes_over_period_no_commits(mock_repo):
-    (commits, avg_changes, total_change, percent_change) = (
-        file_changes_over_period(
-            "nonexistent.py",
-            start=datetime.now() - timedelta(days=30),
-            end=datetime.now(),
-            repo=mock_repo,
-        )
-    )
-
-    assert commits == 0
-    assert avg_changes == 0.0
-    assert total_change == 0
-    assert percent_change == 0.0
 
 
 def test_files_changes_over_period(mock_repo):
@@ -288,17 +302,15 @@ def test_file_changes_over_period_no_lines_changed_keeps_avg_at_zero(mock_repo):
 
     mock_repo.git.show.side_effect = no_changes_show_side_effect
 
-    commits, avg_changes, total_change, percent_change = (
-        file_changes_over_period(
-            "file1.py",
-            start=datetime.now() - timedelta(days=30),
-            end=datetime.now(),
-            repo=mock_repo,
-        )
+    stats = file_changes_over_period(
+        "file1.py",
+        start=datetime.now() - timedelta(days=30),
+        end=datetime.now(),
+        repo=mock_repo,
     )
 
-    assert commits == len(_COMMIT_SHAS)
-    assert avg_changes == 0.0
+    assert stats.commits == len(_COMMIT_SHAS)
+    assert stats.avg_changes == 0.0
 
 
 def test_file_changes_over_period_zero_original_size_has_zero_percent_change(
@@ -314,14 +326,13 @@ def test_file_changes_over_period_zero_original_size_has_zero_percent_change(
 
     mock_repo.git.cat_file.side_effect = zero_size_cat_file
 
-    _, _, _, percent_change = file_changes_over_period(
+    stats = file_changes_over_period(
         "file1.py",
         start=datetime.now() - timedelta(days=30),
         end=datetime.now(),
         repo=mock_repo,
     )
-
-    assert percent_change == 0.0
+    assert stats.percent_change == 0.0
 
 
 def test_file_changes_over_period_small_original_size_computes_percent(
@@ -339,14 +350,13 @@ def test_file_changes_over_period_small_original_size_computes_percent(
 
     mock_repo.git.cat_file.side_effect = tiny_sizes_cat_file
 
-    _, _, _, percent_change = file_changes_over_period(
+    stats = file_changes_over_period(
         "file1.py",
         start=datetime.now() - timedelta(days=30),
         end=datetime.now(),
         repo=mock_repo,
     )
-
-    assert percent_change == 100.0
+    assert stats.percent_change == 100.0
 
 
 def test_lines_changed_in_commit_calls_git_show_with_expected_flags(
@@ -423,7 +433,7 @@ def test_files_changes_over_period_uses_default_window_when_start_end_none(
 
     with patch(
         "algorithms.file_changes.file_changes_over_period",
-        return_value=(1, 2.0, 3, 4.0),
+        return_value=FileChangeStats("file1.py", 1, 2.0, 3, 4.0),
     ) as mock_single:
         files_changes_over_period(["file1.py"], repo=mock_repo)
 
@@ -444,7 +454,7 @@ def test_files_changes_over_period_forwards_explicit_start_end(
 
     with patch(
         "algorithms.file_changes.file_changes_over_period",
-        return_value=(1, 2.0, 3, 4.0),
+        return_value=FileChangeStats("file1.py", 1, 2.0, 3, 4.0),
     ) as mock_single:
         files_changes_over_period(
             ["file1.py"],

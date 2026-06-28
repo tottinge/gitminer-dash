@@ -7,9 +7,7 @@ from typing import TypedDict
 from dash import html
 from dash.dash_table import DataTable
 
-EMPTY_SELECTION_MESSAGE = (
-    "Select a common pair to preview intent and supporting evidence."  # pragma: no mutate
-)
+EMPTY_SELECTION_MESSAGE = "Select a common pair to preview intent and supporting evidence."  # pragma: no mutate
 DRILLDOWN_HELPER_MESSAGE = (
     "Hover preview rows for full messages. Expand drill-down for full "  # pragma: no mutate
     "evidence."  # pragma: no mutate
@@ -112,7 +110,9 @@ def filter_evidence_rows_by_intent(
     evidence_rows: list[EvidenceRow], focused_intent: str | None = None
 ) -> list[EvidenceRow]:
     """Filter evidence rows by an optional focused intent."""
-    normalized_focus = _normalized_intent(focused_intent or "")  # pragma: no mutate
+    normalized_focus = _normalized_intent(
+        focused_intent or ""
+    )  # pragma: no mutate
     if not focused_intent or normalized_focus == "all":
         return evidence_rows
     return [
@@ -153,7 +153,9 @@ def build_evidence_preview_items(
 ) -> list[html.Li]:
     """Build compact preview rows with hover tooltips."""
     if not evidence_rows:
-        return [html.Li("No evidence rows available for this focus.")]  # pragma: no mutate
+        return [
+            html.Li("No evidence rows available for this focus.")
+        ]  # pragma: no mutate
 
     preview_rows: list[html.Li] = []
     for evidence_row in evidence_rows[:preview_row_count]:
@@ -168,7 +170,10 @@ def build_evidence_preview_items(
                 [
                     html.Span(
                         f"{intent_name} · {hash_text} · {date_text}",  # pragma: no mutate
-                        style={"color": "#64748b", "marginRight": "6px"},  # pragma: no mutate
+                        style={
+                            "color": "#64748b",
+                            "marginRight": "6px",
+                        },  # pragma: no mutate
                     ),
                     html.Span(
                         message_text[:120],
@@ -207,14 +212,19 @@ def build_common_pair_intent_pane(
             id=_component_id(component_id_prefix, "container"),
             style=PANE_STYLE,  # pragma: no mutate
             children=[
-                html.H3(title_text, style={"margin": "0 0 6px"}),  # pragma: no mutate
+                html.H3(
+                    title_text, style={"margin": "0 0 6px"}
+                ),  # pragma: no mutate
                 html.P(
                     empty_state_message,
                     id=_component_id(
                         component_id_prefix,
                         "empty-state-message",
                     ),
-                    style={"margin": "0", "color": "#64748b"},  # pragma: no mutate
+                    style={
+                        "margin": "0",
+                        "color": "#64748b",
+                    },  # pragma: no mutate
                 ),
             ],
         )
@@ -238,15 +248,15 @@ def build_common_pair_intent_pane(
     )
 
     drilldown_data = _drilldown_data(filtered_evidence_rows)
-    drilldown_summary_text = (
-        f"Drill down into {len(drilldown_data)} evidence row(s)"  # pragma: no mutate
-    )
+    drilldown_summary_text = f"Drill down into {len(drilldown_data)} evidence row(s)"  # pragma: no mutate
 
     return html.Div(
         id=_component_id(component_id_prefix, "container"),
         style=PANE_STYLE,  # pragma: no mutate
         children=[
-            html.H3(title_text, style={"margin": "0 0 6px"}),  # pragma: no mutate
+            html.H3(
+                title_text, style={"margin": "0 0 6px"}
+            ),  # pragma: no mutate
             html.Div(
                 str(payload.get("pairing", "")),
                 id=_component_id(component_id_prefix, "pairing"),
@@ -284,16 +294,25 @@ def build_common_pair_intent_pane(
             ),
             html.Div(
                 "Intent mix",  # pragma: no mutate
-                style={"fontWeight": "600", "marginBottom": "4px"},  # pragma: no mutate
+                style={
+                    "fontWeight": "600",
+                    "marginBottom": "4px",
+                },  # pragma: no mutate
             ),
             html.Div(
-                intent_chips or [html.Span("No intent data available.")],  # pragma: no mutate
+                intent_chips
+                or [
+                    html.Span("No intent data available.")
+                ],  # pragma: no mutate
                 id=_component_id(component_id_prefix, "intent-chips"),
                 style=METRICS_ROW_STYLE,  # pragma: no mutate
             ),
             html.P(
                 DRILLDOWN_HELPER_MESSAGE,
-                style={"margin": "0 0 4px", "color": "#64748b"},  # pragma: no mutate
+                style={
+                    "margin": "0 0 4px",
+                    "color": "#64748b",
+                },  # pragma: no mutate
             ),
             html.Ul(
                 build_evidence_preview_items(
@@ -316,10 +335,16 @@ def build_common_pair_intent_pane(
                             component_id_prefix, "drilldown-table"
                         ),
                         columns=[
-                            {"name": "Intent", "id": "intent"},  # pragma: no mutate
+                            {
+                                "name": "Intent",
+                                "id": "intent",
+                            },  # pragma: no mutate
                             {"name": "Hash", "id": "hash"},  # pragma: no mutate
                             {"name": "Date", "id": "date"},  # pragma: no mutate
-                            {"name": "Message", "id": "message"},  # pragma: no mutate
+                            {
+                                "name": "Message",
+                                "id": "message",
+                            },  # pragma: no mutate
                         ],
                         data=drilldown_data,
                         style_cell={

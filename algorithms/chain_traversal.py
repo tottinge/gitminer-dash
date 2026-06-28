@@ -8,9 +8,11 @@ results for display in Dash tables.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Protocol, runtime_checkable
+
+from algorithms.commit_presentation import present_commit
 
 
 @runtime_checkable
@@ -126,37 +128,19 @@ def commits_to_chain_rows(
     """
 
     rows: list[dict[str, str]] = []
-
     for commit in commits:
-        # Short hash
-        short_hash = (commit.hexsha or "")[:7]
-
-        # Date formatting (use local time as in other views)
-        committed_dt = commit.committed_datetime
-        date_str = committed_dt.strftime("%Y-%m-%d %H:%M")
-
-        # Branch name (if available)
+        presentation = present_commit(
+            commit,
+            timestamp_format="%Y-%m-%d %H:%M",
+            actor_attribute_name="author",
+        )
         branch = branch_getter(commit) if branch_getter is not None else ""
-
-        # Author name (fall back gracefully if missing)
-        author_obj = getattr(commit, "author", None)
-        author_name = (
-            getattr(author_obj, "name", "") if author_obj is not None else ""
+        row = ChainTableRow(
+            hash=presentation.short_hash,
+            date=presentation.timestamp,
+            branch=branch,
+            author=presentation.actor,
+            message=presentation.message,
         )
-
-        # First line of message, truncated
-        message_full = commit.message or ""
-        first_line, _separator, _rest = message_full.partition("\n")
-        message = first_line[:100]
-
-        rows.append(
-            {
-                "hash": short_hash,
-                "date": date_str,
-                "branch": branch,
-                "author": author_name,
-                "message": message,
-            }
-        )
-
+        rows.append(asdict(row))
     return rows

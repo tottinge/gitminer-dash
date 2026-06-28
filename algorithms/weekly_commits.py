@@ -12,6 +12,8 @@ from typing import TypedDict
 
 from git import Commit
 
+from algorithms.commit_presentation import present_commit
+
 WEEK_STEP_DAYS = 7
 
 
@@ -172,12 +174,19 @@ def extract_commit_details(commit: Commit) -> CommitDetails:
         Dictionary with commit details including date, committer, description,
         and line change statistics
     """
+    presentation = present_commit(
+        commit,
+        timestamp_format="%Y-%m-%d %H:%M:%S",
+        actor_attribute_name="committer",
+        message_selector=lambda current_commit: current_commit.summary,
+        max_message_length=None,
+    )
     stats = commit.stats.total
 
     return {
-        "date": commit.committed_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-        "committer": commit.committer.name,
-        "description": commit.summary,
+        "date": presentation.timestamp,
+        "committer": presentation.actor,
+        "description": presentation.message,
         "lines_added": stats.get("insertions", 0),
         "lines_removed": stats.get("deletions", 0),
         "lines_modified": stats.get("lines", 0),

@@ -165,13 +165,28 @@ def file_changes_over_period(
     start: datetime | None = None,
     end: datetime | None = None,
     repo: git.Repo | None = None,
-) -> tuple[int, float, int, float]:
-    """Calculate statistics about changes to a file over a period of time."""
+) -> FileChangeStats:
+    """Calculate structured file-change statistics over a period of time."""
     start, end = _resolve_period_bounds(start, end)
     repo = repo or get_repo_util()
     shas = list(_commits_touching_file(repo, target_file, start, end))
-    stats = _summarize_file_change_stats(
+    return _summarize_file_change_stats(
         repo=repo, target_file=target_file, shas=shas
+    )
+
+
+def file_changes_over_period_legacy_tuple(
+    target_file: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+    repo: git.Repo | None = None,
+) -> tuple[int, float, int, float]:
+    """Compatibility wrapper for callers that still expect tuple output."""
+    stats = file_changes_over_period(
+        target_file=target_file,
+        start=start,
+        end=end,
+        repo=repo,
     )
     return _as_legacy_tuple(stats)
 
@@ -200,16 +215,7 @@ def files_changes_over_period(
 
     for file_path in target_files:
         try:
-            change_summary = file_changes_over_period(
-                file_path, start, end, repo
-            )
-            stats = _build_file_change_stats(
-                file_path=file_path,
-                commits=change_summary[0],
-                avg_changes=change_summary[1],
-                total_change=change_summary[2],
-                percent_change=change_summary[3],
-            )
+            stats = file_changes_over_period(file_path, start, end, repo)
 
             results[file_path] = stats
 
