@@ -8,6 +8,19 @@ from re import Pattern, compile
 from typing import TypedDict
 
 from algorithms.conventional_commits import (
+    INTENT_BUILD,
+    INTENT_CHORE,
+    INTENT_CI,
+    INTENT_DOCS,
+    INTENT_FEAT,
+    INTENT_FIX,
+    INTENT_MERGE,
+    INTENT_PERF,
+    INTENT_REFACTOR,
+    INTENT_REVERT,
+    INTENT_STYLE,
+    INTENT_TEST,
+    INTENT_UNKNOWN,
     conventional_commit_match_pattern,
     normalize_intent,
 )
@@ -17,15 +30,15 @@ SUMMARY_LINE_PRIORITY_PATTERNS: tuple[
     ...,
 ] = (
     (
-        "revert",
+        INTENT_REVERT,
         compile(r"\b(revert|rollback|rolled back|backout|back out)\b"),
     ),
     (
-        "merge",
+        INTENT_MERGE,
         compile(r"\b(merge|pull request|cherry-pick)\b"),
     ),
     (
-        "fix",
+        INTENT_FIX,
         compile(
             r"\b("
             r"fix|fixed|fixes|bug|bugs|hotfix|repair|resolve|resolved|"
@@ -36,7 +49,7 @@ SUMMARY_LINE_PRIORITY_PATTERNS: tuple[
         ),
     ),
     (
-        "ci",
+        INTENT_CI,
         compile(r"\b(ci|pipeline|workflow|github actions|buildkite|jenkins)\b"),
     ),
 )
@@ -54,15 +67,15 @@ SUMMARY_LINE_SECONDARY_PATTERNS: tuple[
     ...,
 ] = (
     (
-        "docs",
+        INTENT_DOCS,
         compile(r"\b(doc|docs|documentation|readme|changelog|guide|manual)\b"),
     ),
     (
-        "test",
+        INTENT_TEST,
         compile(r"\b(test|tests|testing|spec|specs|assert|coverage)\b"),
     ),
     (
-        "perf",
+        INTENT_PERF,
         compile(
             r"\b("
             r"perf|performance|optimi[sz]e|speed|faster|latency|"
@@ -71,7 +84,7 @@ SUMMARY_LINE_SECONDARY_PATTERNS: tuple[
         ),
     ),
     (
-        "refactor",
+        INTENT_REFACTOR,
         compile(
             r"\b("
             r"refactor|cleanup|clean-up|restructure|reorganize|rename|"
@@ -81,11 +94,11 @@ SUMMARY_LINE_SECONDARY_PATTERNS: tuple[
         ),
     ),
     (
-        "chore",
+        INTENT_CHORE,
         compile(r"\b(chore|maintenance|housekeeping|license|headers?)\b"),
     ),
     (
-        "build",
+        INTENT_BUILD,
         compile(
             r"\b("
             r"build|cmake|makefile|compile|compiler|linker|deps?|"
@@ -94,7 +107,7 @@ SUMMARY_LINE_SECONDARY_PATTERNS: tuple[
         ),
     ),
     (
-        "style",
+        INTENT_STYLE,
         compile(r"\b(format|formatting|lint|whitespace|typo)\b"),
     ),
 )
@@ -132,19 +145,19 @@ def _fallback_non_conventional_intent(
 
     lower_message_text = message_text.lower()
     if FULL_MESSAGE_FEATURE_PATTERN.search(lower_message_text):
-        return "feat"
+        return INTENT_FEAT
 
     for intent, pattern in SUMMARY_LINE_SECONDARY_PATTERNS:
         if pattern.search(lower_summary_line):
             return intent
-    return "unknown"
+    return INTENT_UNKNOWN
 
 
 def classify_commit_message(message: str) -> str:
     """Classify one commit message into a normalized intent."""
     summary_line = message.splitlines()[0].strip() if message else ""
     if not summary_line:
-        return "unknown"
+        return INTENT_UNKNOWN
 
     matched_prefix = conventional_commit_match_pattern.match(summary_line)
     if matched_prefix:

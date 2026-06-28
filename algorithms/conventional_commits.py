@@ -13,21 +13,34 @@ import pandas as pd
 
 # Pattern to match conventional commit format
 conventional_commit_match_pattern = re.compile(r"^(\w+)[!(:]")
+INTENT_BUILD = "build"
+INTENT_CHORE = "chore"
+INTENT_CI = "ci"
+INTENT_DOCS = "docs"
+INTENT_FEAT = "feat"
+INTENT_FIX = "fix"
+INTENT_MERGE = "merge"
+INTENT_PERF = "perf"
+INTENT_REFACTOR = "refactor"
+INTENT_REVERT = "revert"
+INTENT_STYLE = "style"
+INTENT_TEST = "test"
+INTENT_UNKNOWN = "unknown"
 
-# Standard conventional commit categories
+# Standard conventional commit categories (kept as `categories` for compatibility)
 categories = {
-    "build",
-    "chore",
-    "ci",
-    "docs",
-    "feat",
-    "fix",
-    "merge",
-    "perf",
-    "refactor",
-    "revert",
-    "style",
-    "test",
+    INTENT_BUILD,
+    INTENT_CHORE,
+    INTENT_CI,
+    INTENT_DOCS,
+    INTENT_FEAT,
+    INTENT_FIX,
+    INTENT_MERGE,
+    INTENT_PERF,
+    INTENT_REFACTOR,
+    INTENT_REVERT,
+    INTENT_STYLE,
+    INTENT_TEST,
 }
 
 
@@ -48,7 +61,7 @@ def normalize_intent(intent: str):
     for name in categories:
         if lower in name or name in lower:
             return name
-    return "unknown"
+    return INTENT_UNKNOWN
 
 
 def prepare_changes_by_date(

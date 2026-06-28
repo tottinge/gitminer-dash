@@ -1,6 +1,9 @@
 """Tests for algorithms.commit_message_classifier."""
 
+from algorithms import conventional_commits
 from algorithms.commit_message_classifier import (
+    SUMMARY_LINE_PRIORITY_PATTERNS,
+    SUMMARY_LINE_SECONDARY_PATTERNS,
     classify_commit_message,
     classify_commit_messages,
 )
@@ -28,6 +31,14 @@ def test_classify_commit_message_fallback_detects_debug_as_fix():
 def test_classify_commit_message_uses_first_line_for_multiline_messages():
     message = "refactor(parser)!: replace parser API\n\nBody details"
     assert classify_commit_message(message) == "refactor"
+
+
+def test_fallback_pattern_intents_are_canonical_conventional_categories():
+    fallback_pattern_intents = {
+        intent for intent, _ in SUMMARY_LINE_PRIORITY_PATTERNS
+    } | {intent for intent, _ in SUMMARY_LINE_SECONDARY_PATTERNS}
+
+    assert fallback_pattern_intents.issubset(conventional_commits.categories)
 
 
 def test_classify_commit_messages_returns_empty_contract_for_empty_input():
