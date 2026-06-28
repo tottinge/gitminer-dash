@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from pandas import DataFrame
 
+import algorithms.figure_builder as figure_builder_module
 from algorithms.chain_models import TIMELINE_COLUMNS
 from algorithms.figure_builder import create_timeline_figure
 
@@ -333,6 +334,54 @@ class TestCreateTimelineFigure(unittest.TestCase):
             "elevation": False,
             "density": True,
         }
+
+    def test_uses_shared_timeline_schema_constants(self):
+        """Figure builder should consume shared timeline schema constants."""
+        df = DataFrame(
+            [
+                {
+                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "elevation": 1,
+                    "commit_counts": 5,
+                    "head": "abc",
+                    "tail": "def",
+                    "duration": 9,
+                    "density": 1.8,
+                }
+            ]
+        )
+        labels = {"density": "custom-density"}
+        hover_data = {"density": True}
+        custom_data_columns = ["head"]
+
+        with (
+            patch("algorithms.figure_builder.px.timeline") as mock_timeline,
+            patch.object(
+                figure_builder_module,
+                "TIMELINE_LABELS",
+                labels,
+            ),
+            patch.object(
+                figure_builder_module,
+                "TIMELINE_HOVER_DATA",
+                hover_data,
+            ),
+            patch.object(
+                figure_builder_module,
+                "TIMELINE_CUSTOM_DATA_COLUMNS",
+                custom_data_columns,
+            ),
+        ):
+            sentinel_figure = object()
+            mock_timeline.return_value = sentinel_figure
+            result = create_timeline_figure(df)
+
+        assert result is sentinel_figure
+        _, kwargs = mock_timeline.call_args
+        assert kwargs["labels"] is labels
+        assert kwargs["hover_data"] is hover_data
+        assert kwargs["custom_data"] is custom_data_columns
 
 
 if __name__ == "__main__":

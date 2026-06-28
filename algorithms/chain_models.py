@@ -79,6 +79,19 @@ class TimelineRow:
     duration: int
     density: float
 
+    def to_record(self) -> dict[str, object]:
+        """Return a serialization-friendly mapping for tabular/plot inputs."""
+        return {
+            "first": self.first,
+            "last": self.last,
+            "elevation": self.elevation,
+            "commit_counts": self.commit_counts,
+            "head": self.head,
+            "tail": self.tail,
+            "duration": self.duration,
+            "density": self.density,
+        }
+
 
 # Column names for timeline DataFrame, matching TimelineRow fields
 TIMELINE_COLUMNS = [
@@ -91,3 +104,27 @@ TIMELINE_COLUMNS = [
     "duration",
     "density",
 ]
+
+# Shared plotting schema for timeline figure construction
+TIMELINE_X_START_COLUMN = "first"
+TIMELINE_X_END_COLUMN = "last"
+TIMELINE_Y_COLUMN = "elevation"
+TIMELINE_COLOR_COLUMN = "density"
+TIMELINE_CUSTOM_DATA_COLUMNS = ["head", "tail"]
+TIMELINE_LABELS = {
+    "elevation": "",
+    "density": "Commit Sparsity",
+    "first": "Begun",
+    "last": "Ended",
+    "duration": "Days",
+}
+TIMELINE_HOVER_DATA = {
+    "first": True,
+    "head": True,
+    "last": True,
+    "tail": True,
+    "commit_counts": True,
+    "duration": True,
+    "elevation": False,
+    "density": True,
+}

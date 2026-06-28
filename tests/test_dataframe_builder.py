@@ -25,6 +25,40 @@ def test_empty_rows_do_not_invoke_datetime_conversion():
     mock_to_datetime.assert_not_called()
 
 
+def test_create_timeline_dataframe_uses_timeline_row_serializer():
+    row = TimelineRow(
+        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        elevation=1,
+        commit_counts=5,
+        head="abc",
+        tail="def",
+        duration=9,
+        density=1.8,
+    )
+    expected_record = {
+        "first": row.first,
+        "last": row.last,
+        "elevation": row.elevation,
+        "commit_counts": row.commit_counts,
+        "head": row.head,
+        "tail": row.tail,
+        "duration": row.duration,
+        "density": row.density,
+    }
+
+    with patch.object(
+        TimelineRow,
+        "to_record",
+        autospec=True,
+        return_value=expected_record,
+    ) as mock_to_record:
+        df = create_timeline_dataframe([row])
+
+    mock_to_record.assert_called_once_with(row)
+    assert df.iloc[0]["head"] == "abc"
+
+
 def test_single_row():
     """Test DataFrame creation from a single row."""
     row = TimelineRow(

@@ -36,20 +36,8 @@ def create_timeline_dataframe(timeline_rows: list[TimelineRow]) -> DataFrame:
         - duration (int): Duration in days
         - density (float): Commit sparsity metric
     """
-    # Convert TimelineRow objects to dictionaries
-    rows = [
-        dict(
-            first=row.first,
-            last=row.last,
-            elevation=row.elevation,
-            commit_counts=row.commit_counts,
-            head=row.head,
-            tail=row.tail,
-            duration=row.duration,
-            density=row.density,
-        )
-        for row in timeline_rows
-    ]
+    # Convert TimelineRow objects via the shared model serializer.
+    rows = [row.to_record() for row in timeline_rows]
 
     # Create DataFrame
     df = DataFrame(rows, columns=TIMELINE_COLUMNS)
