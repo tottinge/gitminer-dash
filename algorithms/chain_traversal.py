@@ -53,6 +53,15 @@ class ChainTableRow:
     message: str
 
 
+CHAIN_COMMITS_TABLE_COLUMNS = [
+    {"name": "Hash", "id": "hash"},
+    {"name": "Date", "id": "date"},
+    {"name": "Branch", "id": "branch"},
+    {"name": "Author", "id": "author"},
+    {"name": "Message", "id": "message"},
+]
+
+
 def traverse_linear_chain(
     latest_commit: HasCommitFields,
     earliest_sha: str,

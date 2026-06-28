@@ -7,6 +7,7 @@ from algorithms.chain_analyzer import analyze_commit_chains
 from algorithms.chain_clamper import clamp_chains_to_period
 from algorithms.chain_layout import calculate_chain_layout
 from algorithms.chain_traversal import (
+    CHAIN_COMMITS_TABLE_COLUMNS,
     commits_to_chain_rows,
     traverse_linear_chain,
 )
@@ -43,13 +44,7 @@ layout = html.Div(
                     children=[
                         DataTable(
                             id="id-chain-commits-table",
-                            columns=[
-                                {"name": "Hash", "id": "hash"},
-                                {"name": "Date", "id": "date"},
-                                {"name": "Branch", "id": "branch"},
-                                {"name": "Author", "id": "author"},
-                                {"name": "Message", "id": "message"},
-                            ],
+                            columns=CHAIN_COMMITS_TABLE_COLUMNS,
                             style_table={
                                 "maxHeight": "400px",
                                 "overflowY": "auto",
