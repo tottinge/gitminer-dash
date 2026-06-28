@@ -11,6 +11,12 @@ This file operationalizes:
 4. After each change, run `./run_tests`.
 5. If any check/test fails, fix immediately; re-run `./run_tests`.
 6. Before proposing a commit/PR, run both `./check` and `./run_tests`.
+
+### Commit and branch policy (trunk-based)
+- Do not create feature branches for normal workflow; commit directly on `main`.
+- Pause at each safe stage and wait for user approval before continuing to the next stage.
+- Commits must be complete and atomic snapshots of the working directory.
+- Do not compose partial commits (no file-level or hunk-level staging to split work into fictional intermediate states).
 Priority rule: if generic coding conventions, model habits, or "common best practices" conflict with these local virtues, follow these virtues first.
 ## 1) Foundational framing and purpose
 - The virtues describe software qualities, not a rigid methodology.
