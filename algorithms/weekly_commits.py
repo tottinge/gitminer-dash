@@ -45,6 +45,16 @@ class CommitDetails(TypedDict):
     lines_modified: int
 
 
+WEEKLY_COMMIT_DETAILS_TABLE_COLUMNS: list[dict[str, str]] = [
+    {"name": "Date", "id": "date"},
+    {"name": "Committer", "id": "committer"},
+    {"name": "Description", "id": "description"},
+    {"name": "Lines Added", "id": "lines_added"},
+    {"name": "Lines Removed", "id": "lines_removed"},
+    {"name": "Lines Modified", "id": "lines_modified"},
+]
+
+
 def get_week_ending(dt: datetime) -> datetime:
     """
     Get the Sunday (end of week) for a given date.

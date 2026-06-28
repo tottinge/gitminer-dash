@@ -11,6 +11,7 @@ from dash.exceptions import PreventUpdate
 
 import repository_context as repo_context
 from algorithms.weekly_commits import (
+    WEEKLY_COMMIT_DETAILS_TABLE_COLUMNS,
     calculate_weekly_commits,
     extract_commit_details,
 )
@@ -57,14 +58,7 @@ layout = html.Div(
             children=[
                 DataTable(
                     id="id-weekly-commits-table",
-                    columns=[
-                        {"name": "Date", "id": "date"},
-                        {"name": "Committer", "id": "committer"},
-                        {"name": "Description", "id": "description"},
-                        {"name": "Lines Added", "id": "lines_added"},
-                        {"name": "Lines Removed", "id": "lines_removed"},
-                        {"name": "Lines Modified", "id": "lines_modified"},
-                    ],
+                    columns=WEEKLY_COMMIT_DETAILS_TABLE_COLUMNS,
                     style_table={"maxHeight": "400px", "overflowY": "auto"},
                     style_cell={
                         "textAlign": "left",
