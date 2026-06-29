@@ -33,6 +33,26 @@ def test_selected_filename_from_active_cell_returns_selected_filename():
     )
 
 
+def test_selected_filename_from_active_cell_rejects_invalid_row_indexes():
+    table_data = [{"filename": "src/alpha.py"}]
+
+    assert selected_filename_from_active_cell({"row": -1}, table_data) == ""
+    assert selected_filename_from_active_cell({"row": 1}, table_data) == ""
+    assert selected_filename_from_active_cell({"row": "0"}, table_data) == ""
+    assert selected_filename_from_active_cell({"row": 0.0}, table_data) == ""
+
+
+def test_selected_filename_from_active_cell_rejects_non_string_filename():
+    assert (
+        selected_filename_from_active_cell({"row": 0}, [{"filename": None}])
+        == ""
+    )
+    assert (
+        selected_filename_from_active_cell({"row": 0}, [{"filename": 123}])
+        == ""
+    )
+
+
 def test_generate_table_selection_payload_returns_no_selection_contract():
     parse_date_range_fn = Mock()
     get_repo_fn = Mock()

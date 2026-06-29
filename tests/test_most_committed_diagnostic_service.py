@@ -321,6 +321,142 @@ def test_generate_file_payload_applies_intent_focus_to_evidence_rows():
     assert len(payload["classifications"]) == 2
 
 
+def test_generate_file_payload_ranks_and_caps_neighbors_from_filtered_rows():
+    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
+    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    parse_date_range_fn = Mock(return_value=(period_start, period_end))
+    get_repo_fn = Mock(return_value=object())
+    collect_file_commit_evidence_fn = Mock(
+        return_value=[
+            _evidence_row(
+                sha="aaa1111",
+                day=1,
+                message="fix(core): one",
+                neighbors=["src/z.py", "src/a.py", "src/b.py"],
+            ),
+            _evidence_row(
+                sha="bbb2222",
+                day=2,
+                message="fix(core): two",
+                neighbors=["src/a.py", "src/c.py"],
+            ),
+            _evidence_row(
+                sha="ccc3333",
+                day=3,
+                message="fix(core): three",
+                neighbors=["src/b.py", "src/d.py"],
+            ),
+            _evidence_row(
+                sha="ddd4444",
+                day=4,
+                message="fix(core): four",
+                neighbors=["src/e.py", "src/f.py"],
+            ),
+            _evidence_row(
+                sha="eee5555",
+                day=5,
+                message="feat(core): growth",
+                neighbors=["src/feat-only.py"],
+            ),
+        ]
+    )
+    classify_commit_messages_fn = Mock(
+        return_value={
+            "message_count": 5,
+            "intent_counts": [
+                {"intent": "fix", "count": 4},
+                {"intent": "feat", "count": 1},
+            ],
+            "classifications": [
+                {"intent": "fix", "message": "fix(core): one"},
+                {"intent": "fix", "message": "fix(core): two"},
+                {"intent": "fix", "message": "fix(core): three"},
+                {"intent": "fix", "message": "fix(core): four"},
+                {"intent": "feat", "message": "feat(core): growth"},
+            ],
+        }
+    )
+
+    payload = generate_file_change_diagnostic_payload(
+        filename="src/core.py",
+        date_range_data={"period": "Last 30 days"},
+        focused_intent="fix",
+        parse_date_range_fn=parse_date_range_fn,
+        get_repo_fn=get_repo_fn,
+        collect_file_commit_evidence_fn=collect_file_commit_evidence_fn,
+        classify_commit_messages_fn=classify_commit_messages_fn,
+    )
+
+    assert payload["status"] == "ok"
+    assert payload["focused_intent"] == "fix"
+    assert payload["filtered_message_count"] == 4
+    assert payload["top_cochange_neighbors"] == [
+        {"path": "src/a.py", "count": 2},
+        {"path": "src/b.py", "count": 2},
+        {"path": "src/c.py", "count": 1},
+        {"path": "src/d.py", "count": 1},
+        {"path": "src/e.py", "count": 1},
+    ]
+    assert all(
+        neighbor["path"] != "src/feat-only.py"
+        for neighbor in payload["top_cochange_neighbors"]
+    )
+
+
+def test_generate_file_payload_preserves_unknown_focus_and_filters_empty():
+    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
+    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    parse_date_range_fn = Mock(return_value=(period_start, period_end))
+    get_repo_fn = Mock(return_value=object())
+    collect_file_commit_evidence_fn = Mock(
+        return_value=[
+            _evidence_row(
+                sha="aaa1111",
+                day=1,
+                message="fix(core): patch parser",
+                neighbors=["src/fix.py"],
+            ),
+            _evidence_row(
+                sha="bbb2222",
+                day=2,
+                message="feat(core): expand parser",
+                neighbors=["src/feat.py"],
+            ),
+        ]
+    )
+    classify_commit_messages_fn = Mock(
+        return_value={
+            "message_count": 2,
+            "intent_counts": [
+                {"intent": "fix", "count": 1},
+                {"intent": "feat", "count": 1},
+            ],
+            "classifications": [
+                {"intent": "fix", "message": "fix(core): patch parser"},
+                {"intent": "feat", "message": "feat(core): expand parser"},
+            ],
+        }
+    )
+
+    payload = generate_file_change_diagnostic_payload(
+        filename="src/core.py",
+        date_range_data={"period": "Last 30 days"},
+        focused_intent="not-a-real-intent",
+        parse_date_range_fn=parse_date_range_fn,
+        get_repo_fn=get_repo_fn,
+        collect_file_commit_evidence_fn=collect_file_commit_evidence_fn,
+        classify_commit_messages_fn=classify_commit_messages_fn,
+    )
+
+    assert payload["status"] == "ok"
+    assert payload["focused_intent"] == "not-a-real-intent"
+    assert payload["message_count"] == 2
+    assert payload["filtered_message_count"] == 0
+    assert payload["evidence_rows"] == []
+    assert payload["classifications"] == []
+    assert payload["top_cochange_neighbors"] == []
+
+
 def test_generate_file_payload_avoids_false_thrash_without_shared_hunks():
     period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
     period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
@@ -741,3 +877,42 @@ def test_filtered_rows_and_empty_payload_focus_normalization():
     assert empty_payload["focused_intent"] == "all"
     assert empty_payload["filtered_message_count"] == 0
     assert empty_payload["evidence_rows"] == []
+
+
+def test_build_empty_payload_preserves_custom_fields_and_zero_metrics():
+    payload = build_empty_file_change_diagnostic_payload(
+        status="repository_unavailable",
+        filename="src/core.py",
+        status_detail="Repository selection is required.",
+        error_detail="No repository path provided",
+        focused_intent="Fix",
+    )
+
+    assert payload["status"] == "repository_unavailable"
+    assert payload["filename"] == "src/core.py"
+    assert payload["status_detail"] == "Repository selection is required."
+    assert payload["error_detail"] == "No repository path provided"
+    assert payload["focused_intent"] == "fix"
+
+    assert payload["message_count"] == 0
+    assert payload["filtered_message_count"] == 0
+    assert payload["intent_counts"] == []
+    assert payload["classifications"] == []
+    assert payload["evidence_rows"] == []
+    assert payload["advisory_labels"] == []
+    assert payload["confidence_hint"] == ""
+    assert payload["intent_leader"] == "unknown"
+    assert payload["leader_coverage_percent"] == 0
+    assert payload["fixlike_ratio_percent"] == 0
+    assert payload["feature_ratio_percent"] == 0
+    assert payload["maintenance_ratio_percent"] == 0
+    assert payload["short_gap_followups"] == 0
+    assert payload["short_gap_shared_hunk_followups"] == 0
+    assert payload["median_revisit_days"] is None
+    assert payload["unique_cochange_neighbors"] == 0
+    assert payload["cochange_commit_coverage_percent"] == 0
+    assert payload["average_neighbors_per_commit"] == 0.0
+    assert payload["coupling_signal_score"] == 0
+    assert payload["top_cochange_neighbors"] == []
+    assert payload["rework_episode_count"] == 0
+    assert payload["rework_episodes"] == []
