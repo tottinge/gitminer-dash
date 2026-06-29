@@ -1,8 +1,9 @@
-# Warp agent coding rules (8 Virtues + Naming + FIRST unit tests)
+# Warp agent coding rules (8 Virtues + Naming + Zero-One-Many + FIRST unit tests)
 Apply these rules whenever you edit, create, or refactor code in this repo.
 This file operationalizes:
 - `~/Downloads/Eight_Virtues_Agentic_Software_Development_FINAL(1).md`
 - `~/Downloads/NamingShortGuide.md`
+- Zero-One-Many Representation Evolution guidance (repo-local policy)
 
 ## 0) Default execution loop for every task
 1. Discover before changing: read nearby modules and search language/framework/project capabilities before creating new code.
@@ -27,14 +28,10 @@ Priority rule: if generic coding conventions, model habits, or "common best prac
 - Readability is relational: optimize clarity for this team’s domain vocabulary and ecosystem familiarity.
 - Coherent systems make learning more profitable because knowledge from one area transfers to others.
 
-### Representation matters
-- Many improvements come from better representation rather than additional behavior.
-- Prefer representations such as tables, mappings, state machines, value objects, and domain concepts when they reduce duplicated truth and local complexity.
-- When complexity grows, look for representation improvements before procedural expansion.
-
-### Cardinality reveals design
-- When a concept changes from Zero→One or One→Many, re-check whether representation still fits.
-- Numbered variables, repeated parameter clusters, repeated conditionals, and expanding related fields usually indicate a missing concept or outdated representation.
+### Representation evolution default (Zero-One-Many)
+- Prefer representation changes before adding branches, flags, helpers, or special cases.
+- When a concept moves across Zero, One, and Many, re-check whether the current representation still fits.
+- Use the operational workflow in `## 3) Agent operating instructions` before coding.
 
 ## 2) Eight code virtues (software quality)
 ### Working
@@ -107,13 +104,60 @@ When introducing constants:
 3. Check whether they collectively describe a concept.
 4. Represent the concept when meaningful.
 5. Avoid meaningless grouping-only wrappers.
+### Zero-One-Many representation evolution (before coding)
+Core principle:
+- Do not merely add another variable, branch, helper, flag, parameter, enum case, or special case.
+- When the current representation cannot naturally absorb the next observed instance, improve the representation first.
 
-When complexity grows:
-1. Look first for a better representation.
-2. Look for values that travel together.
-3. Look for hidden domain concepts.
-4. Watch cardinality changes (Zero→One, One→Many).
-5. Consider tables, mappings, state machines, value objects, and domain concepts before adding additional branching or state.
+Procedure:
+1. Identify what multiplied: values, grouped values, behavior, implementations, states, rules, relationships, or ownership sites.
+2. Choose the smallest representation that matches the kind of multiplicity.
+
+Representation choices:
+- Many values of the same kind → list, set, or map.
+- Many values that travel together → record, struct, or value object.
+- Many operations over the same data → class or cohesive module.
+- Many implementations of the same role → interface, protocol, strategy, or dispatch table.
+- Many states with transitions → state machine, transition table, or state objects.
+- Many rules over shared facts → rule table, policy object, or rule objects.
+- Many relationships among entities → graph or association model.
+- Many branches selected by condition → polymorphism, pattern matching, or table-driven dispatch.
+- Many scattered ownership sites → move behavior to the concept that owns it.
+
+Evidence to collect before coding:
+1. Names related to the requested change.
+2. Constants, enums, and branches using those names.
+3. Variables and fields repeatedly manipulated together.
+4. Methods operating on the same groups of variables or classes.
+5. Tests exercising the same behavior.
+6. Private helpers that duplicate or resemble existing behavior.
+7. Existing domain concepts that may already own the behavior.
+
+Classify the current representation:
+- Zero → One: introduce the simplest direct representation.
+- One → Many: replace parallel variables, branches, helpers, or parameters with a many-capable representation.
+- Many → One: simplify if multiplicity no longer exists.
+- One → Zero: delete obsolete representation.
+- Many without ownership: introduce or move to an authoritative owner.
+
+Constraints:
+- Do not introduce abstractions speculatively.
+- Do not use a design pattern merely because it is available.
+- Prefer language, type system, and standard library facilities before custom code.
+- Prefer existing domain concepts before new helpers or utilities.
+- Preserve current style and architecture unless evidence shows representation pressure.
+- Separate observations from inferences.
+
+Output before coding (required):
+```text
+Observed multiplicity:
+Evidence:
+Current representation:
+Representation pressure:
+Smallest representation improvement:
+Planned code change:
+```
+If no representation pressure exists, state that explicitly and make the smallest direct change.
 
 Before completing a change, verify:
 - Does it work?
