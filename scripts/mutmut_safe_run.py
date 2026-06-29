@@ -12,6 +12,13 @@ import argparse
 
 import mutmut.__main__ as mutmut_main
 
+try:
+    from bootstrap_paths import add_project_root
+except ModuleNotFoundError:  # pragma: no cover
+    from scripts.bootstrap_paths import add_project_root
+
+add_project_root(__file__)
+
 
 def _noop_setproctitle(*_args, **_kwargs) -> None:
     return None

@@ -15,8 +15,11 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
+from bootstrap_paths import add_project_root
 
 from mutant_common import collect_mutants, find_meta_files, find_stats_files
+
+add_project_root(__file__)
 SURVIVING_STATUSES = ("no_tests", "survived")
 
 
