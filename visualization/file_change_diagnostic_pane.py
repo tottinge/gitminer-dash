@@ -120,6 +120,30 @@ class FileChangeDiagnosticPanePayload(TypedDict):
     rework_episodes: list[ReworkEpisodeRow]
 
 
+class SummaryMetricChip(TypedDict):
+    """One summary metric chip descriptor for pane rendering."""
+
+    id_suffix: str
+    text: str
+
+
+class FileChangeDiagnosticPaneViewModel(TypedDict):
+    """Normalized pane view-model used by the renderer."""
+
+    filename: str
+    message_count: int
+    filtered_message_count: int
+    focus_label: str
+    advisory_labels: list[str]
+    confidence_hint: str
+    advisory_note: str
+    evidence_rows: list[EvidenceRow]
+    drilldown_data: list[dict[str, str]]
+    rework_data: list[dict[str, str | float | bool | int]]
+    cochange_neighbor_data: list[dict[str, str | int]]
+    summary_metric_chips: list[SummaryMetricChip]
+
+
 def _label_text(label_value: str) -> str:
     normalized = (label_value or "").strip()  # pragma: no mutate
     if not normalized:
@@ -173,7 +197,7 @@ def _evidence_data(evidence_rows: list[EvidenceRow]) -> list[dict[str, str]]:
 
 def _rework_data(
     rework_episodes: list[ReworkEpisodeRow],
-) -> list[dict[str, str | float]]:
+) -> list[dict[str, str | float | bool | int]]:
     return [
         {
             "anchor_hash": rework_episode.get("anchor_hash", "-"),
@@ -235,6 +259,171 @@ def _focus_label_text(focused_intent: str) -> str:
     )  # pragma: no mutate
 
 
+def _summary_metric_chip_specs(
+    *,
+    message_count: int,
+    focus_label: str,
+    leader_intent: str,
+    leader_coverage_percent: int,
+    fixlike_ratio_percent: int,
+    feature_ratio_percent: int,
+    maintenance_ratio_percent: int,
+    short_gap_followups: int,
+    short_gap_shared_hunk_followups: int,
+    median_revisit_text: str,
+    unique_cochange_neighbors: int,
+    cochange_commit_coverage_percent: int,
+    average_neighbors_per_commit: float,
+    coupling_signal_score: int,
+    rework_episode_count: int,
+) -> list[SummaryMetricChip]:
+    return [
+        {
+            "id_suffix": "summary-commit-count",
+            "text": f"Commits {message_count}",
+        },
+        {"id_suffix": "summary-focus", "text": f"Focus {focus_label}"},
+        {
+            "id_suffix": "summary-intent-leader",
+            "text": f"Leader: '{leader_intent}' %{leader_coverage_percent}",
+        },
+        {
+            "id_suffix": "summary-fixlike-ratio",
+            "text": f"Fix-like {fixlike_ratio_percent}%",
+        },
+        {
+            "id_suffix": "summary-feature-ratio",
+            "text": f"Feature {feature_ratio_percent}%",
+        },
+        {
+            "id_suffix": "summary-maintenance-ratio",
+            "text": f"Maintenance {maintenance_ratio_percent}%",
+        },
+        {
+            "id_suffix": "summary-short-gap-followups",
+            "text": f"Short-gap follow-ups {short_gap_followups}",
+        },
+        {
+            "id_suffix": "summary-shared-hunk-followups",
+            "text": (
+                "Shared-hunk follow-ups " f"{short_gap_shared_hunk_followups}"
+            ),
+        },
+        {
+            "id_suffix": "summary-median-revisit",
+            "text": median_revisit_text,
+        },
+        {
+            "id_suffix": "summary-neighbors",
+            "text": f"Co-change neighbors {unique_cochange_neighbors}",
+        },
+        {
+            "id_suffix": "summary-neighbor-coverage",
+            "text": (
+                "Neighbor coverage " f"{cochange_commit_coverage_percent}%"
+            ),
+        },
+        {
+            "id_suffix": "summary-average-neighbors",
+            "text": f"Avg neighbors {average_neighbors_per_commit:.2f}",
+        },
+        {
+            "id_suffix": "summary-coupling-score",
+            "text": f"Coupling score {coupling_signal_score}",
+        },
+        {
+            "id_suffix": "summary-rework-episodes",
+            "text": f"Rework episodes {rework_episode_count}",
+        },
+    ]
+
+
+def _build_summary_metric_chip_components(
+    component_id_prefix: str,
+    summary_metric_chips: list[SummaryMetricChip],
+) -> list[html.Span]:
+    return [
+        html.Span(
+            chip["text"],
+            id=_component_id(component_id_prefix, chip["id_suffix"]),
+            style=METRIC_CHIP_STYLE,  # pragma: no mutate
+        )
+        for chip in summary_metric_chips
+    ]
+
+
+def _build_file_change_diagnostic_view_model(
+    payload: FileChangeDiagnosticPanePayload,
+) -> FileChangeDiagnosticPaneViewModel:
+    message_count = max(int(payload.get("message_count", 0)), 0)
+    filtered_message_count = max(
+        int(payload.get("filtered_message_count", message_count)),
+        0,
+    )
+    evidence_rows = list(payload.get("evidence_rows", []) or [])
+    rework_episodes = list(payload.get("rework_episodes", []) or [])
+    focused_intent = _normalized_intent(payload.get("focused_intent", "all"))
+    focus_label = _focus_label_text(focused_intent)
+    leader_intent = _normalized_intent(payload.get("intent_leader", ""))
+    leader_coverage_percent = int(payload.get("leader_coverage_percent", 0))
+    fixlike_ratio_percent = int(payload.get("fixlike_ratio_percent", 0))
+    feature_ratio_percent = int(payload.get("feature_ratio_percent", 0))
+    maintenance_ratio_percent = int(payload.get("maintenance_ratio_percent", 0))
+    short_gap_followups = int(payload.get("short_gap_followups", 0))
+    short_gap_shared_hunk_followups = int(
+        payload.get("short_gap_shared_hunk_followups", 0)
+    )
+    median_revisit_text = _median_revisit_text(
+        payload.get("median_revisit_days")
+    )
+    unique_cochange_neighbors = int(payload.get("unique_cochange_neighbors", 0))
+    cochange_commit_coverage_percent = int(
+        payload.get("cochange_commit_coverage_percent", 0)
+    )
+    average_neighbors_per_commit = float(
+        payload.get("average_neighbors_per_commit", 0.0)
+    )
+    coupling_signal_score = int(payload.get("coupling_signal_score", 0))
+    rework_episode_count = int(payload.get("rework_episode_count", 0))
+
+    summary_metric_chips = _summary_metric_chip_specs(
+        message_count=message_count,
+        focus_label=focus_label,
+        leader_intent=leader_intent,
+        leader_coverage_percent=leader_coverage_percent,
+        fixlike_ratio_percent=fixlike_ratio_percent,
+        feature_ratio_percent=feature_ratio_percent,
+        maintenance_ratio_percent=maintenance_ratio_percent,
+        short_gap_followups=short_gap_followups,
+        short_gap_shared_hunk_followups=short_gap_shared_hunk_followups,
+        median_revisit_text=median_revisit_text,
+        unique_cochange_neighbors=unique_cochange_neighbors,
+        cochange_commit_coverage_percent=cochange_commit_coverage_percent,
+        average_neighbors_per_commit=average_neighbors_per_commit,
+        coupling_signal_score=coupling_signal_score,
+        rework_episode_count=rework_episode_count,
+    )
+
+    return {
+        "filename": str(payload.get("filename", "")),
+        "message_count": message_count,
+        "filtered_message_count": filtered_message_count,
+        "focus_label": focus_label,
+        "advisory_labels": list(payload.get("advisory_labels", []) or []),
+        "confidence_hint": str(payload.get("confidence_hint", "")),
+        "advisory_note": str(
+            payload.get("advisory_note", ADVISORY_HELPER_MESSAGE)
+        ),
+        "evidence_rows": evidence_rows,
+        "drilldown_data": _evidence_data(evidence_rows),
+        "rework_data": _rework_data(rework_episodes),
+        "cochange_neighbor_data": _cochange_neighbor_data(
+            list(payload.get("top_cochange_neighbors", []) or [])
+        ),
+        "summary_metric_chips": summary_metric_chips,
+    }
+
+
 def build_file_change_diagnostic_pane(
     payload: FileChangeDiagnosticPanePayload | None,
     *,
@@ -266,22 +455,7 @@ def build_file_change_diagnostic_pane(
             ],
         )
 
-    message_count = max(int(payload.get("message_count", 0)), 0)
-    filtered_message_count = max(
-        int(payload.get("filtered_message_count", message_count)),
-        0,
-    )
-    evidence_rows = payload.get("evidence_rows", [])
-    rework_episodes = payload.get("rework_episodes", [])
-    focused_intent = _normalized_intent(payload.get("focused_intent", "all"))
-    focus_label = _focus_label_text(focused_intent)
-    leader_intent = _normalized_intent(payload.get("intent_leader", ""))
-    leader_coverage_percent = int(payload.get("leader_coverage_percent", 0))
-    drilldown_data = _evidence_data(evidence_rows)
-    rework_data = _rework_data(rework_episodes)
-    cochange_neighbor_data = _cochange_neighbor_data(
-        payload.get("top_cochange_neighbors", [])
-    )
+    view_model = _build_file_change_diagnostic_view_model(payload)
 
     return html.Div(
         id=_component_id(component_id_prefix, "container"),
@@ -291,140 +465,16 @@ def build_file_change_diagnostic_pane(
                 title_text, style={"margin": "0 0 6px"}
             ),  # pragma: no mutate
             html.Div(
-                str(payload.get("filename", "")),
+                view_model["filename"],
                 id=_component_id(component_id_prefix, "filename"),
                 style={"fontWeight": "600"},  # pragma: no mutate
             ),
             html.Div(
                 style=METRICS_ROW_STYLE,  # pragma: no mutate
-                children=[
-                    html.Span(
-                        f"Commits {message_count}",
-                        id=_component_id(
-                            component_id_prefix, "summary-commit-count"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        f"Focus {focus_label}",
-                        id=_component_id(component_id_prefix, "summary-focus"),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        f"Leader: '{leader_intent}' %{leader_coverage_percent}",
-                        id=_component_id(
-                            component_id_prefix, "summary-intent-leader"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        f"Fix-like {int(payload.get('fixlike_ratio_percent', 0))}%",  # pragma: no mutate
-                        id=_component_id(
-                            component_id_prefix, "summary-fixlike-ratio"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        f"Feature {int(payload.get('feature_ratio_percent', 0))}%",  # pragma: no mutate
-                        id=_component_id(
-                            component_id_prefix, "summary-feature-ratio"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        (
-                            "Maintenance "
-                            f"{int(payload.get('maintenance_ratio_percent', 0))}%"  # pragma: no mutate
-                        ),
-                        id=_component_id(
-                            component_id_prefix, "summary-maintenance-ratio"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        (
-                            "Short-gap follow-ups "
-                            f"{int(payload.get('short_gap_followups', 0))}"  # pragma: no mutate
-                        ),
-                        id=_component_id(
-                            component_id_prefix, "summary-short-gap-followups"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        (
-                            "Shared-hunk follow-ups "
-                            f"{int(payload.get('short_gap_shared_hunk_followups', 0))}"  # pragma: no mutate
-                        ),
-                        id=_component_id(
-                            component_id_prefix,
-                            "summary-shared-hunk-followups",
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        _median_revisit_text(
-                            payload.get("median_revisit_days")
-                        ),
-                        id=_component_id(
-                            component_id_prefix, "summary-median-revisit"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        (
-                            "Co-change neighbors "
-                            f"{int(payload.get('unique_cochange_neighbors', 0))}"  # pragma: no mutate
-                        ),
-                        id=_component_id(
-                            component_id_prefix, "summary-neighbors"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        (
-                            "Neighbor coverage "
-                            f"{int(payload.get('cochange_commit_coverage_percent', 0))}%"  # pragma: no mutate
-                        ),
-                        id=_component_id(
-                            component_id_prefix,
-                            "summary-neighbor-coverage",
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        (
-                            "Avg neighbors "
-                            f"{float(payload.get('average_neighbors_per_commit', 0.0)):.2f}"  # pragma: no mutate
-                        ),
-                        id=_component_id(
-                            component_id_prefix,
-                            "summary-average-neighbors",
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        (
-                            "Coupling score "
-                            f"{int(payload.get('coupling_signal_score', 0))}"  # pragma: no mutate
-                        ),
-                        id=_component_id(
-                            component_id_prefix,
-                            "summary-coupling-score",
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                    html.Span(
-                        (
-                            "Rework episodes "  # pragma: no mutate
-                            f"{int(payload.get('rework_episode_count', 0))}"  # pragma: no mutate
-                        ),
-                        id=_component_id(
-                            component_id_prefix, "summary-rework-episodes"
-                        ),
-                        style=METRIC_CHIP_STYLE,  # pragma: no mutate
-                    ),
-                ],
+                children=_build_summary_metric_chip_components(
+                    component_id_prefix,
+                    view_model["summary_metric_chips"],
+                ),
             ),
             html.Div(
                 "Advisory labels",  # pragma: no mutate
@@ -434,7 +484,7 @@ def build_file_change_diagnostic_pane(
                 },  # pragma: no mutate
             ),
             html.Div(
-                build_label_chips(payload.get("advisory_labels", [])),
+                build_label_chips(view_model["advisory_labels"]),
                 id=_component_id(component_id_prefix, "advisory-label-chips"),
                 style=METRICS_ROW_STYLE,  # pragma: no mutate
             ),
@@ -446,7 +496,7 @@ def build_file_change_diagnostic_pane(
                 },  # pragma: no mutate
             ),
             html.Ul(
-                build_label_help_items(payload.get("advisory_labels", [])),
+                build_label_help_items(view_model["advisory_labels"]),
                 id=_component_id(component_id_prefix, "advisory-label-help"),
                 style={
                     "margin": "0 0 6px 18px",
@@ -454,7 +504,7 @@ def build_file_change_diagnostic_pane(
                 },  # pragma: no mutate
             ),
             html.P(
-                str(payload.get("confidence_hint", "")),
+                view_model["confidence_hint"],
                 id=_component_id(component_id_prefix, "confidence-hint"),
                 style={
                     "margin": "0 0 4px",
@@ -462,16 +512,14 @@ def build_file_change_diagnostic_pane(
                 },  # pragma: no mutate
             ),
             html.P(
-                str(
-                    payload.get("advisory_note", ADVISORY_HELPER_MESSAGE)
-                ),  # pragma: no mutate
+                view_model["advisory_note"],
                 style={
                     "margin": "0 0 4px",
                     "color": "#64748b",
                 },  # pragma: no mutate
             ),
             html.P(
-                f"Showing {filtered_message_count} evidence row(s).",
+                f"Showing {view_model['filtered_message_count']} evidence row(s).",
                 id=_component_id(
                     component_id_prefix, "summary-filtered-evidence-count"
                 ),
@@ -482,7 +530,7 @@ def build_file_change_diagnostic_pane(
             ),
             html.Ul(
                 build_evidence_preview_items(
-                    evidence_rows=evidence_rows,
+                    evidence_rows=view_model["evidence_rows"],
                     preview_row_count=preview_row_count,
                 ),
                 id=_component_id(component_id_prefix, "evidence-preview"),
@@ -493,7 +541,7 @@ def build_file_change_diagnostic_pane(
                     html.Summary(
                         (
                             "Drill down into "  # pragma: no mutate
-                            f"{len(drilldown_data)} evidence row(s)"  # pragma: no mutate
+                            f"{len(view_model['drilldown_data'])} evidence row(s)"  # pragma: no mutate
                         ),
                         id=_component_id(
                             component_id_prefix, "drilldown-summary"
@@ -515,7 +563,7 @@ def build_file_change_diagnostic_pane(
                                 "id": "message",
                             },  # pragma: no mutate
                         ],
-                        data=drilldown_data,
+                        data=view_model["drilldown_data"],
                         style_cell={
                             "textAlign": "left",
                             "padding": "4px 6px",  # pragma: no mutate
@@ -532,7 +580,7 @@ def build_file_change_diagnostic_pane(
             html.Details(
                 children=[
                     html.Summary(
-                        f"Rework episodes ({len(rework_data)})",  # pragma: no mutate
+                        f"Rework episodes ({len(view_model['rework_data'])})",  # pragma: no mutate
                         id=_component_id(component_id_prefix, "rework-summary"),
                     ),
                     DataTable(
@@ -567,7 +615,7 @@ def build_file_change_diagnostic_pane(
                                 "id": "rework_signal_score",
                             },  # pragma: no mutate
                         ],
-                        data=rework_data,
+                        data=view_model["rework_data"],
                         style_cell={
                             "textAlign": "left",
                             "padding": "4px 6px",  # pragma: no mutate
@@ -585,8 +633,8 @@ def build_file_change_diagnostic_pane(
                 children=[
                     html.Summary(
                         (
-                            f"Top co-change neighbors for {focus_label} "
-                            f"({len(cochange_neighbor_data)})"  # pragma: no mutate
+                            f"Top co-change neighbors for {view_model['focus_label']} "
+                            f"({len(view_model['cochange_neighbor_data'])})"  # pragma: no mutate
                         ),
                         id=_component_id(
                             component_id_prefix, "neighbors-summary"
@@ -603,7 +651,7 @@ def build_file_change_diagnostic_pane(
                                 "id": "count",
                             },  # pragma: no mutate
                         ],
-                        data=cochange_neighbor_data,
+                        data=view_model["cochange_neighbor_data"],
                         style_cell={
                             "textAlign": "left",
                             "padding": "4px 6px",  # pragma: no mutate

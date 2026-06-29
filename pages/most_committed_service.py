@@ -76,7 +76,10 @@ def collect_commit_messages_for_file(
 
 
 def _summary_line(commit_message: str) -> str:
-    summary_line = str(commit_message).splitlines()[0].strip()
+    summary_lines = str(commit_message).splitlines()
+    if not summary_lines:
+        return "(empty commit message)"
+    summary_line = summary_lines[0].strip()
     if summary_line:
         return summary_line
     return "(empty commit message)"

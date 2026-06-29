@@ -1,9 +1,16 @@
 """Tests for file-change diagnostic helpers in pages.most_committed_service."""
 
 from datetime import datetime, timezone
-from unittest.mock import Mock
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 from pages.most_committed_service import (
+    _coupling_signals,
+    _diagnostic_labels,
+    _filtered_evidence_rows,
+    _revisit_signals,
+    build_empty_file_change_diagnostic_payload,
+    collect_file_commit_evidence,
     generate_file_change_diagnostic_payload,
     generate_table_selection_file_change_diagnostic_payload,
 )
@@ -26,6 +33,32 @@ def _evidence_row(
         "cochanged_neighbors": neighbors or [],
         "hunk_fingerprints": hunk_fingerprints or [],
     }
+
+
+def _mock_commit(
+    *,
+    sha: str,
+    day: int,
+    message: str,
+    changed_files: list[str],
+    no_parents: bool = False,
+    diff_items: list[SimpleNamespace] | None = None,
+    diff_exception: Exception | None = None,
+) -> Mock:
+    commit = Mock()
+    commit.hexsha = sha
+    commit.committed_datetime = datetime(
+        2026, 5, day, 12, 0, tzinfo=timezone.utc
+    )
+    commit.message = message
+    commit.stats.files = {path: {} for path in changed_files}
+    commit.parents = [] if no_parents else [object()]
+    commit.diff = Mock()
+    if diff_exception is not None:
+        commit.diff.side_effect = diff_exception
+    else:
+        commit.diff.return_value = diff_items or []
+    return commit
 
 
 def test_generate_table_selection_payload_returns_no_selection_contract():
@@ -450,3 +483,261 @@ def test_generate_file_payload_adds_coupling_pressure_independently():
     ]
     assert "coupling_pressure" in payload["advisory_labels"]
     assert "possible_thrash" not in payload["advisory_labels"]
+
+
+def test_collect_file_commit_evidence_sorts_rows_and_normalizes_summary():
+    selected_file = "src/core.py"
+    early_commit = _mock_commit(
+        sha="aaa1111",
+        day=1,
+        message="",
+        changed_files=[selected_file, "src/alpha.py", "src/beta.py"],
+        no_parents=True,
+    )
+    late_commit = _mock_commit(
+        sha="bbb2222",
+        day=3,
+        message="Fix parser branch\nextra detail",
+        changed_files=[selected_file, "src/other.py"],
+        diff_items=[
+            SimpleNamespace(
+                b_path="src/not-target.py",
+                a_path="src/not-target.py",
+                diff=b"ignored",
+            ),
+            SimpleNamespace(
+                b_path=selected_file,
+                a_path=None,
+                diff=b"@@ -1 +1 @@",
+            ),
+        ],
+    )
+    repo = Mock()
+    repo.iter_commits.return_value = [late_commit, early_commit]
+
+    with patch(
+        "pages.most_committed_service.hunk_fingerprints_from_patch",
+        side_effect=lambda patch_text: (
+            [f"fp:{patch_text}"] if patch_text else []
+        ),
+    ):
+        rows = collect_file_commit_evidence(
+            repo=repo,
+            filename=selected_file,
+            period_start=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            period_end=datetime(2026, 5, 31, tzinfo=timezone.utc),
+        )
+
+    assert [row["hash"] for row in rows] == ["aaa1111", "bbb2222"]
+    assert rows[0]["message"] == "(empty commit message)"
+    assert rows[0]["cochanged_neighbors"] == ["src/alpha.py", "src/beta.py"]
+    assert rows[0]["hunk_fingerprints"] == []
+    assert rows[1]["message"] == "Fix parser branch"
+    assert rows[1]["cochanged_neighbors"] == ["src/other.py"]
+    assert rows[1]["hunk_fingerprints"] == ["fp:@@ -1 +1 @@"]
+
+
+def test_collect_file_commit_evidence_handles_diff_error_and_string_patch():
+    selected_file = "src/core.py"
+    error_commit = _mock_commit(
+        sha="aaa1111",
+        day=1,
+        message="fix: fallback",
+        changed_files=[selected_file],
+        diff_exception=RuntimeError("diff failed"),
+    )
+    string_patch_commit = _mock_commit(
+        sha="bbb2222",
+        day=2,
+        message="fix: keep string patch",
+        changed_files=[selected_file, "src/neighbor.py"],
+        diff_items=[
+            SimpleNamespace(
+                b_path=None,
+                a_path=selected_file,
+                diff="string patch",
+            )
+        ],
+    )
+    repo = Mock()
+    repo.iter_commits.return_value = [string_patch_commit, error_commit]
+
+    with patch(
+        "pages.most_committed_service.hunk_fingerprints_from_patch",
+        side_effect=lambda patch_text: [patch_text],
+    ):
+        rows = collect_file_commit_evidence(
+            repo=repo,
+            filename=selected_file,
+            period_start=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            period_end=datetime(2026, 5, 31, tzinfo=timezone.utc),
+        )
+
+    assert rows[0]["hash"] == "aaa1111"
+    assert rows[0]["hunk_fingerprints"] == [""]
+    assert rows[1]["hash"] == "bbb2222"
+    assert rows[1]["hunk_fingerprints"] == ["string patch"]
+
+
+def test_revisit_signals_handles_short_inputs_and_thresholds():
+    empty_signals = _revisit_signals(
+        [
+            _evidence_row(
+                sha="aaa1111",
+                day=1,
+                message="feat(core): add parser",
+                hunk_fingerprints=["hunk-a"],
+            )
+        ]
+    )
+    assert empty_signals == {
+        "short_gap_followups": 0,
+        "short_gap_shared_hunk_followups": 0,
+        "fixlike_followups": 0,
+        "median_revisit_days": None,
+        "rework_episode_count": 0,
+        "rework_episodes": [],
+    }
+
+    threshold_rows = [
+        {
+            **_evidence_row(
+                sha="aaa1111",
+                day=1,
+                message="feat(core): add parser",
+                hunk_fingerprints=["hunk-a"],
+            ),
+            "intent": "feat",
+        },
+        {
+            **_evidence_row(
+                sha="bbb2222",
+                day=10,
+                message="fix(core): patch parser",
+                hunk_fingerprints=["hunk-b"],
+            ),
+            "intent": "fix",
+        },
+        {
+            **_evidence_row(
+                sha="ccc3333",
+                day=11,
+                message="fix(core): follow-up parser patch",
+                hunk_fingerprints=["hunk-b"],
+            ),
+            "intent": "fix",
+        },
+    ]
+
+    signals = _revisit_signals(threshold_rows)
+    assert signals["short_gap_followups"] == 1
+    assert signals["short_gap_shared_hunk_followups"] == 1
+    assert signals["fixlike_followups"] == 1
+    assert signals["median_revisit_days"] == 5.0
+    assert signals["rework_episode_count"] == 1
+    assert signals["rework_episodes"][0]["anchor_hash"] == "bbb2222"
+    assert signals["rework_episodes"][0]["rework_signal_score"] == 3
+
+
+def test_coupling_signals_zero_and_minimum_message_guard():
+    zero_signals = _coupling_signals([], message_count=0)
+    assert zero_signals == {
+        "unique_cochange_neighbors": 0,
+        "cochange_commit_coverage_percent": 0,
+        "average_neighbors_per_commit": 0.0,
+        "coupling_signal_score": 0,
+        "top_cochange_neighbors": [],
+    }
+
+    dense_rows = [
+        {"cochanged_neighbors": ["a.py", "b.py", "c.py"]},
+        {"cochanged_neighbors": ["d.py", "e.py", "f.py"]},
+        {"cochanged_neighbors": ["g.py", "h.py", "i.py"]},
+    ]
+    guarded_signals = _coupling_signals(dense_rows, message_count=3)
+    assert guarded_signals["unique_cochange_neighbors"] == 9
+    assert guarded_signals["cochange_commit_coverage_percent"] == 100
+    assert guarded_signals["average_neighbors_per_commit"] == 3.0
+    assert guarded_signals["coupling_signal_score"] == 0
+
+
+def test_diagnostic_labels_cover_all_decision_paths():
+    assert _diagnostic_labels(
+        message_count=4,
+        fixlike_ratio_percent=40,
+        feature_ratio_percent=10,
+        maintenance_ratio_percent=20,
+        short_gap_followups=3,
+        short_gap_shared_hunk_followups=2,
+        fixlike_followups=2,
+        rework_episode_count=2,
+        coupling_signal_score=1,
+    ) == ["possible_thrash"]
+
+    assert _diagnostic_labels(
+        message_count=5,
+        fixlike_ratio_percent=10,
+        feature_ratio_percent=40,
+        maintenance_ratio_percent=20,
+        short_gap_followups=0,
+        short_gap_shared_hunk_followups=0,
+        fixlike_followups=0,
+        rework_episode_count=0,
+        coupling_signal_score=0,
+    ) == ["feature_growth"]
+
+    assert _diagnostic_labels(
+        message_count=6,
+        fixlike_ratio_percent=20,
+        feature_ratio_percent=10,
+        maintenance_ratio_percent=45,
+        short_gap_followups=0,
+        short_gap_shared_hunk_followups=0,
+        fixlike_followups=0,
+        rework_episode_count=0,
+        coupling_signal_score=0,
+    ) == ["maintenance_chore"]
+
+    assert _diagnostic_labels(
+        message_count=6,
+        fixlike_ratio_percent=20,
+        feature_ratio_percent=10,
+        maintenance_ratio_percent=20,
+        short_gap_followups=0,
+        short_gap_shared_hunk_followups=0,
+        fixlike_followups=0,
+        rework_episode_count=0,
+        coupling_signal_score=2,
+    ) == ["coupling_pressure"]
+
+    assert _diagnostic_labels(
+        message_count=3,
+        fixlike_ratio_percent=20,
+        feature_ratio_percent=20,
+        maintenance_ratio_percent=20,
+        short_gap_followups=0,
+        short_gap_shared_hunk_followups=0,
+        fixlike_followups=0,
+        rework_episode_count=0,
+        coupling_signal_score=1,
+    ) == ["mixed_signal"]
+
+
+def test_filtered_rows_and_empty_payload_focus_normalization():
+    evidence_rows = [
+        {"intent": "fix", "message": "fix: one"},
+        {"intent": "feat", "message": "feat: one"},
+    ]
+    assert _filtered_evidence_rows(evidence_rows, "all") == evidence_rows
+    assert _filtered_evidence_rows(evidence_rows, "FIX") == [
+        {"intent": "fix", "message": "fix: one"}
+    ]
+    assert _filtered_evidence_rows(evidence_rows, "*") == evidence_rows
+
+    empty_payload = build_empty_file_change_diagnostic_payload(
+        status="no_file_selected",
+        focused_intent="*",
+    )
+    assert empty_payload["focused_intent"] == "all"
+    assert empty_payload["filtered_message_count"] == 0
+    assert empty_payload["evidence_rows"] == []
