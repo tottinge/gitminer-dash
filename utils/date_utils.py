@@ -24,6 +24,35 @@ PERIOD_OPTIONS: list[str] = [
 # Default period used across the app when none is provided
 DEFAULT_PERIOD: str = "Last 30 days"
 
+PeriodDelta = timedelta | relativedelta
+
+PERIOD_DELTAS: tuple[tuple[str, PeriodDelta], ...] = (
+    ("last 7 ", timedelta(days=7)),
+    ("30", timedelta(days=30)),
+    ("60", timedelta(days=60)),
+    ("90", timedelta(days=90)),
+    ("6 months", relativedelta(months=6)),
+    ("1 year", relativedelta(years=1)),
+    ("5 years", relativedelta(years=5)),
+)
+
+
+def _start_of_day(moment: datetime) -> datetime:
+    return moment.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _ever_begin(end: datetime) -> datetime:
+    return end.replace(
+        year=1970, month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+    )
+
+
+def _begin_for_period(period_text: str, end: datetime) -> datetime:
+    for token, delta in PERIOD_DELTAS:
+        if token in period_text:
+            return _start_of_day(end - delta)
+    return _ever_begin(end)
+
 
 def calculate_date_range(period: str) -> tuple[datetime, datetime]:
     """
@@ -51,43 +80,8 @@ def calculate_date_range(period: str) -> tuple[datetime, datetime]:
     now = datetime.today().astimezone()
     # Normalize "end" to end-of-day
     end = now.replace(hour=23, minute=59, second=59, microsecond=0)
-    period = period or "30 days"  # pragma: no mutate
-
-    lower = period.lower()
-    if "last 7 " in lower:
-        begin = (end - timedelta(days=7)).replace(  # pragma: no mutate
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    elif "30" in lower:
-        begin = (end - timedelta(days=30)).replace(  # pragma: no mutate
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    elif "60" in lower:
-        begin = (end - timedelta(days=60)).replace(  # pragma: no mutate
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    elif "90" in lower:
-        begin = (end - timedelta(days=90)).replace(  # pragma: no mutate
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    elif "6 months" in lower:
-        begin = (end - relativedelta(months=6)).replace(  # pragma: no mutate
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    elif "1 year" in lower:
-        begin = (end - relativedelta(years=1)).replace(  # pragma: no mutate
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    elif "5 years" in lower:
-        begin = (end - relativedelta(years=5)).replace(  # pragma: no mutate
-            hour=0, minute=0, second=0, microsecond=0
-        )
-    else:
-        # Ever
-        begin = end.replace(  # pragma: no mutate
-            year=1970, month=1, day=1, hour=0, minute=0, second=0, microsecond=0
-        )
-        return begin, end
+    period_text = (period or "30 days").lower()  # pragma: no mutate
+    begin = _begin_for_period(period_text, end)
 
     return begin, end
 
