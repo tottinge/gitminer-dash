@@ -4,6 +4,7 @@ from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 
 import repository_context as repo_context
+from algorithms.analysis_context import commit_range_context_from_store
 from algorithms.commit_frequency import calculate_file_commit_frequency
 from algorithms.commit_message_classifier import classify_commit_messages
 from pages.most_committed_service import (
@@ -144,15 +145,17 @@ layout = html.Div(
 def populate_ranked_table(store_data):
     if not store_data or "period" not in store_data:
         raise PreventUpdate
-
-    begin, end = date_utils.parse_date_range_from_store(store_data)
-    commits_data = repo_context.commits_in_period(begin, end)
+    commit_context = commit_range_context_from_store(
+        store_data=store_data,
+        parse_date_range_fn=date_utils.parse_date_range_from_store,
+        commits_in_period_fn=repo_context.commits_in_period,
+    )
     repo = repo_context.get_repo()
     usages = calculate_file_commit_frequency(
-        commits_data,
+        commit_context.commits_data,
         repo,
-        begin,
-        end,
+        commit_context.period_start,
+        commit_context.period_end,
         top_n=20,
     )
     return [

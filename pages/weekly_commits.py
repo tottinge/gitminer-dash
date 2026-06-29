@@ -10,6 +10,7 @@ from dash.dash_table import DataTable
 from dash.exceptions import PreventUpdate
 
 import repository_context as repo_context
+from algorithms.analysis_context import commit_range_context_from_store
 from algorithms.weekly_commits import (
     WEEKLY_COMMIT_DETAILS_TABLE_COLUMNS,
     calculate_weekly_commits,
@@ -92,11 +93,16 @@ def populate_graph(store_data):
     """Generate the weekly commits graph and statistics."""
     if not store_data or "period" not in store_data:
         raise PreventUpdate
-
-    begin, end = date_utils.parse_date_range_from_store(store_data)
-
-    commits_data = repo_context.commits_in_period(begin, end)
-    weekly_data = calculate_weekly_commits(commits_data, begin, end)
+    commit_context = commit_range_context_from_store(
+        store_data=store_data,
+        parse_date_range_fn=date_utils.parse_date_range_from_store,
+        commits_in_period_fn=repo_context.commits_in_period,
+    )
+    weekly_data = calculate_weekly_commits(
+        commit_context.commits_data,
+        commit_context.period_start,
+        commit_context.period_end,
+    )
 
     if not weekly_data["weeks"]:
         fig = create_empty_figure("No data in selected period")

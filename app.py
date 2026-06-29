@@ -12,6 +12,7 @@ from dash import (
 )
 
 import repository_context as repo_context
+from pages.navigation_config import page_sort_key
 from utils import date_utils
 from utils.global_date_store import build_store_payload
 
@@ -52,33 +53,6 @@ NAV_LINK_STYLE = {
     "backgroundColor": "#e2e8f0",
     "border": "1px solid #cbd5e1",
 }
-WORKFLOW_PAGE_ORDER = [
-    "pages.ai_insights",
-    "pages.weekly_commits",
-    "pages.merges",
-    "pages.diff_summary",
-    "pages.change_types",
-    "pages.conventional",
-    "pages.codelines",
-    "pages.community_flows",
-    "pages.affinity_groups",
-    "pages.strongest_pairings",
-    "pages.most_committed",
-]
-WORKFLOW_PAGE_ORDER_INDEX = {
-    module_name: idx for idx, module_name in enumerate(WORKFLOW_PAGE_ORDER)
-}
-WORKFLOW_PAGE_FALLBACK_INDEX = len(WORKFLOW_PAGE_ORDER)
-
-
-def _page_sort_key(page):
-    module_name = str(page.get("module", ""))
-    workflow_index = WORKFLOW_PAGE_ORDER_INDEX.get(
-        module_name, WORKFLOW_PAGE_FALLBACK_INDEX
-    )
-    page_name = str(page.get("name", "")).lower()
-    return workflow_index, page_name
-
 
 app.layout = html.Div(
     [
@@ -116,7 +90,7 @@ app.layout = html.Div(
                 )
                 for page in sorted(
                     page_registry.values(),
-                    key=_page_sort_key,
+                    key=page_sort_key,
                 )
             ],
             style=NAV_CONTAINER_STYLE,
