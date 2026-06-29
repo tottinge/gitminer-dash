@@ -5,23 +5,23 @@ from typing import Any
 ROW_DATE_KEY = "Date"
 ROW_NAME_KEY = "Name"
 OTHER_CHANGE_KEY = "Other"
-
-change_name = {
+CHANGE_NAME_BY_TYPE = {
     "A": "Files Added",
     "D": "Files Deleted",
     "R": "Files Renamed",
     "M": "Files Modified",
 }
+# Backward compatibility for existing imports.
+change_name = CHANGE_NAME_BY_TYPE
 
 
 def _summarize_change_types(diffs: Iterable[Any]) -> Counter[str]:
     summarized_change_types: list[str] = []
     for diff in diffs:
         diff_change_type = getattr(diff, "change_type", None)
-        if diff_change_type in change_name:
-            summarized_change_types.append(change_name[diff_change_type])
-        else:
-            summarized_change_types.append(OTHER_CHANGE_KEY)
+        summarized_change_types.append(
+            CHANGE_NAME_BY_TYPE.get(diff_change_type, OTHER_CHANGE_KEY)
+        )
     return Counter(summarized_change_types)
 
 

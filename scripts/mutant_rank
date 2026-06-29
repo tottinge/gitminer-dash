@@ -16,21 +16,14 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 from bootstrap_paths import add_project_root
-
-from mutant_common import collect_mutants, relative_path_str, weight_for_status
+from mutant_common import (
+    DEFAULT_RANK_TARGET_STATUSES,
+    collect_mutants,
+    parse_target_statuses,
+    relative_path_str,
+    weight_for_status,
+)
 add_project_root(__file__)
-
-DEFAULT_TARGET_STATUSES = {"survived"}
-
-
-def parse_statuses(raw: str | None, include_crash: bool) -> set[str]:
-    if raw:
-        statuses = {value.strip() for value in raw.split(",") if value.strip()}
-    else:
-        statuses = set(DEFAULT_TARGET_STATUSES)
-    if include_crash:
-        statuses.add("crash")
-    return statuses
 
 
 def rank_by_function(
@@ -176,7 +169,11 @@ def main() -> int:
 
     root = args.root.resolve()
     records = collect_mutants(root)
-    target_statuses = parse_statuses(args.statuses, args.include_crash)
+    target_statuses = parse_target_statuses(
+        args.statuses,
+        DEFAULT_RANK_TARGET_STATUSES,
+        include_crash=args.include_crash,
+    )
 
     function_rows = rank_by_function(records, target_statuses, root)
     module_rows = rank_by_module(records, target_statuses, root)

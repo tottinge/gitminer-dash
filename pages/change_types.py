@@ -9,7 +9,7 @@ from plotly.graph_objs import Figure
 
 # Note: PyCharm tags these as invalid imports, but we run
 # the app from the parent dir and these are okay.
-from algorithms.change_series import change_name, change_series
+from algorithms.change_series import CHANGE_NAME_BY_TYPE, change_series
 from algorithms.sorted_tags import get_most_recent_tags
 from repository_context import get_repo
 
@@ -65,8 +65,8 @@ layout = html.Div(
 )
 
 StyleDict = dict[str, str]
-style_show: StyleDict = {"display": "block"}
-style_hide: StyleDict = {"display": "none"}
+STYLE_SHOW: StyleDict = {"display": "block"}
+STYLE_HIDE: StyleDict = {"display": "none"}
 
 ChangeTypeCallbackResult = tuple[
     Figure,  # Graphic to draw
@@ -90,12 +90,12 @@ def update_graph(_) -> ChangeTypeCallbackResult:
     if data.empty:
         figure = go.Figure()
         table_data = []
-        return figure, table_data, style_hide, style_show
+        return figure, table_data, STYLE_HIDE, STYLE_SHOW
     figure = px.bar(
         data,
         title="Change Types and Magnitudes Across Tags",
         x="Name",
-        y=list(change_name.values()),
+        y=list(CHANGE_NAME_BY_TYPE.values()),
         labels={
             "Name": "Tag",
             "Files Added": "Added",
@@ -108,4 +108,4 @@ def update_graph(_) -> ChangeTypeCallbackResult:
         text_auto=".2s",
     )
     table_data = data.to_dict("records")
-    return figure, table_data, style_show, style_hide
+    return figure, table_data, STYLE_SHOW, STYLE_HIDE

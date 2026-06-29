@@ -17,16 +17,15 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 from bootstrap_paths import add_project_root
 
-from mutant_common import collect_mutants, load_tests_by_function, weight_for_status
+from mutant_common import (
+    DEFAULT_TRIAGE_TARGET_STATUSES,
+    candidate_test_file_for_module,
+    collect_mutants,
+    load_tests_by_function,
+    parse_target_statuses,
+    weight_for_status,
+)
 add_project_root(__file__)
-
-DEFAULT_TARGET_STATUSES = {"no_tests", "survived", "timeout"}
-
-
-def parse_statuses(raw: str | None) -> set[str]:
-    if raw:
-        return {value.strip() for value in raw.split(",") if value.strip()}
-    return set(DEFAULT_TARGET_STATUSES)
 
 
 def classify_gap(status_counts: Counter, test_count: int) -> str:
@@ -39,10 +38,6 @@ def classify_gap(status_counts: Counter, test_count: int) -> str:
     if status_counts.get("survived", 0):
         return "weak-assertions-or-missing-edge-cases"
     return "investigate"
-
-
-def candidate_test_file(module_name: str) -> str:
-    return f"tests/test_{module_name.split('.')[-1]}.py"
 
 
 def focus_hints(function_key: str) -> list[str]:
@@ -89,7 +84,9 @@ def build_gap_report(root: Path, top: int, target_statuses: set[str]) -> list[di
                 "key": key,
                 "module": module_by_key[key],
                 "source_file": source_by_key[key],
-                "suggested_test_file": candidate_test_file(module_by_key[key]),
+                "suggested_test_file": candidate_test_file_for_module(
+                    module_by_key[key]
+                ),
                 "priority_score": score,
                 "target_mutants": sum(status_counts.values()),
                 "status_counts": dict(status_counts),
@@ -165,7 +162,9 @@ def main() -> int:
     args = parser.parse_args()
 
     root = args.root.resolve()
-    target_statuses = parse_statuses(args.statuses)
+    target_statuses = parse_target_statuses(
+        args.statuses, DEFAULT_TRIAGE_TARGET_STATUSES
+    )
     rows = build_gap_report(root, args.top, target_statuses)
 
     payload = {

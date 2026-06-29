@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter, defaultdict
+from collections.abc import Collection
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -35,6 +36,9 @@ DEFAULT_STATUS_SEVERITY = {
     "survived": 3,
     "no_tests": 4,
 }
+
+DEFAULT_RANK_TARGET_STATUSES = frozenset({"survived"})
+DEFAULT_TRIAGE_TARGET_STATUSES = frozenset({"no_tests", "survived", "timeout"})
 
 
 @dataclass(frozen=True)
@@ -81,6 +85,26 @@ def normalize_function_name(mangled_name: str) -> str:
     if cleaned.startswith("x_"):
         cleaned = cleaned[2:]
     return cleaned.replace("ǁ", ".")
+
+
+def parse_target_statuses(
+    raw_statuses: str | None,
+    default_statuses: Collection[str],
+    include_crash: bool = False,
+) -> set[str]:
+    if raw_statuses:
+        statuses = {
+            value.strip() for value in raw_statuses.split(",") if value.strip()
+        }
+    else:
+        statuses = set(default_statuses)
+    if include_crash:
+        statuses.add("crash")
+    return statuses
+
+
+def candidate_test_file_for_module(module_name: str) -> str:
+    return f"tests/test_{module_name.split('.')[-1]}.py"
 
 
 def split_mutant_key(key: str) -> tuple[str, str, str]:

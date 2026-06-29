@@ -15,9 +15,16 @@ import repository_context as repo_context
 from utils import date_utils
 from utils.global_date_store import build_store_payload
 
-if len(sys.argv) < 2:
-    print("Usage: app.py <repo_path>")
-    sys.exit(1)
+USAGE_MESSAGE = "Usage: app.py <repo_path>"
+
+
+def _require_repository_path_argument() -> None:
+    if len(sys.argv) < 2:
+        print(USAGE_MESSAGE)
+        sys.exit(1)
+
+
+_require_repository_path_argument()
 
 app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
 NAV_CONTAINER_STYLE = {
@@ -61,12 +68,13 @@ WORKFLOW_PAGE_ORDER = [
 WORKFLOW_PAGE_ORDER_INDEX = {
     module_name: idx for idx, module_name in enumerate(WORKFLOW_PAGE_ORDER)
 }
+WORKFLOW_PAGE_FALLBACK_INDEX = len(WORKFLOW_PAGE_ORDER)
 
 
 def _page_sort_key(page):
     module_name = str(page.get("module", ""))
     workflow_index = WORKFLOW_PAGE_ORDER_INDEX.get(
-        module_name, len(WORKFLOW_PAGE_ORDER)
+        module_name, WORKFLOW_PAGE_FALLBACK_INDEX
     )
     page_name = str(page.get("name", "")).lower()
     return workflow_index, page_name
