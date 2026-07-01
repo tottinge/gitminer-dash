@@ -227,11 +227,58 @@ def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
     )
 
     assert payload["status"] == "ok"
+    assert payload["status_detail"] == "Diagnostics completed."
+    assert payload["error_detail"] == ""
     assert payload["filename"] == "src/core.py"
     assert payload["message_count"] == 4
     assert payload["filtered_message_count"] == 4
+    assert payload["focused_intent"] == "all"
+    assert payload["intent_counts"] == [
+        {"intent": "fix", "count": 2},
+        {"intent": "chore", "count": 1},
+        {"intent": "feat", "count": 1},
+    ]
+    assert payload["classifications"] == [
+        {"intent": "feat", "message": "feat(core): add parser"},
+        {"intent": "fix", "message": "fix(core): patch parser"},
+        {"intent": "chore", "message": "chore(core): tidy parser"},
+        {"intent": "fix", "message": "fix(core): patch parser follow-up"},
+    ]
+    assert payload["evidence_rows"] == [
+        {
+            "intent": "feat",
+            "hash": "aaa1111",
+            "date": "2026-05-01 12:00",
+            "message": "feat(core): add parser",
+        },
+        {
+            "intent": "fix",
+            "hash": "bbb2222",
+            "date": "2026-05-02 12:00",
+            "message": "fix(core): patch parser",
+        },
+        {
+            "intent": "chore",
+            "hash": "ccc3333",
+            "date": "2026-05-04 12:00",
+            "message": "chore(core): tidy parser",
+        },
+        {
+            "intent": "fix",
+            "hash": "ddd4444",
+            "date": "2026-05-05 12:00",
+            "message": "fix(core): patch parser follow-up",
+        },
+    ]
+    assert payload["advisory_note"] == (
+        "Signals are advisory. Review commit evidence before deciding whether "
+        "to refactor."
+    )
     assert payload["intent_leader"] == "fix"
+    assert payload["leader_coverage_percent"] == 50
     assert payload["fixlike_ratio_percent"] == 50
+    assert payload["feature_ratio_percent"] == 25
+    assert payload["maintenance_ratio_percent"] == 25
     assert payload["short_gap_followups"] == 3
     assert payload["short_gap_shared_hunk_followups"] == 2
     assert payload["median_revisit_days"] == 1.0
