@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 import json
-import runpy
 from pathlib import Path
+
+from tests.script_namespace_loader import load_script_namespace
 
 
 def _load_mutant_type_report_namespace() -> dict:
-    current_path = Path(__file__).resolve()
-    for parent in current_path.parents:
-        script_path = parent / "scripts" / "mutant_type_report"
-        if script_path.exists():
-            return runpy.run_path(str(script_path))
-    raise FileNotFoundError("Could not locate scripts/mutant_type_report")
+    return load_script_namespace("mutant_type_report", start_path=__file__)
 
 
 def test_classify_mutation_detects_lookup_argument_changes():

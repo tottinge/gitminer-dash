@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-import runpy
 from pathlib import Path
 from types import SimpleNamespace
 
+from tests.script_namespace_loader import load_script_namespace
+
 
 def _load_mutant_triage_namespace() -> dict:
-    current_path = Path(__file__).resolve()
-    for parent in current_path.parents:
-        script_path = parent / "scripts" / "mutant_triage"
-        if script_path.exists():
-            return runpy.run_path(str(script_path))
-    raise FileNotFoundError("Could not locate scripts/mutant_triage")
+    return load_script_namespace("mutant_triage", start_path=__file__)
 
 
 def _record(
