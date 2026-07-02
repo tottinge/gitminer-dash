@@ -8,6 +8,7 @@ import json
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
+from typing import Any
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -18,12 +19,55 @@ from mutant_common import (
     collect_mutants,
     filter_mutants_for_source,
     load_tests_by_function,
+    mutation_type_for_record,
     relative_path_str,
 )
 add_project_root(__file__)
+PARAMETERIZED_DIMENSIONS_BY_MUTATION_TYPE = {
+    "comparison-boundary-shift": [
+        "inputs exactly at, below, and above each boundary",
+        "zero, one, and many-item boundary cardinalities",
+    ],
+    "boolean-operator-swap": [
+        "truth-table combinations for each predicate input",
+        "cases where only one predicate flips the outcome",
+    ],
+    "lookup-argument-mutation": [
+        "canonical keys plus casing/alias variants",
+        "missing key fallback behavior",
+    ],
+    "arithmetic-operator-swap": [
+        "positive, zero, and negative value combinations",
+        "known exact totals from representative fixtures",
+    ],
+    "return-value-mutation": [
+        "exact return values for canonical and edge inputs",
+        "shape and type invariants on returned payloads",
+    ],
+    "statement-deletion-or-simplification": [
+        "required fields are present and populated",
+        "multi-step behavior where dropping logic changes outcome",
+    ],
+    "statement-addition-or-expansion": [
+        "minimal inputs that should not trigger extra behavior",
+        "assert no accidental extra side effects/fields",
+    ],
+    "assignment-or-expression-mutation": [
+        "cross-check derived values against known-good fixtures",
+        "orthogonal combinations of inputs affecting the expression",
+    ],
+    "string-literal-mutation": [
+        "canonical label/token values from user-visible contract",
+    ],
+    "no-text-change": [
+        "no additional parameterization needed; inspect for equivalence",
+    ],
+}
 
 
-def rank_sources_by_no_tests(records, root: Path) -> list[dict[str, object]]:
+def rank_sources_for_clustered_remediation(
+    records, root: Path
+) -> list[dict[str, object]]:
     counts_by_source: dict[str, Counter] = defaultdict(Counter)
 
     for record in records:
@@ -45,8 +89,8 @@ def rank_sources_by_no_tests(records, root: Path) -> list[dict[str, object]]:
     return sorted(
         ranked_sources,
         key=lambda row: (
-            -int(row["no_tests"]),
             -int(row["survived"]),
+            -int(row["no_tests"]),
             -int(row["timeout"]),
             -int(row["total_mutants"]),
             str(row["source_file"]),
@@ -62,6 +106,10 @@ def select_source_query(
 
     if not ranked_sources:
         return "", "none"
+
+    for row in ranked_sources:
+        if int(row["survived"]) > 0:
+            return str(row["source_file"]), "top-survived"
 
     for row in ranked_sources:
         if int(row["no_tests"]) > 0:
@@ -221,11 +269,111 @@ def surviving_mutant_source_rows(
     return rows
 
 
+def parameterized_dimensions_for_mutation_type(
+    mutation_type: str,
+) -> list[str]:
+    return PARAMETERIZED_DIMENSIONS_BY_MUTATION_TYPE.get(
+        mutation_type,
+        [
+            "cover happy-path, edge-case, and invalid-input variants "
+            "with exact assertions"
+        ],
+    )
+
+
+def survivor_clusters(
+    surviving_records, root: Path
+) -> list[dict[str, Any]]:
+    source_cache: dict[Path, dict[str, str]] = {}
+    clusters: dict[tuple[str, str], dict[str, Any]] = {}
+
+    for record in surviving_records:
+        mutation_type = mutation_type_for_record(record, source_cache)
+        if mutation_type is None:
+            mutation_type = "unclassified"
+        cluster_key = (record.base_key, mutation_type)
+
+        if cluster_key not in clusters:
+            clusters[cluster_key] = {
+                "function_key": record.base_key,
+                "module": record.module,
+                "function": record.function,
+                "source_file": relative_path_str(record.source_path, root),
+                "mutation_type": mutation_type,
+                "survivor_count": 0,
+                "sample_mutant_keys": [],
+                "parameterized_dimensions": (
+                    parameterized_dimensions_for_mutation_type(mutation_type)
+                ),
+            }
+
+        cluster = clusters[cluster_key]
+        cluster["survivor_count"] += 1
+        sample_mutant_keys = cluster["sample_mutant_keys"]
+        if len(sample_mutant_keys) < 5:
+            sample_mutant_keys.append(record.key)
+
+    return sorted(
+        clusters.values(),
+        key=lambda row: (
+            -int(row["survivor_count"]),
+            str(row["function_key"]),
+            str(row["mutation_type"]),
+        ),
+    )
+
+
+def parameterized_test_plan(
+    clusters: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    plans_by_function: dict[str, dict[str, Any]] = {}
+
+    for cluster in clusters:
+        function_key = str(cluster["function_key"])
+        if function_key not in plans_by_function:
+            plans_by_function[function_key] = {
+                "function_key": function_key,
+                "source_file": cluster["source_file"],
+                "survivor_count": 0,
+                "mutation_type_counts": [],
+                "parameterized_dimensions": [],
+                "sample_mutant_keys": [],
+            }
+        plan = plans_by_function[function_key]
+        plan["survivor_count"] += int(cluster["survivor_count"])
+        plan["mutation_type_counts"].append(
+            {
+                "mutation_type": cluster["mutation_type"],
+                "count": cluster["survivor_count"],
+            }
+        )
+
+        dimensions = plan["parameterized_dimensions"]
+        for dimension in cluster["parameterized_dimensions"]:
+            if dimension not in dimensions:
+                dimensions.append(dimension)
+        sample_keys = plan["sample_mutant_keys"]
+        for key in cluster["sample_mutant_keys"]:
+            if key not in sample_keys and len(sample_keys) < 8:
+                sample_keys.append(key)
+
+    sorted_plans = sorted(
+        plans_by_function.values(),
+        key=lambda row: (-int(row["survivor_count"]), str(row["function_key"])),
+    )
+    for plan in sorted_plans:
+        plan["mutation_type_counts"] = sorted(
+            plan["mutation_type_counts"],
+            key=lambda row: (-int(row["count"]), str(row["mutation_type"])),
+        )
+    return sorted_plans
+
+
 def build_report(
     root: Path, source_query: str | None, top_sources: int
 ) -> dict[str, object]:
     records = collect_mutants(root)
-    ranked_sources = rank_sources_by_no_tests(records, root)
+    ranked_sources = rank_sources_for_clustered_remediation(records, root)
     selected_query, selection_mode = select_source_query(
         ranked_sources, source_query
     )
@@ -244,6 +392,8 @@ def build_report(
     surviving_mutant_sources = surviving_mutant_source_rows(
         surviving_records, root
     )
+    clusters = survivor_clusters(surviving_records, root)
+    cluster_test_plan = parameterized_test_plan(clusters)
 
     tests_by_function = load_tests_by_function(root)
     mapped_test_names = mapped_tests_for_records(
@@ -264,6 +414,8 @@ def build_report(
         "matched_source_files": matched_source_files,
         "surviving_count": len(surviving_records),
         "surviving_mutant_sources": surviving_mutant_sources,
+        "survivor_clusters": clusters,
+        "parameterized_test_plan": cluster_test_plan,
         "mapped_test_files": mapped_test_files,
         "mapped_tests": mapped_test_names,
         "candidate_test_files": candidate_test_files,
@@ -276,12 +428,12 @@ def print_text_report(report: dict[str, object]) -> None:
 
     top_sources = report["top_sources"]
     if top_sources:
-        print("Top source files by no_tests concentration:")
+        print("Top source files by survivor concentration:")
         for index, row in enumerate(top_sources, start=1):
             print(
                 f"  {index}. {row['source_file']} | "
-                f"no_tests={row['no_tests']} | "
                 f"survived={row['survived']} | "
+                f"no_tests={row['no_tests']} | "
                 f"timeout={row['timeout']} | "
                 f"total={row['total_mutants']}"
             )
@@ -324,6 +476,34 @@ def print_text_report(report: dict[str, object]) -> None:
                 print("    patch:")
                 print(indented_text(row["patch"]))
             print("")
+    survivor_clusters_rows = report["survivor_clusters"]
+    if not survivor_clusters_rows:
+        print("No survivor clusters for the selected source query.")
+        print("")
+    else:
+        print("Survivor clusters (function × mutation type):")
+        for row in survivor_clusters_rows:
+            print(
+                f"  - {row['function_key']} | type={row['mutation_type']} | "
+                f"survivors={row['survivor_count']}"
+            )
+            print(
+                "    sample mutants: "
+                f"{', '.join(row['sample_mutant_keys'])}"
+            )
+        print("")
+
+    parameterized_plans = report["parameterized_test_plan"]
+    if parameterized_plans:
+        print("Parameterized test plan (one comprehensive test per function):")
+        for row in parameterized_plans:
+            print(
+                f"  - {row['function_key']} | survivors={row['survivor_count']} | "
+                f"types={row['mutation_type_counts']}"
+            )
+            for dimension in row["parameterized_dimensions"]:
+                print(f"    dimension: {dimension}")
+        print("")
 
     mapped_test_files = report["mapped_test_files"]
     print("Mapped test files from mutmut stats:")
@@ -346,8 +526,9 @@ def print_text_report(report: dict[str, object]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Show a fast mutant triage view: no_tests concentration, "
-            "surviving mutant patch diffs for one file, and related tests."
+            "Show a clustered mutant triage view for one source: survivor "
+            "ranking, function×mutation-type clusters, parameterized-test "
+            "guidance, patch diffs, and related tests."
         )
     )
     parser.add_argument(
@@ -356,7 +537,7 @@ def main() -> int:
         default=None,
         help=(
             "Optional source file query (basename, relative path, or absolute "
-            "path). If omitted, the top no_tests source is selected."
+            "path). If omitted, the top survived source is selected."
         ),
     )
     parser.add_argument(

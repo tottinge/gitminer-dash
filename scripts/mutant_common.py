@@ -7,6 +7,7 @@ status weighting so command scripts can share one implementation.
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter, defaultdict
 from collections.abc import Collection
 from dataclasses import dataclass
@@ -39,6 +40,8 @@ DEFAULT_STATUS_SEVERITY = {
 
 DEFAULT_RANK_TARGET_STATUSES = frozenset({"survived"})
 DEFAULT_TRIAGE_TARGET_STATUSES = frozenset({"no_tests", "survived", "timeout"})
+MUTANT_NAME_PATTERN = re.compile(r"^(?P<base>.+)__mutmut_(?P<suffix>orig|\d+)$")
+DEF_PATTERN = re.compile(r"^def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -105,6 +108,111 @@ def parse_target_statuses(
 
 def candidate_test_file_for_module(module_name: str) -> str:
     return f"tests/test_{module_name.split('.')[-1]}.py"
+
+
+def classify_mutation(original_source: str, mutant_source: str) -> str:
+    if original_source == mutant_source:
+        return "no-text-change"
+    if "XXXX" in mutant_source or "XX" in mutant_source:
+        return "string-literal-mutation"
+
+    if (
+        ".get(" in original_source
+        and ".get(" in mutant_source
+        and original_source != mutant_source
+    ):
+        return "lookup-argument-mutation"
+
+    if (" and " in original_source and " or " in mutant_source) or (
+        " or " in original_source and " and " in mutant_source
+    ):
+        return "boolean-operator-swap"
+
+    if (
+        (" >= " in original_source and " > " in mutant_source)
+        or (" > " in original_source and " >= " in mutant_source)
+        or (" <= " in original_source and " < " in mutant_source)
+        or (" < " in original_source and " <= " in mutant_source)
+    ):
+        return "comparison-boundary-shift"
+
+    if (
+        (" + " in original_source and " - " in mutant_source)
+        or (" - " in original_source and " + " in mutant_source)
+        or (" * " in original_source and " / " in mutant_source)
+        or (" / " in original_source and " * " in mutant_source)
+    ):
+        return "arithmetic-operator-swap"
+
+    original_returns = [
+        line.strip()
+        for line in original_source.splitlines()
+        if line.strip().startswith("return ")
+    ]
+    mutant_returns = [
+        line.strip()
+        for line in mutant_source.splitlines()
+        if line.strip().startswith("return ")
+    ]
+    if (
+        original_returns
+        and mutant_returns
+        and original_returns != mutant_returns
+    ):
+        return "return-value-mutation"
+
+    if len(mutant_source) < len(original_source):
+        return "statement-deletion-or-simplification"
+    if len(mutant_source) > len(original_source):
+        return "statement-addition-or-expansion"
+    return "assignment-or-expression-mutation"
+
+
+def load_function_sources(mutants_py_file: Path) -> dict[str, str]:
+    source_text = mutants_py_file.read_text()
+    matches = list(DEF_PATTERN.finditer(source_text))
+    function_sources: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        function_name = match.group(1)
+        start = match.start()
+        end = (
+            matches[index + 1].start()
+            if index + 1 < len(matches)
+            else len(source_text)
+        )
+        function_sources[function_name] = source_text[start:end]
+    return function_sources
+
+
+def mutation_type_for_record(
+    record: MutantRecord, source_cache: dict[Path, dict[str, str]]
+) -> str | None:
+    mutants_py_file = record.meta_path.with_suffix("")
+    if mutants_py_file not in source_cache:
+        try:
+            source_cache[mutants_py_file] = load_function_sources(
+                mutants_py_file
+            )
+        except (FileNotFoundError, OSError, SyntaxError):
+            source_cache[mutants_py_file] = {}
+    function_sources = source_cache[mutants_py_file]
+
+    mutant_function_name = record.key.rsplit(".", 1)[-1]
+    match = MUTANT_NAME_PATTERN.match(mutant_function_name)
+    if not match:
+        return None
+    base_name = match.group("base")
+    original_function_name = f"{base_name}__mutmut_orig"
+    if (
+        original_function_name not in function_sources
+        or mutant_function_name not in function_sources
+    ):
+        return None
+
+    return classify_mutation(
+        function_sources[original_function_name],
+        function_sources[mutant_function_name],
+    )
 
 
 def split_mutant_key(key: str) -> tuple[str, str, str]:
