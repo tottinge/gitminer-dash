@@ -92,10 +92,11 @@ def test_generate_file_payload_returns_invalid_date_range_contract():
     get_repo_fn = Mock()
     collect_file_commit_evidence_fn = Mock()
     classify_commit_messages_fn = Mock()
+    date_range_data = {"period": "Broken"}
 
     payload = generate_file_change_diagnostic_payload(
         filename="src/core.py",
-        date_range_data={"period": "Broken"},
+        date_range_data=date_range_data,
         focused_intent="all",
         parse_date_range_fn=parse_date_range_fn,
         get_repo_fn=get_repo_fn,
@@ -105,7 +106,11 @@ def test_generate_file_payload_returns_invalid_date_range_contract():
 
     assert payload["status"] == "invalid_date_range"
     assert payload["filename"] == "src/core.py"
+    assert payload["status_detail"] == "Date range could not be parsed."
     assert payload["error_detail"] == "Bad date range"
+    assert payload["focused_intent"] == "all"
+    assert payload["filtered_message_count"] == 0
+    parse_date_range_fn.assert_called_once_with(date_range_data)
     get_repo_fn.assert_not_called()
     collect_file_commit_evidence_fn.assert_not_called()
     classify_commit_messages_fn.assert_not_called()
@@ -114,14 +119,16 @@ def test_generate_file_payload_returns_invalid_date_range_contract():
 def test_generate_file_payload_returns_no_messages_contract():
     period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
     period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    date_range_data = {"period": "Last 30 days"}
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
-    get_repo_fn = Mock(return_value=object())
+    repo = object()
+    get_repo_fn = Mock(return_value=repo)
     collect_file_commit_evidence_fn = Mock(return_value=[])
     classify_commit_messages_fn = Mock()
 
     payload = generate_file_change_diagnostic_payload(
         filename="src/core.py",
-        date_range_data={"period": "Last 30 days"},
+        date_range_data=date_range_data,
         focused_intent="all",
         parse_date_range_fn=parse_date_range_fn,
         get_repo_fn=get_repo_fn,
@@ -131,13 +138,29 @@ def test_generate_file_payload_returns_no_messages_contract():
 
     assert payload["status"] == "no_messages"
     assert payload["filename"] == "src/core.py"
+    assert (
+        payload["status_detail"]
+        == "No commit evidence found for selected file."
+    )
+    assert payload["error_detail"] == ""
     assert payload["message_count"] == 0
+    assert payload["filtered_message_count"] == 0
+    assert payload["focused_intent"] == "all"
+    parse_date_range_fn.assert_called_once_with(date_range_data)
+    get_repo_fn.assert_called_once_with()
+    collect_file_commit_evidence_fn.assert_called_once_with(
+        repo,
+        "src/core.py",
+        period_start,
+        period_end,
+    )
     classify_commit_messages_fn.assert_not_called()
 
 
 def test_generate_file_payload_handles_missing_repository_path_error():
     period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
     period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    date_range_data = {"period": "Last 30 days"}
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(side_effect=ValueError("No repository path provided"))
     collect_file_commit_evidence_fn = Mock()
@@ -145,7 +168,7 @@ def test_generate_file_payload_handles_missing_repository_path_error():
 
     payload = generate_file_change_diagnostic_payload(
         filename="src/core.py",
-        date_range_data={"period": "Last 30 days"},
+        date_range_data=date_range_data,
         focused_intent="all",
         parse_date_range_fn=parse_date_range_fn,
         get_repo_fn=get_repo_fn,
@@ -155,6 +178,11 @@ def test_generate_file_payload_handles_missing_repository_path_error():
 
     assert payload["status"] == "repository_unavailable"
     assert payload["filename"] == "src/core.py"
+    assert payload["status_detail"] == "Repository selection is required."
+    assert payload["error_detail"] == "No repository path provided"
+    assert payload["focused_intent"] == "all"
+    parse_date_range_fn.assert_called_once_with(date_range_data)
+    get_repo_fn.assert_called_once_with()
     collect_file_commit_evidence_fn.assert_not_called()
     classify_commit_messages_fn.assert_not_called()
 
@@ -162,63 +190,63 @@ def test_generate_file_payload_handles_missing_repository_path_error():
 def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
     period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
     period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    date_range_data = {"period": "Last 30 days"}
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
-    get_repo_fn = Mock(return_value=object())
-    collect_file_commit_evidence_fn = Mock(
-        return_value=[
-            _evidence_row(
-                sha="aaa1111",
-                day=1,
-                message="feat(core): add parser",
-                neighbors=["src/a.py"],
-                hunk_fingerprints=["hunk-a"],
-            ),
-            _evidence_row(
-                sha="bbb2222",
-                day=2,
-                message="fix(core): patch parser",
-                neighbors=["src/a.py", "src/b.py"],
-                hunk_fingerprints=["hunk-a"],
-            ),
-            _evidence_row(
-                sha="ccc3333",
-                day=4,
-                message="chore(core): tidy parser",
-                neighbors=["src/c.py"],
-                hunk_fingerprints=["hunk-c"],
-            ),
-            _evidence_row(
-                sha="ddd4444",
-                day=5,
-                message="fix(core): patch parser follow-up",
-                neighbors=["src/a.py"],
-                hunk_fingerprints=["hunk-c"],
-            ),
-        ]
-    )
-    classify_commit_messages_fn = Mock(
-        return_value={
-            "message_count": 4,
-            "intent_counts": [
-                {"intent": "fix", "count": 2},
-                {"intent": "chore", "count": 1},
-                {"intent": "feat", "count": 1},
-            ],
-            "classifications": [
-                {"intent": "feat", "message": "feat(core): add parser"},
-                {"intent": "fix", "message": "fix(core): patch parser"},
-                {"intent": "chore", "message": "chore(core): tidy parser"},
-                {
-                    "intent": "fix",
-                    "message": "fix(core): patch parser follow-up",
-                },
-            ],
-        }
-    )
+    repo = object()
+    get_repo_fn = Mock(return_value=repo)
+    file_commit_evidence = [
+        _evidence_row(
+            sha="aaa1111",
+            day=1,
+            message="feat(core): add parser",
+            neighbors=["src/a.py"],
+            hunk_fingerprints=["hunk-a"],
+        ),
+        _evidence_row(
+            sha="bbb2222",
+            day=2,
+            message="fix(core): patch parser",
+            neighbors=["src/a.py", "src/b.py"],
+            hunk_fingerprints=["hunk-a"],
+        ),
+        _evidence_row(
+            sha="ccc3333",
+            day=4,
+            message="chore(core): tidy parser",
+            neighbors=["src/c.py"],
+            hunk_fingerprints=["hunk-c"],
+        ),
+        _evidence_row(
+            sha="ddd4444",
+            day=5,
+            message="fix(core): patch parser follow-up",
+            neighbors=["src/a.py"],
+            hunk_fingerprints=["hunk-c"],
+        ),
+    ]
+    collect_file_commit_evidence_fn = Mock(return_value=file_commit_evidence)
+    classification_result = {
+        "message_count": 4,
+        "intent_counts": [
+            {"intent": "fix", "count": 2},
+            {"intent": "chore", "count": 1},
+            {"intent": "feat", "count": 1},
+        ],
+        "classifications": [
+            {"intent": "feat", "message": "feat(core): add parser"},
+            {"intent": "fix", "message": "fix(core): patch parser"},
+            {"intent": "chore", "message": "chore(core): tidy parser"},
+            {
+                "intent": "fix",
+                "message": "fix(core): patch parser follow-up",
+            },
+        ],
+    }
+    classify_commit_messages_fn = Mock(return_value=classification_result)
 
     payload = generate_file_change_diagnostic_payload(
         filename="src/core.py",
-        date_range_data={"period": "Last 30 days"},
+        date_range_data=date_range_data,
         focused_intent="all",
         parse_date_range_fn=parse_date_range_fn,
         get_repo_fn=get_repo_fn,
@@ -302,6 +330,22 @@ def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
     assert payload["rework_episodes"][0]["anchor_hash"] == "aaa1111"
     assert payload["rework_episodes"][0]["shared_hunk_count"] == 1
     assert payload["rework_episodes"][0]["rework_signal_score"] == 3
+    parse_date_range_fn.assert_called_once_with(date_range_data)
+    get_repo_fn.assert_called_once_with()
+    collect_file_commit_evidence_fn.assert_called_once_with(
+        repo,
+        "src/core.py",
+        period_start,
+        period_end,
+    )
+    classify_commit_messages_fn.assert_called_once_with(
+        [
+            "feat(core): add parser",
+            "fix(core): patch parser",
+            "chore(core): tidy parser",
+            "fix(core): patch parser follow-up",
+        ]
+    )
 
 
 def test_generate_file_payload_applies_intent_focus_to_evidence_rows():

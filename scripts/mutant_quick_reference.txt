@@ -16,21 +16,19 @@ Recommended flow
 ----------------
 1) Inventory artifacts and status counts:
    ./scripts/mutant_discover --top 10
-
-2) Rank where to focus next:
+2) Classify dominant survivor mutation types:
+   ./scripts/mutant_type_report --top 10
+3) Rank where to focus next:
    ./scripts/mutant_rank --top 10
-
-3) Identify likely test gaps:
+4) Identify likely test gaps:
    ./scripts/mutant_test_gap --top 10
-
-4) Get concrete test suggestions:
+5) Get concrete test suggestions:
    ./scripts/mutant_suggest --top 10
-5) Triage one target source file in one command:
+6) Triage one target source file in one command:
    ./scripts/mutant_triage
    # or select a specific source directly
    ./scripts/mutant_triage algorithms/graph_statistics.py
-
-6) Track progress over time:
+7) Track progress over time:
    ./scripts/mutant_verify --save-snapshot .tmp/mutant-baseline.json
    # ... make test improvements ...
    ./scripts/mutant_verify --baseline .tmp/mutant-baseline.json --top-changes 25
@@ -47,6 +45,12 @@ Script details
   - Default target statuses: no_tests,survived,timeout
   - Best for: deciding where test effort pays off most.
   - Useful flags: --scope function|module|both, --statuses, --include-crash, --top, --json
+
+./scripts/mutant_type_report
+  - What it does: groups targeted mutants by mutation type and file×type hotspots,
+    with a likely-cosmetic shortlist for pragma triage.
+  - Best for: choosing tests vs cosmetic suppression before writing code.
+  - Useful flags: --statuses, --include-crash, --top, --json
 
 ./scripts/mutant_test_gap
   - What it does: maps mutant targets to existing tests and classifies gap type.

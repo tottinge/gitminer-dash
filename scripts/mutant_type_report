@@ -1,0 +1,269 @@
+#!/usr/bin/env python3
+"""Summarize surviving mutmut results by mutation type and file hotspot."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from bootstrap_paths import add_project_root
+from mutant_common import (
+    DEFAULT_RANK_TARGET_STATUSES,
+    collect_mutants,
+    parse_target_statuses,
+    relative_path_str,
+)
+
+add_project_root(__file__)
+MUTANT_NAME_PATTERN = re.compile(r"^(?P<base>.+)__mutmut_(?P<suffix>orig|\d+)$")
+DEF_PATTERN = re.compile(r"^def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(", re.MULTILINE)
+DEFAULT_COSMETIC_CATEGORIES = frozenset(
+    {"string-literal-mutation", "statement-deletion-or-simplification"}
+)
+
+
+def classify_mutation(original_source: str, mutant_source: str) -> str:
+    if original_source == mutant_source:
+        return "no-text-change"
+    if "XXXX" in mutant_source or "XX" in mutant_source:
+        return "string-literal-mutation"
+
+    if (
+        ".get(" in original_source
+        and ".get(" in mutant_source
+        and original_source != mutant_source
+    ):
+        return "lookup-argument-mutation"
+
+    if (
+        (" and " in original_source and " or " in mutant_source)
+        or (" or " in original_source and " and " in mutant_source)
+    ):
+        return "boolean-operator-swap"
+
+    if (
+        (" >= " in original_source and " > " in mutant_source)
+        or (" > " in original_source and " >= " in mutant_source)
+        or (" <= " in original_source and " < " in mutant_source)
+        or (" < " in original_source and " <= " in mutant_source)
+    ):
+        return "comparison-boundary-shift"
+
+    if (
+        (" + " in original_source and " - " in mutant_source)
+        or (" - " in original_source and " + " in mutant_source)
+        or (" * " in original_source and " / " in mutant_source)
+        or (" / " in original_source and " * " in mutant_source)
+    ):
+        return "arithmetic-operator-swap"
+
+    original_returns = [
+        line.strip()
+        for line in original_source.splitlines()
+        if line.strip().startswith("return ")
+    ]
+    mutant_returns = [
+        line.strip()
+        for line in mutant_source.splitlines()
+        if line.strip().startswith("return ")
+    ]
+    if original_returns and mutant_returns and original_returns != mutant_returns:
+        return "return-value-mutation"
+
+    if len(mutant_source) < len(original_source):
+        return "statement-deletion-or-simplification"
+    if len(mutant_source) > len(original_source):
+        return "statement-addition-or-expansion"
+    return "assignment-or-expression-mutation"
+
+
+def load_function_sources(mutants_py_file: Path) -> dict[str, str]:
+    source_text = mutants_py_file.read_text()
+    matches = list(DEF_PATTERN.finditer(source_text))
+    function_sources: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        function_name = match.group(1)
+        start = match.start()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(
+            source_text
+        )
+        function_sources[function_name] = source_text[start:end]
+    return function_sources
+
+
+def likely_cosmetic(source_file: str, mutation_type: str) -> bool:
+    if "storybook" in source_file:
+        return True
+    return (
+        source_file.startswith("visualization/")
+        and mutation_type in DEFAULT_COSMETIC_CATEGORIES
+    )
+
+
+def build_report(
+    root: Path, target_statuses: set[str], top: int
+) -> dict[str, object]:
+    records = [
+        record
+        for record in collect_mutants(root)
+        if record.status in target_statuses
+    ]
+
+    mutation_type_counts: Counter[str] = Counter()
+    source_type_counts: Counter[tuple[str, str]] = Counter()
+    likely_cosmetic_counts: Counter[tuple[str, str]] = Counter()
+    sample_keys_by_type: dict[str, list[str]] = defaultdict(list)
+    source_cache: dict[Path, dict[str, str]] = {}
+
+    for record in records:
+        mutants_py_file = record.meta_path.with_suffix("")
+        if mutants_py_file not in source_cache:
+            try:
+                source_cache[mutants_py_file] = load_function_sources(
+                    mutants_py_file
+                )
+            except (FileNotFoundError, OSError, SyntaxError):
+                source_cache[mutants_py_file] = {}
+        function_sources = source_cache[mutants_py_file]
+
+        mutant_function_name = record.key.rsplit(".", 1)[-1]
+        match = MUTANT_NAME_PATTERN.match(mutant_function_name)
+        if not match:
+            continue
+        base_name = match.group("base")
+        original_function_name = f"{base_name}__mutmut_orig"
+        if (
+            original_function_name not in function_sources
+            or mutant_function_name not in function_sources
+        ):
+            continue
+
+        mutation_type = classify_mutation(
+            function_sources[original_function_name],
+            function_sources[mutant_function_name],
+        )
+        source_file = relative_path_str(record.source_path, root)
+
+        mutation_type_counts[mutation_type] += 1
+        source_type_counts[(source_file, mutation_type)] += 1
+        if likely_cosmetic(source_file, mutation_type):
+            likely_cosmetic_counts[(source_file, mutation_type)] += 1
+        if len(sample_keys_by_type[mutation_type]) < 5:
+            sample_keys_by_type[mutation_type].append(record.key)
+
+    return {
+        "root": str(root),
+        "target_statuses": sorted(target_statuses),
+        "total_targets": len(records),
+        "mutation_types": [
+            {"mutation_type": mutation_type, "count": count}
+            for mutation_type, count in mutation_type_counts.most_common(top)
+        ],
+        "source_type_hotspots": [
+            {"source_file": source_file, "mutation_type": mutation_type, "count": count}
+            for (source_file, mutation_type), count in source_type_counts.most_common(
+                top
+            )
+        ],
+        "likely_cosmetic_hotspots": [
+            {"source_file": source_file, "mutation_type": mutation_type, "count": count}
+            for (source_file, mutation_type), count in likely_cosmetic_counts.most_common(
+                top
+            )
+        ],
+        "sample_keys_by_type": dict(sample_keys_by_type),
+    }
+
+
+def print_text_report(report: dict[str, object]) -> None:
+    print(f"Root: {report['root']}")
+    print(f"Target statuses: {', '.join(report['target_statuses'])}")
+    print(f"Targets analyzed: {report['total_targets']}")
+    print("")
+
+    print("Top mutation types:")
+    for row in report["mutation_types"]:
+        print(f"  - {row['mutation_type']}: {row['count']}")
+    print("")
+
+    print("Top source × type hotspots:")
+    for row in report["source_type_hotspots"]:
+        print(
+            f"  - {row['source_file']} | {row['mutation_type']} | "
+            f"count={row['count']}"
+        )
+    print("")
+
+    print("Likely cosmetic hotspots:")
+    for row in report["likely_cosmetic_hotspots"]:
+        print(
+            f"  - {row['source_file']} | {row['mutation_type']} | "
+            f"count={row['count']}"
+        )
+    print("")
+
+    print("Sample mutant keys by type:")
+    for mutation_type, keys in report["sample_keys_by_type"].items():
+        print(f"  - {mutation_type}")
+        for key in keys:
+            print(f"      • {key}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Summarize mutmut survivors by mutation type."
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=10,
+        help="Number of top rows to show per section (default: 10).",
+    )
+    parser.add_argument(
+        "--statuses",
+        default=None,
+        help="Comma-separated statuses to analyze (default: survived).",
+    )
+    parser.add_argument(
+        "--include-crash",
+        action="store_true",
+        help="Include crash mutants in target statuses.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON output.",
+    )
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    target_statuses = parse_target_statuses(
+        args.statuses,
+        DEFAULT_RANK_TARGET_STATUSES,
+        include_crash=args.include_crash,
+    )
+    report = build_report(root=root, target_statuses=target_statuses, top=args.top)
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print_text_report(report)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
