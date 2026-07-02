@@ -226,12 +226,30 @@ def source_path_for_module(root: Path, module: str) -> Path:
     return root / f"{module.replace('.', '/')}.py"
 
 
+def _is_project_mutation_artifact(path: Path, root: Path) -> bool:
+    root_abs = root.resolve()
+    path_abs = path.resolve()
+    try:
+        relative_path = path_abs.relative_to(root_abs)
+    except ValueError:
+        return False
+    return bool(relative_path.parts) and relative_path.parts[0] == "mutants"
+
+
 def find_meta_files(root: Path) -> list[Path]:
-    return sorted(root.rglob("*.py.meta"))
+    return [
+        path
+        for path in sorted(root.rglob("*.py.meta"))
+        if _is_project_mutation_artifact(path, root)
+    ]
 
 
 def find_stats_files(root: Path) -> list[Path]:
-    return sorted(root.rglob("mutmut-stats.json"))
+    return [
+        path
+        for path in sorted(root.rglob("mutmut-stats.json"))
+        if _is_project_mutation_artifact(path, root)
+    ]
 
 
 def parse_meta_file(meta_path: Path, root: Path) -> list[MutantRecord]:
