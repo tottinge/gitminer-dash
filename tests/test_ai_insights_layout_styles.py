@@ -1,6 +1,15 @@
 """Layout/style tests for AI Insights usability improvements."""
 
 from tests import setup_path
+from tests.dash_component_helpers import (
+    component_ids as _ids_under,
+)
+from tests.dash_component_helpers import (
+    find_component_by_id as _find_by_id,
+)
+from tests.dash_component_helpers import (
+    walk_components as _walk_components,
+)
 
 setup_path()
 import os
@@ -8,38 +17,6 @@ import sys
 from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-
-def _walk_components(component):
-    if component is None:
-        return
-    yield component
-    children = getattr(component, "children", None)
-    if isinstance(children, (list, tuple)):
-        for child in children:
-            yield from _walk_components(child)
-        return
-    if children is None or isinstance(children, str):
-        return
-    yield from _walk_components(children)
-
-
-def _find_by_id(root, component_id: str):
-    for component in _walk_components(root):
-        if getattr(component, "id", None) == component_id:
-            return component
-    msg = f"Component not found for id={component_id}"
-    raise AssertionError(msg)
-
-
-def _ids_under(component) -> set[str]:
-    return {
-        comp_id
-        for comp_id in (
-            getattr(item, "id", None) for item in _walk_components(component)
-        )
-        if comp_id
-    }
 
 
 @patch("dash.register_page")

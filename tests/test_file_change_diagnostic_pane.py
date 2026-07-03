@@ -1,5 +1,6 @@
 """Unit tests for file-change diagnostic pane view-model and rendering helpers."""
 
+from tests.dash_component_helpers import find_component_by_id as _find_by_id
 from visualization.file_change_diagnostic_pane import (
     ADVISORY_HELPER_MESSAGE,
     _build_file_change_diagnostic_view_model,
@@ -13,28 +14,6 @@ from visualization.file_change_diagnostic_pane import (
     build_label_chips,
     build_label_help_items,
 )
-
-
-def _walk_components(component):
-    if component is None:
-        return
-    yield component
-    children = getattr(component, "children", None)
-    if isinstance(children, (list, tuple)):
-        for child in children:
-            yield from _walk_components(child)
-        return
-    if children is None or isinstance(children, str):
-        return
-    yield from _walk_components(children)
-
-
-def _find_by_id(component, component_id: str):
-    for item in _walk_components(component):
-        if getattr(item, "id", None) == component_id:
-            return item
-    msg = f"Component not found for id={component_id}"
-    raise AssertionError(msg)
 
 
 def test_build_file_change_diagnostic_view_model_normalizes_values():

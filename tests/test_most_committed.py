@@ -1,6 +1,9 @@
 """Behavioral tests for the refactored Most Committed page."""
 
 from tests import setup_path
+from tests.dash_component_helpers import (
+    find_component_by_id as _find_component_by_id,
+)
 
 setup_path()
 import os
@@ -10,28 +13,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-
-def _walk_components(component):
-    if component is None:
-        return
-    yield component
-    children = getattr(component, "children", None)
-    if isinstance(children, (list, tuple)):
-        for child in children:
-            yield from _walk_components(child)
-        return
-    if children is None or isinstance(children, str):
-        return
-    yield from _walk_components(children)
-
-
-def _find_component_by_id(component, component_id):
-    for item in _walk_components(component):
-        if getattr(item, "id", None) == component_id:
-            return item
-    msg = f"Component not found for id={component_id}"
-    raise AssertionError(msg)
 
 
 @pytest.fixture

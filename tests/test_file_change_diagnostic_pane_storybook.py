@@ -2,6 +2,12 @@
 
 import pytest
 
+from tests.dash_component_helpers import (
+    find_component_by_id as _find_by_id,
+)
+from tests.dash_component_helpers import (
+    walk_components as _walk_components,
+)
 from visualization.file_change_diagnostic_pane import (
     EMPTY_SELECTION_MESSAGE,
     build_file_change_diagnostic_pane,
@@ -15,28 +21,6 @@ from visualization.file_change_diagnostic_pane_storybook import (
     story_feature_growth,
     story_thrash_leaning,
 )
-
-
-def _walk_components(component):
-    if component is None:
-        return
-    yield component
-    children = getattr(component, "children", None)
-    if isinstance(children, (list, tuple)):
-        for child in children:
-            yield from _walk_components(child)
-        return
-    if children is None or isinstance(children, str):
-        return
-    yield from _walk_components(children)
-
-
-def _find_by_id(component, component_id: str):
-    for item in _walk_components(component):
-        if getattr(item, "id", None) == component_id:
-            return item
-    msg = f"Component not found for id={component_id}"
-    raise AssertionError(msg)
 
 
 def test_storybook_registry_contains_expected_story_names():
