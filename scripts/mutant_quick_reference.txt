@@ -27,6 +27,11 @@ Recommended flow
    # a parameterized test plan (one comprehensive test per function).
    # or select a specific source directly
    ./scripts/mutant_triage algorithms/graph_statistics.py
+4b) Focus one function and get reusable mutmut rerun targets:
+   ./scripts/mutant_function_targets \
+     visualization/common_pair_intent_pane.py \
+     build_common_pair_intent_pane \
+     --show-target-keys
 5) Drill into surviving mutants for one source as needed:
    ./scripts/mutants_for <source-file-path>
 6) Identify likely test gaps:
@@ -81,6 +86,14 @@ Script details
   - Best for: batch-killing survivors with one contract-focused parameterized
     test per function rather than one-mutant-at-a-time loops.
   - Useful flags: source (optional), --top-sources, --json
+
+./scripts/mutant_function_targets
+  - What it does: narrows one source to one function, summarizes status and
+    mutation-type counts, and emits exact mutmut target keys plus a rerun
+    command.
+  - Best for: replacing ad-hoc one-off JSON/python extraction during iterative
+    mutation remediation for a specific function.
+  - Useful flags: --statuses, --include-crash, --show-target-keys, --json
 
 Internal helper
 ---------------

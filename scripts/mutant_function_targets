@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""Show mutant clusters and rerun targets for one source/function pair."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import Counter
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from bootstrap_paths import add_project_root
+from mutant_common import (
+    DEFAULT_RANK_TARGET_STATUSES,
+    collect_mutants,
+    filter_mutants_for_source,
+    mutation_type_for_record,
+    parameterized_dimensions_for_mutation_type,
+    parse_target_statuses,
+)
+
+add_project_root(__file__)
+
+
+def function_query_matches(record, function_query: str) -> bool:
+    query = function_query.strip()
+    if not query:
+        return False
+    candidates = {
+        record.base_key,
+        record.function,
+        record.mangled_function,
+        f"{record.module}.{record.function}",
+        f"{record.module}.{record.mangled_function}",
+    }
+    return query in candidates
+
+
+def build_report(
+    *,
+    root: Path,
+    source_query: str,
+    function_query: str,
+    target_statuses: set[str],
+) -> dict[str, object]:
+    records = collect_mutants(root)
+    matched_source_records = filter_mutants_for_source(
+        records, root, source_query
+    )
+    matched_function_records = [
+        record
+        for record in matched_source_records
+        if function_query_matches(record, function_query)
+    ]
+
+    matched_function_keys = sorted(
+        {record.base_key for record in matched_function_records}
+    )
+    status_counts = Counter(
+        record.status for record in matched_function_records
+    )
+    source_cache: dict[Path, dict[str, str]] = {}
+    mutation_type_counts: Counter[str] = Counter()
+    for record in matched_function_records:
+        mutation_type = mutation_type_for_record(record, source_cache)
+        mutation_type_counts[mutation_type or "unclassified"] += 1
+
+    target_records = [
+        record
+        for record in matched_function_records
+        if record.status in target_statuses
+    ]
+    target_mutant_keys = sorted(record.key for record in target_records)
+    target_mutation_types = sorted(
+        {
+            mutation_type_for_record(record, source_cache) or "unclassified"
+            for record in target_records
+        }
+    )
+    parameterized_dimensions: list[str] = []
+    for mutation_type in target_mutation_types:
+        for dimension in parameterized_dimensions_for_mutation_type(
+            mutation_type
+        ):
+            if dimension not in parameterized_dimensions:
+                parameterized_dimensions.append(dimension)
+
+    mutmut_run_command = ""
+    if target_mutant_keys:
+        mutmut_run_command = "uv run mutmut run " + " ".join(
+            target_mutant_keys
+        )
+
+    return {
+        "root": str(root),
+        "source_query": source_query,
+        "function_query": function_query,
+        "matched_source_count": len(matched_source_records),
+        "matched_function_count": len(matched_function_records),
+        "matched_function_keys": matched_function_keys,
+        "status_counts": dict(status_counts),
+        "mutation_type_counts": dict(
+            sorted(
+                mutation_type_counts.items(),
+                key=lambda row: (-row[1], row[0]),
+            )
+        ),
+        "target_statuses": sorted(target_statuses),
+        "target_mutant_count": len(target_mutant_keys),
+        "target_mutant_keys": target_mutant_keys,
+        "parameterized_dimensions": parameterized_dimensions,
+        "mutmut_run_command": mutmut_run_command,
+    }
+
+
+def print_text_report(
+    report: dict[str, object], *, show_target_keys: bool
+) -> None:
+    print(f"Source query: {report['source_query']}")
+    print(f"Function query: {report['function_query']}")
+    print(f"Matched source mutants: {report['matched_source_count']}")
+    print(f"Matched function mutants: {report['matched_function_count']}")
+    print("")
+
+    function_keys = report["matched_function_keys"]
+    if not function_keys:
+        print("No matched function keys.")
+    else:
+        print("Matched function keys:")
+        for function_key in function_keys:
+            print(f"  - {function_key}")
+    print("")
+
+    status_counts = report["status_counts"]
+    if not status_counts:
+        print("Status counts: (none)")
+    else:
+        print("Status counts:")
+        for status, count in sorted(
+            status_counts.items(), key=lambda row: (-row[1], row[0])
+        ):
+            print(f"  - {status}: {count}")
+    print("")
+
+    mutation_type_counts = report["mutation_type_counts"]
+    if not mutation_type_counts:
+        print("Mutation types: (none)")
+    else:
+        print("Mutation type counts:")
+        for mutation_type, count in mutation_type_counts.items():
+            print(f"  - {mutation_type}: {count}")
+    print("")
+
+    print(
+        "Target statuses: "
+        + ", ".join(report["target_statuses"])
+    )
+    print(f"Target mutants: {report['target_mutant_count']}")
+    if report["parameterized_dimensions"]:
+        print("Parameterized dimensions:")
+        for dimension in report["parameterized_dimensions"]:
+            print(f"  - {dimension}")
+    print("")
+
+    if show_target_keys and report["target_mutant_keys"]:
+        print("Target mutant keys:")
+        for key in report["target_mutant_keys"]:
+            print(f"  - {key}")
+        print("")
+        print("Mutmut rerun command:")
+        print(f"  {report['mutmut_run_command']}")
+        print("")
+    elif report["target_mutant_keys"]:
+        print("Use --show-target-keys to print full target keys and run command.")
+        print("")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Show one function's mutation-type clusters and mutmut rerun "
+            "targets for a selected source file."
+        )
+    )
+    parser.add_argument(
+        "source",
+        help="Source file query (basename, relative path, or absolute path).",
+    )
+    parser.add_argument(
+        "function",
+        help=(
+            "Function query (normalized function, mangled function, or base "
+            "function key)."
+        ),
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path("."),
+        help="Repository root to scan (default: current directory).",
+    )
+    parser.add_argument(
+        "--statuses",
+        default=None,
+        help=(
+            "Comma-separated statuses to include in target mutants "
+            "(default: survived)."
+        ),
+    )
+    parser.add_argument(
+        "--include-crash",
+        action="store_true",
+        help="Also include crash mutants in target status selection.",
+    )
+    parser.add_argument(
+        "--show-target-keys",
+        action="store_true",
+        help="Print all target mutant keys and a full mutmut rerun command.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON output.",
+    )
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    target_statuses = parse_target_statuses(
+        args.statuses,
+        DEFAULT_RANK_TARGET_STATUSES,
+        include_crash=args.include_crash,
+    )
+    report = build_report(
+        root=root,
+        source_query=args.source,
+        function_query=args.function,
+        target_statuses=target_statuses,
+    )
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print_text_report(report, show_target_keys=args.show_target_keys)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

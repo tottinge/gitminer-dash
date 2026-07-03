@@ -42,6 +42,46 @@ DEFAULT_RANK_TARGET_STATUSES = frozenset({"survived"})
 DEFAULT_TRIAGE_TARGET_STATUSES = frozenset({"no_tests", "survived", "timeout"})
 MUTANT_NAME_PATTERN = re.compile(r"^(?P<base>.+)__mutmut_(?P<suffix>orig|\d+)$")
 DEF_PATTERN = re.compile(r"^def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(", re.MULTILINE)
+PARAMETERIZED_DIMENSIONS_BY_MUTATION_TYPE = {
+    "comparison-boundary-shift": [
+        "inputs exactly at, below, and above each boundary",
+        "zero, one, and many-item boundary cardinalities",
+    ],
+    "boolean-operator-swap": [
+        "truth-table combinations for each predicate input",
+        "cases where only one predicate flips the outcome",
+    ],
+    "lookup-argument-mutation": [
+        "canonical keys plus casing/alias variants",
+        "missing key fallback behavior",
+    ],
+    "arithmetic-operator-swap": [
+        "positive, zero, and negative value combinations",
+        "known exact totals from representative fixtures",
+    ],
+    "return-value-mutation": [
+        "exact return values for canonical and edge inputs",
+        "shape and type invariants on returned payloads",
+    ],
+    "statement-deletion-or-simplification": [
+        "required fields are present and populated",
+        "multi-step behavior where dropping logic changes outcome",
+    ],
+    "statement-addition-or-expansion": [
+        "minimal inputs that should not trigger extra behavior",
+        "assert no accidental extra side effects/fields",
+    ],
+    "assignment-or-expression-mutation": [
+        "cross-check derived values against known-good fixtures",
+        "orthogonal combinations of inputs affecting the expression",
+    ],
+    "string-literal-mutation": [
+        "canonical label/token values from user-visible contract",
+    ],
+    "no-text-change": [
+        "no additional parameterization needed; inspect for equivalence",
+    ],
+}
 
 
 @dataclass(frozen=True)
@@ -212,6 +252,18 @@ def mutation_type_for_record(
     return classify_mutation(
         function_sources[original_function_name],
         function_sources[mutant_function_name],
+    )
+
+
+def parameterized_dimensions_for_mutation_type(
+    mutation_type: str,
+) -> list[str]:
+    return PARAMETERIZED_DIMENSIONS_BY_MUTATION_TYPE.get(
+        mutation_type,
+        [
+            "cover happy-path, edge-case, and invalid-input variants "
+            "with exact assertions"
+        ],
     )
 
 
