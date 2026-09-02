@@ -228,7 +228,12 @@ def generate_affinity_graph_result(
 
 
 def _first_click_point(click_data: dict[str, Any]) -> dict[str, Any]:
-    return click_data.get("points", [{}])[0]
+    points = click_data.get("points")
+    if isinstance(points, list) and points:
+        first_point = points[0]
+        if isinstance(first_point, dict):
+            return first_point
+    return {}
 
 
 def _file_path_from_hover_text(node_text: str) -> str:

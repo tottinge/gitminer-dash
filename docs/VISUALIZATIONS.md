@@ -43,6 +43,7 @@ Diff Summary provides a visualization of code churn or "thrash" in the repositor
 ## Merges
 
 The Merges visualization shows all merges in your repository. Each merge is represented visually with size and color indicating:
+
 - The number of lines changed
 - The number of files affected
 
@@ -53,10 +54,12 @@ This helps identify significant integration points in your development history.
 Strongest Pairings shows files that have the strongest affinity to each other, where affinity is based on how often they are committed together. The strength of the pairing is inversely proportional to the total number of files in those commits.
 
 For example:
+
 - Committing just files A & B together creates a strong pairing
 - Committing 1000 files (e.g., after reformatting everything) creates weak pairings between all files
 
 The visualization aggregates these pairings over a period to help identify:
+
 - Potential "shotgun surgery" (changes scattered across the codebase)
 - Files that frequently change together, suggesting they might be tightly coupled
 
@@ -73,23 +76,28 @@ Affinity Groups provides a network visualization of files that frequently change
 - **Edge thickness**: Thicker lines indicate stronger affinity between files
 
 The visualization includes controls to:
+
 - Select different time periods to analyze
 - Adjust the maximum number of nodes displayed to focus on the most important files
 - Set the minimum affinity factor to control the threshold for displaying connections between files
 
 This visualization helps identify:
+
 - Cohesive modules in your codebase (files that naturally belong together)
 - Central files that affect many other parts of the system
 - Unexpected dependencies between different areas of the codebase
+
 ## Community Flows (Sankey)
 
 Community Flows is a Sankey visualization that summarizes cross-community coupling in the file affinity network. Each node in the Sankey is a detected community (group of files that frequently change together), and each link shows the total affinity weight of edges that connect files across two different communities.
 
 The visualization includes controls to:
+
 - Adjust the maximum number of nodes considered in the underlying affinity graph
 - Set the minimum affinity factor threshold before an edge contributes to cross-community flow
 
 This view is especially useful for spotting:
+
 - Architectural boundaries that are leaking (large links between communities)
 - Potentially over-coupled modules that should be more independent
 - Periods where cross-module change pressure is increasing

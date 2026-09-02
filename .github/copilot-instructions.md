@@ -1,7 +1,9 @@
 # Copilot and coding-agent instructions for `gitminer-dash`
+
 Use these instructions for all edits in this repository.
 
 ## Mandatory workflow
+
 - Discover before changing: search standard library/framework/repo before creating new code.
 - Make the smallest conservative change that solves the requested problem.
 - Keep changes aligned with existing architecture, patterns, and domain vocabulary.
@@ -9,7 +11,9 @@ Use these instructions for all edits in this repository.
 - Before proposing merge readiness, run `./check` and `./run_tests`.
 
 ## Eleven virtues (operational)
+
 ### Product virtues
+
 - Working: prove correctness with tests/checks.
 - Unique: preserve a single point of truth; avoid duplication.
 - Simple: reduce local operands, operations, and paths.
@@ -19,12 +23,14 @@ Use these instructions for all edits in this repository.
 - Brief: remove noise and unnecessary ceremony.
 
 ### Stewardship virtues
+
 - Aligned: follow existing architecture/conventions.
 - Discovered: understand surrounding code before modifying.
 - Traceable: keep rationale explainable through requirement/defect/domain need.
 - Conservative: prefer focused incremental changes.
 
 ## Naming operational checklist
+
 - Name for team/domain audience, not individual style.
 - Prefer familiar ecosystem idioms already used in the codebase.
 - Prefer domain language used in tests/tickets/docs.

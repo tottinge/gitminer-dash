@@ -3,17 +3,19 @@
 Quick reference for finding and reusing code in `algorithms/`. Organized by functionality to help avoid duplication.
 
 ## File Affinity Analysis
+
 **Purpose**: Identify files that change together frequently
 
 - `affinity_calculator.py` - Core algorithm: calculates affinity scores for file pairs based on co-occurrence in commits
   - `calculate_affinities()` - Main entry point, returns dict of (file1, file2) → affinity score
   - `_calculate_affinities_from_commits()` - Inner loop logic, reusable for custom affinity calculations
-  
+
 - `affinity_analysis.py` - Advanced analysis helpers built on affinities
   - `get_file_total_affinities()` - Aggregate affinity scores per file
   - `get_top_files_by_affinity()` - Filter to N most connected files
 
 ## Commit Chain Analysis
+
 **Purpose**: Analyze sequences of related commits and their temporal patterns
 
 - `chain_models.py` - Data models (ChainData, ClampedChain, TimelineRow)
@@ -24,6 +26,7 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
 - `commit_graph.py` - Build NetworkX graphs from commit data
 
 ## File Change Statistics
+
 **Purpose**: Calculate metrics about file modifications over time
 
 - `file_changes.py` - Core file change analysis
@@ -32,6 +35,7 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
   - `FileChangeStats` - NamedTuple with structured results
 
 ## Commit Frequency & Top Files
+
 **Purpose**: Find most-changed files and their statistics
 
 - `commit_frequency.py` - Identify frequently modified files
@@ -39,6 +43,7 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
   - Internally uses `file_changes.py` for enrichment
 
 ## Conventional Commits
+
 **Purpose**: Parse and categorize commit messages by intent
 
 - `conventional_commits.py` - Parse conventional commit format (feat:, fix:, etc.)
@@ -54,6 +59,7 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
   - `classify_commit_messages()` - Return deterministic counts + row-level classifications
 
 ## Time-Based Analysis
+
 **Purpose**: Aggregate commits by time periods
 
 - `weekly_commits.py` - Group commits by week
@@ -63,9 +69,16 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
 
 - `diff_analysis.py` - Daily diff statistics
   - `get_diffs_in_period()` - Break down insertions/deletions into modifications vs net changes
+## Text Analysis
 
+**Purpose**: Analyze text content of commits
+
+- `word_frequency.py` - Count word occurrences in commit messages
+  - `calculate_word_frequency()` - With stop word filtering and min length
+  - `STOP_WORDS` - Configurable exclusion list
 
 ## Data Transformation
+
 **Purpose**: Convert analysis results to visualization-ready formats
 
 - `dataframe_builder.py` - Build pandas DataFrames
@@ -75,6 +88,7 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
 - `figure_builder.py` - Build Plotly figures (check for visualization helpers)
 
 ## Utility Patterns
+
 **Purpose**: Small reusable utilities
 
 - `change_series.py` - Generate change series between commits
@@ -84,18 +98,23 @@ Quick reference for finding and reusing code in `algorithms/`. Organized by func
 ## Common Patterns to Reuse
 
 ### Iterator Safety
+
 Many functions use `ensure_list()` from `utils.git` to handle iterators safely for re-use
 
 ### Date Range Filtering
+
 Most functions accept `begin`/`end` or `start`/`end` datetime parameters with sensible defaults
 
 ### Repository Access
+
 Functions accept optional `repo` parameter, defaulting to `get_repo()` from `utils.git`
 
 ### Error Handling
+
 File operations typically have try/except with logging and return zero/empty defaults
 
 ### Named Tuples for Results
+
 `FileChangeStats`, `ChainData`, `ClampedChain`, `TimelineRow` - prefer immutable results with slots
 
 ## Before Implementing New Features

@@ -299,6 +299,9 @@ def test_extract_clicked_node_name_handles_missing_and_plain_text():
     assert extract_clicked_node_name({}) == ""
     assert extract_clicked_node_name({"metadata": "present"}) == ""
     assert extract_clicked_node_name({"points": [{}]}) == ""
+    assert extract_clicked_node_name({"points": []}) == ""
+    assert extract_clicked_node_name({"points": [None]}) == ""
+    assert extract_clicked_node_name({"points": [42]}) == ""
     assert (
         extract_clicked_node_name(
             {"points": [{"text": "src/feature/module.py"}]}

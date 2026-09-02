@@ -5,6 +5,7 @@ mode: agent
 Refactor the requested scope using the repository's eleven-virtue and naming standards.
 
 Requirements:
+
 1. Discover before modifying: inspect existing implementation patterns first.
 2. Keep the change conservative and focused to the requested scope.
 3. Apply product virtues (Working, Unique, Simple, Clear, Easy, Developed, Brief).
@@ -19,6 +20,7 @@ Requirements:
 7. Run `./run_tests` after changes and report outcomes.
 
 Output:
+
 - concise summary of modifications
 - validation results
 - any follow-up risks or TODOs
