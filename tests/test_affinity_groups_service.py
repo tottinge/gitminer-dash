@@ -1,6 +1,6 @@
 """Requirement-based tests for pages.affinity_groups_service."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import Mock, patch
 
 import networkx as nx
@@ -98,8 +98,8 @@ def test_build_graph_data_store_invalid_input(
 
 def test_generate_affinity_graph_result_happy_path():
     """Happy path wires parse/load/cache/build collaborators correctly."""
-    starting = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    ending = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    starting = datetime(2026, 1, 1, tzinfo=UTC)
+    ending = datetime(2026, 1, 31, tzinfo=UTC)
     raw_commits = ("commit-a", "commit-b")
     normalized_commits = ["commit-a", "commit-b"]
     affinities = {("a.py", "b.py"): 0.7}
@@ -189,8 +189,8 @@ def test_generate_affinity_graph_result_invalid_date_returns_error():
 
 def test_generate_affinity_graph_result_missing_repo_returns_repo_error():
     """Missing repository path ValueError returns repository-required figure."""
-    starting = datetime(2026, 2, 1, tzinfo=timezone.utc)
-    ending = datetime(2026, 2, 2, tzinfo=timezone.utc)
+    starting = datetime(2026, 2, 1, tzinfo=UTC)
+    ending = datetime(2026, 2, 2, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(starting, ending))
     commits_in_period_fn = Mock(
         side_effect=ValueError("No repository path provided for run")
@@ -225,8 +225,8 @@ def test_generate_affinity_graph_result_missing_repo_returns_repo_error():
 
 def test_generate_affinity_graph_result_non_repo_error_is_reraised():
     """Non-repository ValueError from commit loader should propagate."""
-    starting = datetime(2026, 2, 1, tzinfo=timezone.utc)
-    ending = datetime(2026, 2, 2, tzinfo=timezone.utc)
+    starting = datetime(2026, 2, 1, tzinfo=UTC)
+    ending = datetime(2026, 2, 2, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(starting, ending))
     commits_in_period_fn = Mock(side_effect=ValueError("Commit load failed"))
     ensure_list_fn = Mock()
@@ -257,8 +257,8 @@ def test_generate_affinity_graph_result_non_repo_error_is_reraised():
 
 def test_generate_affinity_graph_result_graph_failure_returns_error():
     """Graph build exception returns graph-generation-failed figure."""
-    starting = datetime(2026, 3, 1, tzinfo=timezone.utc)
-    ending = datetime(2026, 3, 3, tzinfo=timezone.utc)
+    starting = datetime(2026, 3, 1, tzinfo=UTC)
+    ending = datetime(2026, 3, 3, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(starting, ending))
     commits_in_period_fn = Mock(return_value=[])
     ensure_list_fn = Mock(return_value=[])
@@ -470,8 +470,8 @@ def test_generate_node_details_rows_happy_path():
     click_data = {"points": [{"text": "src/a.py"}]}
     graph_data = {"nodes": {"src/a.py": {"community": 0}}}
     date_range_data = {"period": "Last 7 days"}
-    starting = datetime(2026, 4, 1, tzinfo=timezone.utc)
-    ending = datetime(2026, 4, 7, tzinfo=timezone.utc)
+    starting = datetime(2026, 4, 1, tzinfo=UTC)
+    ending = datetime(2026, 4, 7, tzinfo=UTC)
     commits_in_period = ["c1", "c2"]
     group_files = ["src/a.py", "src/b.py"]
     expected_rows = [{"sha": "c1", "author": "Ada"}]
@@ -580,8 +580,8 @@ def test_build_affinity_graph_output_invalid_input():
 
 def test_get_or_compute_affinities_happy_path():
     """Returns cached affinities when cache key already exists."""
-    starting = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    ending = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    starting = datetime(2026, 5, 1, tzinfo=UTC)
+    ending = datetime(2026, 5, 31, tzinfo=UTC)
     cached_affinities = {("a.py", "b.py"): 0.8}
     cache = {(starting.isoformat(), ending.isoformat()): cached_affinities}
     calculate_affinities_fn = Mock()
@@ -600,8 +600,8 @@ def test_get_or_compute_affinities_happy_path():
 
 def test_get_or_compute_affinities_edge_cases():
     """Computes and caches affinities on miss, including empty commit input."""
-    starting = datetime(2026, 6, 1, tzinfo=timezone.utc)
-    ending = datetime(2026, 6, 7, tzinfo=timezone.utc)
+    starting = datetime(2026, 6, 1, tzinfo=UTC)
+    ending = datetime(2026, 6, 7, tzinfo=UTC)
     cache: dict[tuple[str, str], dict[tuple[str, str], float]] = {}
     computed_affinities = {("a.py", "c.py"): 0.42}
     calculate_affinities_fn = Mock(return_value=computed_affinities)
@@ -622,8 +622,8 @@ def test_get_or_compute_affinities_edge_cases():
 
 def test_get_or_compute_affinities_invalid_input():
     """Propagates calculator errors and does not write failed cache entries."""
-    starting = datetime(2026, 7, 1, tzinfo=timezone.utc)
-    ending = datetime(2026, 7, 2, tzinfo=timezone.utc)
+    starting = datetime(2026, 7, 1, tzinfo=UTC)
+    ending = datetime(2026, 7, 2, tzinfo=UTC)
     cache: dict[tuple[str, str], dict[tuple[str, str], float]] = {}
     calculate_affinities_fn = Mock(side_effect=RuntimeError("calc failed"))
 

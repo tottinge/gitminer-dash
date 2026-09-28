@@ -3,7 +3,7 @@ Unit tests for figure builder.
 """
 
 import unittest
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import patch
 
 from pandas import DataFrame
@@ -31,8 +31,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 5,
                     "head": "abc",
@@ -53,8 +53,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 5, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 5, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 3,
                     "head": "c1",
@@ -63,8 +63,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
                     "density": 1.33,
                 },
                 {
-                    "first": datetime(2024, 1, 10, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 20, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 10, tzinfo=UTC),
+                    "last": datetime(2024, 1, 20, tzinfo=UTC),
                     "elevation": 2,
                     "commit_counts": 7,
                     "head": "c3",
@@ -85,8 +85,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 5,
                     "head": "abc",
@@ -106,8 +106,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 5,
                     "head": "abc",
@@ -129,8 +129,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 5,
                     "head": "abc",
@@ -152,8 +152,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 5, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 5, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 3,
                     "head": "c1",
@@ -162,8 +162,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
                     "density": 1.33,
                 },
                 {
-                    "first": datetime(2024, 1, 3, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 8, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 3, tzinfo=UTC),
+                    "last": datetime(2024, 1, 8, tzinfo=UTC),
                     "elevation": 2,
                     "commit_counts": 4,
                     "head": "c3",
@@ -172,8 +172,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
                     "density": 1.25,
                 },
                 {
-                    "first": datetime(2024, 1, 6, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 12, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 6, tzinfo=UTC),
+                    "last": datetime(2024, 1, 12, tzinfo=UTC),
                     "elevation": 3,
                     "commit_counts": 5,
                     "head": "c5",
@@ -194,8 +194,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 10,
                     "head": "c1",
@@ -204,8 +204,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
                     "density": 0.9,  # Low density (many commits)
                 },
                 {
-                    "first": datetime(2024, 1, 15, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 25, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 15, tzinfo=UTC),
+                    "last": datetime(2024, 1, 25, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 2,
                     "head": "c3",
@@ -226,8 +226,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 5,
                     "head": "abc",
@@ -254,8 +254,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 5,
                     "head": "abc",
@@ -302,8 +302,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 5,
                     "head": "abc",
@@ -340,8 +340,8 @@ class TestCreateTimelineFigure(unittest.TestCase):
         df = DataFrame(
             [
                 {
-                    "first": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                    "last": datetime(2024, 1, 10, tzinfo=timezone.utc),
+                    "first": datetime(2024, 1, 1, tzinfo=UTC),
+                    "last": datetime(2024, 1, 10, tzinfo=UTC),
                     "elevation": 1,
                     "commit_counts": 5,
                     "head": "abc",

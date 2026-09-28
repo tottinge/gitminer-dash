@@ -1,6 +1,6 @@
 """Unit tests for `algorithms/sorted_tags.py`."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from types import SimpleNamespace
 
 from tests import setup_path
@@ -14,7 +14,7 @@ def _tag(name: str, year: int, month: int, day: int) -> SimpleNamespace:
     return SimpleNamespace(
         name=name,
         commit=SimpleNamespace(
-            authored_datetime=datetime(year, month, day, tzinfo=timezone.utc)
+            authored_datetime=datetime(year, month, day, tzinfo=UTC)
         ),
     )
 

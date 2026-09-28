@@ -1,7 +1,7 @@
 """Tests for `insights/snapshot_store.py`."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 from insights.models import AnalysisSnapshot
@@ -13,8 +13,8 @@ from insights.snapshot_store import (
 
 
 def test_snapshot_path_for_inputs_is_deterministic(tmp_path: Path):
-    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    end = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    end = datetime(2026, 1, 31, tzinfo=UTC)
 
     path_one = snapshot_path_for_inputs(
         snapshot_dir=tmp_path,
@@ -32,7 +32,7 @@ def test_snapshot_path_for_inputs_is_deterministic(tmp_path: Path):
         snapshot_dir=tmp_path,
         repo_path="/example/repo",
         period_start=start,
-        period_end=datetime(2026, 2, 1, tzinfo=timezone.utc),
+        period_end=datetime(2026, 2, 1, tzinfo=UTC),
     )
 
     assert path_one == path_two
@@ -59,7 +59,7 @@ def test_save_and_load_snapshot_roundtrip(tmp_path: Path):
     loaded = load_snapshot(
         snapshot_dir=tmp_path,
         repo_path="/example/repo",
-        period_start=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        period_end=datetime(2026, 1, 31, tzinfo=timezone.utc),
+        period_start=datetime(2026, 1, 1, tzinfo=UTC),
+        period_end=datetime(2026, 1, 31, tzinfo=UTC),
     )
     assert loaded == snapshot

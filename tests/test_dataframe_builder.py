@@ -1,6 +1,6 @@
 """Unit and regression tests for DataFrame builder."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import patch
 
 import pandas as pd
@@ -27,8 +27,8 @@ def test_empty_rows_do_not_invoke_datetime_conversion():
 
 def test_create_timeline_dataframe_uses_timeline_row_serializer():
     row = TimelineRow(
-        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        first=datetime(2024, 1, 1, tzinfo=UTC),
+        last=datetime(2024, 1, 10, tzinfo=UTC),
         elevation=1,
         commit_counts=5,
         head="abc",
@@ -62,8 +62,8 @@ def test_create_timeline_dataframe_uses_timeline_row_serializer():
 def test_single_row():
     """Test DataFrame creation from a single row."""
     row = TimelineRow(
-        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        first=datetime(2024, 1, 1, tzinfo=UTC),
+        last=datetime(2024, 1, 10, tzinfo=UTC),
         elevation=1,
         commit_counts=5,
         head="abc",
@@ -87,8 +87,8 @@ def test_multiple_rows():
     """Test DataFrame creation from multiple rows."""
     rows = [
         TimelineRow(
-            first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            last=datetime(2024, 1, 5, tzinfo=timezone.utc),
+            first=datetime(2024, 1, 1, tzinfo=UTC),
+            last=datetime(2024, 1, 5, tzinfo=UTC),
             elevation=1,
             commit_counts=3,
             head="c1",
@@ -97,8 +97,8 @@ def test_multiple_rows():
             density=1.33,
         ),
         TimelineRow(
-            first=datetime(2024, 1, 10, tzinfo=timezone.utc),
-            last=datetime(2024, 1, 20, tzinfo=timezone.utc),
+            first=datetime(2024, 1, 10, tzinfo=UTC),
+            last=datetime(2024, 1, 20, tzinfo=UTC),
             elevation=2,
             commit_counts=7,
             head="c3",
@@ -118,8 +118,8 @@ def test_multiple_rows():
 def test_column_order():
     """Test that DataFrame has columns in expected order."""
     row = TimelineRow(
-        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        first=datetime(2024, 1, 1, tzinfo=UTC),
+        last=datetime(2024, 1, 10, tzinfo=UTC),
         elevation=1,
         commit_counts=5,
         head="abc",
@@ -136,8 +136,8 @@ def test_column_order():
 def test_datetime_column_types():
     """Test that datetime columns have correct dtype."""
     row = TimelineRow(
-        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        first=datetime(2024, 1, 1, tzinfo=UTC),
+        last=datetime(2024, 1, 10, tzinfo=UTC),
         elevation=1,
         commit_counts=5,
         head="abc",
@@ -173,8 +173,8 @@ def test_regression_timezone_aware_datetimes():
     # Create rows with timezone-aware datetimes (as git commits have)
     rows = [
         TimelineRow(
-            first=datetime(2024, 1, 1, 12, 30, 0, tzinfo=timezone.utc),
-            last=datetime(2024, 1, 10, 15, 45, 0, tzinfo=timezone.utc),
+            first=datetime(2024, 1, 1, 12, 30, 0, tzinfo=UTC),
+            last=datetime(2024, 1, 10, 15, 45, 0, tzinfo=UTC),
             elevation=1,
             commit_counts=5,
             head="abc123",
@@ -183,8 +183,8 @@ def test_regression_timezone_aware_datetimes():
             density=1.8,
         ),
         TimelineRow(
-            first=datetime(2024, 1, 5, 8, 0, 0, tzinfo=timezone.utc),
-            last=datetime(2024, 1, 15, 18, 30, 0, tzinfo=timezone.utc),
+            first=datetime(2024, 1, 5, 8, 0, 0, tzinfo=UTC),
+            last=datetime(2024, 1, 15, 18, 30, 0, tzinfo=UTC),
             elevation=2,
             commit_counts=8,
             head="ghi789",
@@ -216,8 +216,8 @@ def test_regression_timezone_aware_datetimes():
 def test_preserves_data_integrity():
     """Test that all data is preserved correctly in DataFrame."""
     row = TimelineRow(
-        first=datetime(2024, 1, 1, 14, 30, 0, tzinfo=timezone.utc),
-        last=datetime(2024, 1, 10, 9, 15, 0, tzinfo=timezone.utc),
+        first=datetime(2024, 1, 1, 14, 30, 0, tzinfo=UTC),
+        last=datetime(2024, 1, 10, 9, 15, 0, tzinfo=UTC),
         elevation=3,
         commit_counts=42,
         head="first_sha_abc",
@@ -239,8 +239,8 @@ def test_preserves_data_integrity():
 
 def test_datetime_values_preserved():
     """Test that datetime values are preserved during conversion."""
-    original_first = datetime(2024, 3, 15, 10, 30, 45, tzinfo=timezone.utc)
-    original_last = datetime(2024, 3, 25, 16, 45, 30, tzinfo=timezone.utc)
+    original_first = datetime(2024, 3, 15, 10, 30, 45, tzinfo=UTC)
+    original_last = datetime(2024, 3, 25, 16, 45, 30, tzinfo=UTC)
 
     row = TimelineRow(
         first=original_first,
@@ -261,15 +261,15 @@ def test_datetime_values_preserved():
     df_last = df.iloc[0]["last"].to_pydatetime()
 
     # Check timestamps are equivalent (allowing for timezone conversion)
-    assert df_first.replace(tzinfo=timezone.utc) == original_first
-    assert df_last.replace(tzinfo=timezone.utc) == original_last
+    assert df_first.replace(tzinfo=UTC) == original_first
+    assert df_last.replace(tzinfo=UTC) == original_last
 
 
 def test_zero_values():
     """Test handling of zero values."""
     row = TimelineRow(
-        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        last=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        first=datetime(2024, 1, 1, tzinfo=UTC),
+        last=datetime(2024, 1, 1, tzinfo=UTC),
         elevation=1,
         commit_counts=0,
         head="sha",
@@ -288,8 +288,8 @@ def test_zero_values():
 def test_column_types():
     """Test that all columns have expected types."""
     row = TimelineRow(
-        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        first=datetime(2024, 1, 1, tzinfo=UTC),
+        last=datetime(2024, 1, 10, tzinfo=UTC),
         elevation=1,
         commit_counts=5,
         head="abc",
@@ -313,8 +313,8 @@ def test_column_types():
 
 def test_datetime_conversion_uses_explicit_utc_true_for_first_and_last():
     row = TimelineRow(
-        first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        first=datetime(2024, 1, 1, tzinfo=UTC),
+        last=datetime(2024, 1, 10, tzinfo=UTC),
         elevation=1,
         commit_counts=5,
         head="abc",

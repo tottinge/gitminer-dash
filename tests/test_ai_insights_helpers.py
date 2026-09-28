@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -283,7 +283,7 @@ def test_filter_reason_and_action_helpers(_):
 def test_period_trend_and_row_helpers(_):
     import pages.ai_insights as module
 
-    begin = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    begin = datetime(2026, 1, 1, tzinfo=UTC)
     end = begin + timedelta(days=30)
     previous_begin, previous_end = module._previous_period_bounds(begin, end)
     assert previous_end == begin

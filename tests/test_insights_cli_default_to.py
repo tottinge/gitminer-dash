@@ -1,6 +1,6 @@
 """Tests default period behavior in `insights/cli.py`."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from insights.cli import main
@@ -18,7 +18,7 @@ def test_main_defaults_period_end_when_to_is_omitted(capsys):
         hotspots=[],
     )
 
-    default_end = datetime(2026, 3, 14, 0, 0, 0, tzinfo=timezone.utc)
+    default_end = datetime(2026, 3, 14, 0, 0, 0, tzinfo=UTC)
 
     with (
         patch("insights.cli.Repo"),
@@ -51,8 +51,8 @@ def test_main_defaults_period_start_when_from_is_omitted(capsys):
         hotspots=[],
     )
 
-    default_start = datetime(2025, 3, 13, 0, 0, 0, tzinfo=timezone.utc)
-    default_end = datetime(2026, 3, 14, 0, 0, 0, tzinfo=timezone.utc)
+    default_start = datetime(2025, 3, 13, 0, 0, 0, tzinfo=UTC)
+    default_end = datetime(2026, 3, 14, 0, 0, 0, tzinfo=UTC)
 
     with (
         patch("insights.cli.Repo"),

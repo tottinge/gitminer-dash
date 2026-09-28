@@ -1,6 +1,6 @@
 """Unit tests for `algorithms/change_series.py`."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -37,7 +37,7 @@ def _build_tag_ref(name: str, committed_at, change_types: list[str]):
 
 
 def test_change_series_returns_empty_when_commit_refs_is_empty():
-    start_commit = _commit(datetime(2026, 1, 1, tzinfo=timezone.utc))
+    start_commit = _commit(datetime(2026, 1, 1, tzinfo=UTC))
     start_ref = _commit_ref(name="v1.0", commit=start_commit)
 
     rows = list(change_series(start=start_ref, commit_refs=[]))
@@ -47,9 +47,9 @@ def test_change_series_returns_empty_when_commit_refs_is_empty():
 
 
 def test_change_series_yields_expected_summaries_and_diff_chain():
-    start_commit = _commit(datetime(2026, 1, 1, tzinfo=timezone.utc))
-    first_commit = _commit(datetime(2026, 1, 2, tzinfo=timezone.utc))
-    second_commit = _commit(datetime(2026, 1, 3, tzinfo=timezone.utc))
+    start_commit = _commit(datetime(2026, 1, 1, tzinfo=UTC))
+    first_commit = _commit(datetime(2026, 1, 2, tzinfo=UTC))
+    second_commit = _commit(datetime(2026, 1, 3, tzinfo=UTC))
 
     start_commit.diff.return_value = [_change("A"), _change("M")]
     first_commit.diff.return_value = [_change("D"), _change("R"), _change("R")]

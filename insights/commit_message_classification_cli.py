@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from git import Repo
 
@@ -25,7 +25,7 @@ def _parse_iso_datetime(
     except ValueError:
         parser.error(f"{option_name} must be a valid ISO datetime string.")
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
+        return parsed.replace(tzinfo=UTC)
     return parsed
 
 

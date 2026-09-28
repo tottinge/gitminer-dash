@@ -1,6 +1,6 @@
 """Tests for `insights/snapshot_builder.py`."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from insights.schema_version import ANALYSIS_SCHEMA_VERSION
@@ -21,12 +21,12 @@ def test_build_analysis_snapshot_is_deterministic_and_counts_files():
 
     older = _mock_commit(
         hexsha="a" * 40,
-        when=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        when=datetime(2026, 1, 1, tzinfo=UTC),
         files=["src/a.py", "src/b.py"],
     )
     newer = _mock_commit(
         hexsha="b" * 40,
-        when=datetime(2026, 1, 2, tzinfo=timezone.utc),
+        when=datetime(2026, 1, 2, tzinfo=UTC),
         files=["src/a.py"],
     )
 
@@ -36,8 +36,8 @@ def test_build_analysis_snapshot_is_deterministic_and_counts_files():
     ):
         snapshot = build_analysis_snapshot(
             repo=repo,
-            period_start=datetime(2026, 1, 1, tzinfo=timezone.utc),
-            period_end=datetime(2026, 1, 31, tzinfo=timezone.utc),
+            period_start=datetime(2026, 1, 1, tzinfo=UTC),
+            period_end=datetime(2026, 1, 31, tzinfo=UTC),
         )
 
     assert snapshot.schema_version == ANALYSIS_SCHEMA_VERSION
@@ -53,17 +53,17 @@ def test_build_analysis_snapshot_respects_max_evidence_commits_per_file():
     commits = [
         _mock_commit(
             hexsha="a" * 40,
-            when=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            when=datetime(2026, 1, 1, tzinfo=UTC),
             files=["src/a.py"],
         ),
         _mock_commit(
             hexsha="b" * 40,
-            when=datetime(2026, 1, 2, tzinfo=timezone.utc),
+            when=datetime(2026, 1, 2, tzinfo=UTC),
             files=["src/a.py"],
         ),
         _mock_commit(
             hexsha="c" * 40,
-            when=datetime(2026, 1, 3, tzinfo=timezone.utc),
+            when=datetime(2026, 1, 3, tzinfo=UTC),
             files=["src/a.py"],
         ),
     ]
@@ -74,8 +74,8 @@ def test_build_analysis_snapshot_respects_max_evidence_commits_per_file():
     ):
         snapshot = build_analysis_snapshot(
             repo=repo,
-            period_start=datetime(2026, 1, 1, tzinfo=timezone.utc),
-            period_end=datetime(2026, 1, 31, tzinfo=timezone.utc),
+            period_start=datetime(2026, 1, 1, tzinfo=UTC),
+            period_end=datetime(2026, 1, 31, tzinfo=UTC),
             max_evidence_commits_per_file=2,
         )
 

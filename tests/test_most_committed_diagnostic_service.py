@@ -1,6 +1,6 @@
 """Tests for file-change diagnostic helpers in pages.most_committed_service."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -24,7 +24,7 @@ def _evidence_row(
     neighbors: list[str] | None = None,
     hunk_fingerprints: list[str] | None = None,
 ):
-    timestamp = datetime(2026, 5, day, 12, 0, tzinfo=timezone.utc)
+    timestamp = datetime(2026, 5, day, 12, 0, tzinfo=UTC)
     return {
         "hash": sha,
         "date": timestamp.strftime("%Y-%m-%d %H:%M"),
@@ -47,9 +47,7 @@ def _mock_commit(
 ) -> Mock:
     commit = Mock()
     commit.hexsha = sha
-    commit.committed_datetime = datetime(
-        2026, 5, day, 12, 0, tzinfo=timezone.utc
-    )
+    commit.committed_datetime = datetime(2026, 5, day, 12, 0, tzinfo=UTC)
     commit.message = message
     commit.stats.files = {path: {} for path in changed_files}
     commit.parents = [] if no_parents else [object()]
@@ -117,8 +115,8 @@ def test_generate_file_payload_returns_invalid_date_range_contract():
 
 
 def test_generate_file_payload_returns_no_messages_contract():
-    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    period_end = datetime(2026, 5, 31, tzinfo=UTC)
     date_range_data = {"period": "Last 30 days"}
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     repo = object()
@@ -158,8 +156,8 @@ def test_generate_file_payload_returns_no_messages_contract():
 
 
 def test_generate_file_payload_handles_missing_repository_path_error():
-    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    period_end = datetime(2026, 5, 31, tzinfo=UTC)
     date_range_data = {"period": "Last 30 days"}
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(side_effect=ValueError("No repository path provided"))
@@ -188,8 +186,8 @@ def test_generate_file_payload_handles_missing_repository_path_error():
 
 
 def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
-    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    period_end = datetime(2026, 5, 31, tzinfo=UTC)
     date_range_data = {"period": "Last 30 days"}
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     repo = object()
@@ -349,8 +347,8 @@ def test_generate_file_payload_populates_diagnostic_metrics_and_labels():
 
 
 def test_generate_file_payload_applies_intent_focus_to_evidence_rows():
-    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    period_end = datetime(2026, 5, 31, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(return_value=object())
     collect_file_commit_evidence_fn = Mock(
@@ -413,8 +411,8 @@ def test_generate_file_payload_applies_intent_focus_to_evidence_rows():
 
 
 def test_generate_file_payload_ranks_and_caps_neighbors_from_filtered_rows():
-    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    period_end = datetime(2026, 5, 31, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(return_value=object())
     collect_file_commit_evidence_fn = Mock(
@@ -495,8 +493,8 @@ def test_generate_file_payload_ranks_and_caps_neighbors_from_filtered_rows():
 
 
 def test_generate_file_payload_preserves_unknown_focus_and_filters_empty():
-    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    period_end = datetime(2026, 5, 31, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(return_value=object())
     collect_file_commit_evidence_fn = Mock(
@@ -549,8 +547,8 @@ def test_generate_file_payload_preserves_unknown_focus_and_filters_empty():
 
 
 def test_generate_file_payload_avoids_false_thrash_without_shared_hunks():
-    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    period_end = datetime(2026, 5, 31, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(return_value=object())
     collect_file_commit_evidence_fn = Mock(
@@ -615,8 +613,8 @@ def test_generate_file_payload_avoids_false_thrash_without_shared_hunks():
 
 
 def test_generate_file_payload_adds_coupling_pressure_independently():
-    period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 5, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    period_end = datetime(2026, 5, 31, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(return_value=object())
     collect_file_commit_evidence_fn = Mock(
@@ -751,8 +749,8 @@ def test_collect_file_commit_evidence_sorts_rows_and_normalizes_summary():
         rows = collect_file_commit_evidence(
             repo=repo,
             filename=selected_file,
-            period_start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            period_end=datetime(2026, 5, 31, tzinfo=timezone.utc),
+            period_start=datetime(2026, 5, 1, tzinfo=UTC),
+            period_end=datetime(2026, 5, 31, tzinfo=UTC),
         )
 
     assert [row["hash"] for row in rows] == ["aaa1111", "bbb2222"]
@@ -796,8 +794,8 @@ def test_collect_file_commit_evidence_handles_diff_error_and_string_patch():
         rows = collect_file_commit_evidence(
             repo=repo,
             filename=selected_file,
-            period_start=datetime(2026, 5, 1, tzinfo=timezone.utc),
-            period_end=datetime(2026, 5, 31, tzinfo=timezone.utc),
+            period_start=datetime(2026, 5, 1, tzinfo=UTC),
+            period_end=datetime(2026, 5, 31, tzinfo=UTC),
         )
 
     assert rows[0]["hash"] == "aaa1111"

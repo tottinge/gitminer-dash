@@ -1,6 +1,6 @@
 """Tests for `algorithms/commit_filter.py`."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -60,7 +60,7 @@ def test_get_modified_files_never_adds_none_for_b_path():
 def test_format_commit_data_joins_group_files_with_comma_space():
     commit = SimpleNamespace(
         hexsha="123456789abcdef",
-        committed_datetime=datetime(2026, 5, 12, 10, 30, tzinfo=timezone.utc),
+        committed_datetime=datetime(2026, 5, 12, 10, 30, tzinfo=UTC),
         message="feat: improve pipeline\n\nextra details",
     )
 
@@ -75,7 +75,7 @@ def test_get_commits_for_group_files_skips_bad_commit_and_continues():
     good_commit = SimpleNamespace(
         parents=[parent],
         hexsha="abcdef123456",
-        committed_datetime=datetime(2026, 5, 11, 12, 0, tzinfo=timezone.utc),
+        committed_datetime=datetime(2026, 5, 11, 12, 0, tzinfo=UTC),
         message="fix: handle edge case",
     )
     good_commit.diff = Mock(

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import pytest
 
@@ -13,8 +13,8 @@ def _window_metrics(
     bridge_score: float,
 ) -> WindowMetrics:
     return WindowMetrics(
-        period_start=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        period_end=datetime(2026, 1, 2, tzinfo=timezone.utc),
+        period_start=datetime(2026, 1, 1, tzinfo=UTC),
+        period_end=datetime(2026, 1, 2, tzinfo=UTC),
         hotspot_rank=hotspot_rank,
         hotspot_score=hotspot_score,
         bridge_rank=bridge_rank,
@@ -43,7 +43,7 @@ def test_guardrail_triggers_for_sustained_top_rank_and_bridge_rise():
     result = evaluate_hotspot_guardrail(
         repo_path="/example/repo",
         file_path="visualization/network_graph.py",
-        reference_time=datetime(2026, 4, 13, tzinfo=timezone.utc),
+        reference_time=datetime(2026, 4, 13, tzinfo=UTC),
         window_days=90,
         hotspot_rank_threshold=1,
         min_bridge_score_increase=0.1,
@@ -77,7 +77,7 @@ def test_guardrail_does_not_trigger_without_sustained_top_rank():
     result = evaluate_hotspot_guardrail(
         repo_path="/example/repo",
         file_path="visualization/network_graph.py",
-        reference_time=datetime(2026, 4, 13, tzinfo=timezone.utc),
+        reference_time=datetime(2026, 4, 13, tzinfo=UTC),
         window_days=90,
         hotspot_rank_threshold=1,
         min_bridge_score_increase=0.1,
@@ -111,7 +111,7 @@ def test_guardrail_does_not_trigger_when_bridge_rise_is_too_small():
     result = evaluate_hotspot_guardrail(
         repo_path="/example/repo",
         file_path="visualization/network_graph.py",
-        reference_time=datetime(2026, 4, 13, tzinfo=timezone.utc),
+        reference_time=datetime(2026, 4, 13, tzinfo=UTC),
         window_days=90,
         hotspot_rank_threshold=1,
         min_bridge_score_increase=0.1,

@@ -1,6 +1,6 @@
 """Tests for pages.most_committed_service."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import Mock
 
 import pytest
@@ -103,8 +103,8 @@ def test_generate_file_payload_returns_invalid_date_range_contract():
 
 
 def test_generate_file_payload_returns_no_messages_contract():
-    period_start = datetime(2026, 4, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 4, 7, tzinfo=timezone.utc)
+    period_start = datetime(2026, 4, 1, tzinfo=UTC)
+    period_end = datetime(2026, 4, 7, tzinfo=UTC)
     repo = Mock()
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(return_value=repo)
@@ -127,8 +127,8 @@ def test_generate_file_payload_returns_no_messages_contract():
 
 
 def test_generate_file_payload_handles_missing_repository_path_error():
-    period_start = datetime(2026, 4, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 4, 7, tzinfo=timezone.utc)
+    period_start = datetime(2026, 4, 1, tzinfo=UTC)
+    period_end = datetime(2026, 4, 7, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(side_effect=ValueError("No repository path provided"))
     collect_commit_messages_for_file_fn = Mock()
@@ -150,8 +150,8 @@ def test_generate_file_payload_handles_missing_repository_path_error():
 
 
 def test_generate_file_payload_happy_path():
-    period_start = datetime(2026, 4, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 4, 7, tzinfo=timezone.utc)
+    period_start = datetime(2026, 4, 1, tzinfo=UTC)
+    period_end = datetime(2026, 4, 7, tzinfo=UTC)
     repo = Mock()
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(return_value=repo)
@@ -228,8 +228,8 @@ def test_generate_file_payload_happy_path():
 
 
 def test_generate_file_payload_reraises_unrelated_value_error():
-    period_start = datetime(2026, 4, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 4, 7, tzinfo=timezone.utc)
+    period_start = datetime(2026, 4, 1, tzinfo=UTC)
+    period_end = datetime(2026, 4, 7, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     get_repo_fn = Mock(side_effect=ValueError("Unexpected repo failure"))
     collect_commit_messages_for_file_fn = Mock()

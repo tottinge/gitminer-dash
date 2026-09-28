@@ -3,7 +3,7 @@ Unit tests for the weekly commits module.
 """
 
 import unittest
-from datetime import datetime
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -62,7 +62,7 @@ class TestGetWeekEnding(unittest.TestCase):
         """Test that timezone information is preserved."""
         from datetime import timezone
 
-        monday_utc = datetime(2025, 10, 27, 10, 0, 0, tzinfo=timezone.utc)
+        monday_utc = datetime(2025, 10, 27, 10, 0, 0, tzinfo=UTC)
         result = get_week_ending(monday_utc)
         assert result.tzinfo is not None
         assert result.weekday() == 6
@@ -84,7 +84,7 @@ class TestNormalizeDatetime(unittest.TestCase):
     def test_normalize_datetime_converts_timezone_aware_datetime(self):
         from datetime import timezone
 
-        dt = datetime(2025, 10, 27, 10, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2025, 10, 27, 10, 0, 0, tzinfo=UTC)
         normalized = _normalize_datetime(dt)
         assert normalized.tzinfo is not None
         assert normalized == dt.astimezone()

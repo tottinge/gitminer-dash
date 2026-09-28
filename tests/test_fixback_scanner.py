@@ -1,7 +1,7 @@
 """Tests for `insights/fixback_scanner.py`."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -47,10 +47,10 @@ def _commit(
 
 
 def test_period_from_months_uses_calendar_months():
-    now = datetime(2026, 4, 21, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 4, 21, 12, 0, tzinfo=UTC)
     start, end = _period_from_months(6, now=now)
     assert end == now
-    assert start == datetime(2025, 10, 21, 12, 0, tzinfo=timezone.utc)
+    assert start == datetime(2025, 10, 21, 12, 0, tzinfo=UTC)
 
 
 def test_hunk_fingerprints_ignore_hunk_header_line_numbers():
@@ -68,7 +68,7 @@ def test_hunk_fingerprints_ignore_hunk_header_line_numbers():
 
 
 def test_build_fixback_scan_report_detects_short_term_fixback_sequence():
-    base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    base = datetime(2026, 1, 1, tzinfo=UTC)
     commits = [
         _commit(
             "ccccccc3", base.replace(day=31), "chore: tidy a", ["src/a.py"]
@@ -108,7 +108,7 @@ def test_build_fixback_scan_report_detects_short_term_fixback_sequence():
 
 
 def test_build_fixback_scan_report_includes_hunk_fingerprint_overlap():
-    base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    base = datetime(2026, 1, 1, tzinfo=UTC)
     shared_patch = """@@ -5,2 +5,2 @@
 -value = 1
 +value = 2
@@ -155,7 +155,7 @@ def test_build_fixback_scan_report_includes_hunk_fingerprint_overlap():
 
 
 def test_build_fixback_scan_report_ranks_fixback_above_plain_revisit():
-    base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    base = datetime(2026, 1, 1, tzinfo=UTC)
     commits = [
         _commit("aaaaaaa1", base, "feat: add a", ["src/a.py"]),
         _commit("bbbbbbb2", base.replace(day=2), "fix: a bug", ["src/a.py"]),
@@ -185,7 +185,7 @@ def test_build_fixback_scan_report_ranks_fixback_above_plain_revisit():
 
 
 def test_build_fixback_scan_report_skips_merge_commits_by_default():
-    base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    base = datetime(2026, 1, 1, tzinfo=UTC)
     commits = [
         _commit(
             "aaaaaaa1",

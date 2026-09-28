@@ -1,6 +1,6 @@
 """Tests for `pages/conventional.py` figure helper behavior."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import Mock
 
 from pandas import DataFrame
@@ -45,8 +45,8 @@ def test_make_figure_updates_xaxis_range_when_dates_provided(monkeypatch):
     fake_figure = Mock()
     px_bar = Mock(return_value=fake_figure)
     monkeypatch.setattr(conventional.px, "bar", px_bar)
-    start_date = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    end_date = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    start_date = datetime(2026, 1, 1, tzinfo=UTC)
+    end_date = datetime(2026, 1, 31, tzinfo=UTC)
 
     conventional.make_figure(_sample_dataframe(), start_date, end_date)
 
@@ -64,8 +64,8 @@ def test_make_figure_does_not_update_xaxis_range_without_full_dates(
     fake_figure = Mock()
     px_bar = Mock(return_value=fake_figure)
     monkeypatch.setattr(conventional.px, "bar", px_bar)
-    start_date = datetime(2026, 2, 1, tzinfo=timezone.utc)
-    end_date = datetime(2026, 2, 28, tzinfo=timezone.utc)
+    start_date = datetime(2026, 2, 1, tzinfo=UTC)
+    end_date = datetime(2026, 2, 28, tzinfo=UTC)
 
     conventional.make_figure(_sample_dataframe(), start_date, None)
     conventional.make_figure(_sample_dataframe(), None, end_date)

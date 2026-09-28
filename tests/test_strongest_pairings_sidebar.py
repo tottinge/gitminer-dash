@@ -1,6 +1,6 @@
 """Behavioral tests for the strongest-pairings right sidebar."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from importlib import import_module
 from unittest.mock import patch
 
@@ -87,8 +87,8 @@ def test_sidebar_renders_pair_intent_snapshot_for_selected_pair(monkeypatch):
         "begin": "2026-05-01T00:00:00+00:00",
         "end": "2026-05-18T23:59:59+00:00",
     }
-    expected_period_start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    expected_period_end = datetime(2026, 5, 18, 23, 59, 59, tzinfo=timezone.utc)
+    expected_period_start = datetime(2026, 5, 1, tzinfo=UTC)
+    expected_period_end = datetime(2026, 5, 18, 23, 59, 59, tzinfo=UTC)
     captured = {}
     sentinel_repo = object()
     pair_commits = [

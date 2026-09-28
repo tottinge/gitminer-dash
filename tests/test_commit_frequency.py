@@ -1,6 +1,6 @@
 """Tests for `algorithms/commit_frequency.py`."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -529,8 +529,8 @@ def _mock_commit(files: list[str]) -> MagicMock:
 
 
 def test_calculate_file_commit_frequency_aggregates_and_rounds_metrics():
-    begin = datetime(2025, 1, 1, tzinfo=timezone.utc)
-    end = datetime(2025, 1, 31, tzinfo=timezone.utc)
+    begin = datetime(2025, 1, 1, tzinfo=UTC)
+    end = datetime(2025, 1, 31, tzinfo=UTC)
     repo = MagicMock()
 
     commits = [
@@ -584,8 +584,8 @@ def test_calculate_file_commit_frequency_aggregates_and_rounds_metrics():
 
 
 def test_calculate_file_commit_frequency_uses_zero_defaults_when_missing_stats():
-    begin = datetime(2025, 2, 1, tzinfo=timezone.utc)
-    end = datetime(2025, 2, 28, tzinfo=timezone.utc)
+    begin = datetime(2025, 2, 1, tzinfo=UTC)
+    end = datetime(2025, 2, 28, tzinfo=UTC)
     repo = MagicMock()
     commits = [_mock_commit(["x.py", "y.py"]), _mock_commit(["x.py"])]
 
@@ -626,8 +626,8 @@ def test_calculate_file_commit_frequency_uses_zero_defaults_when_missing_stats()
 
 
 def test_calculate_file_commit_frequency_reraises_value_error():
-    begin = datetime(2025, 3, 1, tzinfo=timezone.utc)
-    end = datetime(2025, 3, 2, tzinfo=timezone.utc)
+    begin = datetime(2025, 3, 1, tzinfo=UTC)
+    end = datetime(2025, 3, 2, tzinfo=UTC)
     repo = MagicMock()
 
     commit = MagicMock()
@@ -672,8 +672,8 @@ def test_count_file_commits_logs_with_module_logger_and_message():
 
 
 def test_calculate_file_commit_frequency_default_top_n_is_twenty():
-    begin = datetime(2025, 4, 1, tzinfo=timezone.utc)
-    end = datetime(2025, 4, 30, tzinfo=timezone.utc)
+    begin = datetime(2025, 4, 1, tzinfo=UTC)
+    end = datetime(2025, 4, 30, tzinfo=UTC)
     repo = MagicMock()
     commits = [_mock_commit([f"file_{index}.py"]) for index in range(21)]
 

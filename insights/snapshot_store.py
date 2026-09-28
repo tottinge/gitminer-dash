@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 from insights.models import AnalysisSnapshot
@@ -12,7 +12,7 @@ from insights.schema_version import ANALYSIS_SCHEMA_VERSION
 
 
 def _canonical_time(dt: datetime) -> str:
-    return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+    return dt.astimezone(UTC).replace(microsecond=0).isoformat()
 
 
 def snapshot_path_for_inputs(

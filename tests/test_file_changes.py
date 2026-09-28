@@ -1,6 +1,6 @@
 """Tests for `algorithms/file_changes.py`."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -236,7 +236,7 @@ def test_file_changes_over_period_passes_correct_args_to_blob_size(mock_repo):
 
 
 def test_dt_arg_normalizes_microseconds_and_separator():
-    dt = datetime(2026, 5, 1, 12, 34, 56, 987654, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 1, 12, 34, 56, 987654, tzinfo=UTC)
 
     result = _dt_arg(dt)
 
@@ -246,8 +246,8 @@ def test_dt_arg_normalizes_microseconds_and_separator():
 
 
 def test_commits_touching_file_calls_rev_list_with_expected_flags(mock_repo):
-    start = datetime(2026, 5, 1, 0, 0, 0, tzinfo=timezone.utc)
-    end = datetime(2026, 5, 31, 23, 59, 59, tzinfo=timezone.utc)
+    start = datetime(2026, 5, 1, 0, 0, 0, tzinfo=UTC)
+    end = datetime(2026, 5, 31, 23, 59, 59, tzinfo=UTC)
     mock_repo.git.rev_list.side_effect = None
     mock_repo.git.rev_list.return_value = "sha1\n"
 
@@ -266,8 +266,8 @@ def test_commits_touching_file_calls_rev_list_with_expected_flags(mock_repo):
 def test_commits_touching_file_trims_whitespace_and_ignores_blank_lines(
     mock_repo,
 ):
-    start = datetime(2026, 5, 1, tzinfo=timezone.utc)
-    end = datetime(2026, 5, 2, tzinfo=timezone.utc)
+    start = datetime(2026, 5, 1, tzinfo=UTC)
+    end = datetime(2026, 5, 2, tzinfo=UTC)
     mock_repo.git.rev_list.side_effect = None
     mock_repo.git.rev_list.return_value = " sha1 \n\n\tsha2\t\n"
 

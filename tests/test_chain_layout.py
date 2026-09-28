@@ -4,7 +4,7 @@ Unit tests for chain layout calculator.
 
 import unittest
 from dataclasses import FrozenInstanceError
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 from algorithms.chain_layout import calculate_chain_layout
 from algorithms.chain_models import ClampedChain
@@ -21,8 +21,8 @@ class TestCalculateChainLayout(unittest.TestCase):
     def test_single_chain(self):
         """Test layout of a single chain."""
         chain = ClampedChain(
-            clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            clamped_last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+            clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+            clamped_last=datetime(2024, 1, 10, tzinfo=UTC),
             clamped_duration=timedelta(days=9),
             commit_count=5,
             earliest_sha="abc",
@@ -33,8 +33,8 @@ class TestCalculateChainLayout(unittest.TestCase):
 
         assert len(rows) == 1
         row = rows[0]
-        assert row.first == datetime(2024, 1, 1, tzinfo=timezone.utc)
-        assert row.last == datetime(2024, 1, 10, tzinfo=timezone.utc)
+        assert row.first == datetime(2024, 1, 1, tzinfo=UTC)
+        assert row.last == datetime(2024, 1, 10, tzinfo=UTC)
         assert row.elevation == 1  # First chain should be at level 1
         assert row.commit_counts == 5
         assert row.head == "abc"
@@ -46,16 +46,16 @@ class TestCalculateChainLayout(unittest.TestCase):
         """Test that non-overlapping chains get same elevation."""
         chains = [
             ClampedChain(
-                clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 5, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 5, tzinfo=UTC),
                 clamped_duration=timedelta(days=4),
                 commit_count=2,
                 earliest_sha="c1",
                 latest_sha="c2",
             ),
             ClampedChain(
-                clamped_first=datetime(2024, 1, 10, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 15, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 10, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 15, tzinfo=UTC),
                 clamped_duration=timedelta(days=5),
                 commit_count=3,
                 earliest_sha="c3",
@@ -74,16 +74,16 @@ class TestCalculateChainLayout(unittest.TestCase):
         """Test that overlapping chains get different elevations."""
         chains = [
             ClampedChain(
-                clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 10, tzinfo=UTC),
                 clamped_duration=timedelta(days=9),
                 commit_count=2,
                 earliest_sha="c1",
                 latest_sha="c2",
             ),
             ClampedChain(
-                clamped_first=datetime(2024, 1, 5, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 15, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 5, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 15, tzinfo=UTC),
                 clamped_duration=timedelta(days=10),
                 commit_count=3,
                 earliest_sha="c3",
@@ -101,8 +101,8 @@ class TestCalculateChainLayout(unittest.TestCase):
     def test_zero_duration_chain(self):
         """Test chain with zero duration."""
         chain = ClampedChain(
-            clamped_first=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            clamped_last=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            clamped_first=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
+            clamped_last=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
             clamped_duration=timedelta(0),
             commit_count=1,
             earliest_sha="single",
@@ -119,8 +119,8 @@ class TestCalculateChainLayout(unittest.TestCase):
     def test_zero_commit_count_density(self):
         """Test that zero commit count results in zero density (not division by zero)."""
         chain = ClampedChain(
-            clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            clamped_last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+            clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+            clamped_last=datetime(2024, 1, 10, tzinfo=UTC),
             clamped_duration=timedelta(days=9),
             commit_count=0,  # Edge case
             earliest_sha="abc",
@@ -137,16 +137,16 @@ class TestCalculateChainLayout(unittest.TestCase):
         """Test that density is correctly calculated as days per commit."""
         chains = [
             ClampedChain(
-                clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 11, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 11, tzinfo=UTC),
                 clamped_duration=timedelta(days=10),
                 commit_count=5,
                 earliest_sha="c1",
                 latest_sha="c2",
             ),
             ClampedChain(
-                clamped_first=datetime(2024, 2, 1, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 2, 21, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 2, 1, tzinfo=UTC),
+                clamped_last=datetime(2024, 2, 21, tzinfo=UTC),
                 clamped_duration=timedelta(days=20),
                 commit_count=4,
                 earliest_sha="c3",
@@ -162,8 +162,8 @@ class TestCalculateChainLayout(unittest.TestCase):
     def test_preserves_all_metadata(self):
         """Test that all chain metadata is preserved in rows."""
         chain = ClampedChain(
-            clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            clamped_last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+            clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+            clamped_last=datetime(2024, 1, 10, tzinfo=UTC),
             clamped_duration=timedelta(days=9),
             commit_count=42,
             earliest_sha="first_commit_sha",
@@ -185,8 +185,8 @@ class TestCalculateChainLayout(unittest.TestCase):
         chains = [
             # Level 1
             ClampedChain(
-                clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 5, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 5, tzinfo=UTC),
                 clamped_duration=timedelta(days=4),
                 commit_count=2,
                 earliest_sha="c1",
@@ -194,8 +194,8 @@ class TestCalculateChainLayout(unittest.TestCase):
             ),
             # Level 2 (overlaps with c1)
             ClampedChain(
-                clamped_first=datetime(2024, 1, 3, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 7, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 3, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 7, tzinfo=UTC),
                 clamped_duration=timedelta(days=4),
                 commit_count=2,
                 earliest_sha="c3",
@@ -203,8 +203,8 @@ class TestCalculateChainLayout(unittest.TestCase):
             ),
             # Level 1 (doesn't overlap with c1)
             ClampedChain(
-                clamped_first=datetime(2024, 1, 10, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 15, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 10, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 15, tzinfo=UTC),
                 clamped_duration=timedelta(days=5),
                 commit_count=3,
                 earliest_sha="c5",
@@ -212,8 +212,8 @@ class TestCalculateChainLayout(unittest.TestCase):
             ),
             # Level 2 (overlaps with c5)
             ClampedChain(
-                clamped_first=datetime(2024, 1, 12, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 17, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 12, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 17, tzinfo=UTC),
                 clamped_duration=timedelta(days=5),
                 commit_count=3,
                 earliest_sha="c7",
@@ -232,8 +232,8 @@ class TestCalculateChainLayout(unittest.TestCase):
     def test_timeline_row_is_immutable(self):
         """Test that TimelineRow is immutable (frozen dataclass)."""
         chain = ClampedChain(
-            clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            clamped_last=datetime(2024, 1, 10, tzinfo=timezone.utc),
+            clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+            clamped_last=datetime(2024, 1, 10, tzinfo=UTC),
             clamped_duration=timedelta(days=9),
             commit_count=5,
             earliest_sha="abc",
@@ -251,16 +251,16 @@ class TestCalculateChainLayout(unittest.TestCase):
         """Test that output order matches input order."""
         chains = [
             ClampedChain(
-                clamped_first=datetime(2024, 1, 10, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 15, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 10, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 15, tzinfo=UTC),
                 clamped_duration=timedelta(days=5),
                 commit_count=2,
                 earliest_sha="second",
                 latest_sha="second_end",
             ),
             ClampedChain(
-                clamped_first=datetime(2024, 1, 1, tzinfo=timezone.utc),
-                clamped_last=datetime(2024, 1, 5, tzinfo=timezone.utc),
+                clamped_first=datetime(2024, 1, 1, tzinfo=UTC),
+                clamped_last=datetime(2024, 1, 5, tzinfo=UTC),
                 clamped_duration=timedelta(days=4),
                 commit_count=2,
                 earliest_sha="first",

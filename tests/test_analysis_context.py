@@ -1,6 +1,6 @@
 """Tests for algorithms.analysis_context shared context builders."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import Mock
 
 from algorithms.analysis_context import (
@@ -10,8 +10,8 @@ from algorithms.analysis_context import (
 
 
 def test_date_range_context_from_store_uses_parser_result():
-    period_start = datetime(2026, 1, 2, tzinfo=timezone.utc)
-    period_end = datetime(2026, 1, 3, tzinfo=timezone.utc)
+    period_start = datetime(2026, 1, 2, tzinfo=UTC)
+    period_end = datetime(2026, 1, 3, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     store_data = {"period": "Last 7 days"}
 
@@ -26,8 +26,8 @@ def test_date_range_context_from_store_uses_parser_result():
 
 
 def test_commit_range_context_from_store_loads_commits_for_parsed_range():
-    period_start = datetime(2026, 2, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 2, 2, tzinfo=timezone.utc)
+    period_start = datetime(2026, 2, 1, tzinfo=UTC)
+    period_end = datetime(2026, 2, 2, tzinfo=UTC)
     parse_date_range_fn = Mock(return_value=(period_start, period_end))
     commits = [{"sha": "abc123"}, {"sha": "def456"}]
     commits_in_period_fn = Mock(return_value=iter(commits))

@@ -1,6 +1,6 @@
 """Tests for `insights/bridge_metrics_report.py`."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import networkx as nx
@@ -44,8 +44,8 @@ def test_rank_bridge_metrics_handles_empty_or_non_positive_inputs():
 
 
 def test_build_bridge_metrics_report_emits_contract_from_graph_stats():
-    period_start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    period_start = datetime(2026, 1, 1, tzinfo=UTC)
+    period_end = datetime(2026, 1, 31, tzinfo=UTC)
     commits = [MagicMock(), MagicMock(), MagicMock()]
     graph = nx.Graph()
     graph.add_node("src/a.py", community=0, commit_count=5)

@@ -3,7 +3,7 @@ Unit tests for commit graph building.
 """
 
 import unittest
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import Mock
 
 from algorithms.commit_graph import build_commit_graph
@@ -22,15 +22,11 @@ class TestBuildCommitGraph(unittest.TestCase):
         """Test basic case: one commit with one parent."""
         parent = Mock()
         parent.hexsha = "abc123"
-        parent.committed_datetime = datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-        )
+        parent.committed_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         commit = Mock()
         commit.hexsha = "def456"
-        commit.committed_datetime = datetime(
-            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
-        )
+        commit.committed_datetime = datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC)
         commit.parents = [parent]
 
         graph = build_commit_graph([commit])
@@ -46,15 +42,11 @@ class TestBuildCommitGraph(unittest.TestCase):
         """Test that nodes have correct attributes."""
         parent = Mock()
         parent.hexsha = "abc123"
-        parent.committed_datetime = datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-        )
+        parent.committed_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         commit = Mock()
         commit.hexsha = "def456"
-        commit.committed_datetime = datetime(
-            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
-        )
+        commit.committed_datetime = datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC)
         commit.parents = [parent]
 
         graph = build_commit_graph([commit])
@@ -69,20 +61,16 @@ class TestBuildCommitGraph(unittest.TestCase):
         """Test that merge commits (multiple parents) are skipped."""
         parent1 = Mock()
         parent1.hexsha = "abc123"
-        parent1.committed_datetime = datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-        )
+        parent1.committed_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         parent2 = Mock()
         parent2.hexsha = "xyz789"
-        parent2.committed_datetime = datetime(
-            2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc
-        )
+        parent2.committed_datetime = datetime(2024, 1, 1, 13, 0, 0, tzinfo=UTC)
 
         merge_commit = Mock()
         merge_commit.hexsha = "merge999"
         merge_commit.committed_datetime = datetime(
-            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 2, 12, 0, 0, tzinfo=UTC
         )
         merge_commit.parents = [parent1, parent2]  # Multiple parents
 
@@ -97,32 +85,32 @@ class TestBuildCommitGraph(unittest.TestCase):
         merge_parent_1 = Mock()
         merge_parent_1.hexsha = "merge_parent_1"
         merge_parent_1.committed_datetime = datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 1, 12, 0, 0, tzinfo=UTC
         )
 
         merge_parent_2 = Mock()
         merge_parent_2.hexsha = "merge_parent_2"
         merge_parent_2.committed_datetime = datetime(
-            2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc
+            2024, 1, 1, 13, 0, 0, tzinfo=UTC
         )
 
         merge_commit = Mock()
         merge_commit.hexsha = "merge_commit"
         merge_commit.committed_datetime = datetime(
-            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 2, 12, 0, 0, tzinfo=UTC
         )
         merge_commit.parents = [merge_parent_1, merge_parent_2]
 
         regular_parent = Mock()
         regular_parent.hexsha = "regular_parent"
         regular_parent.committed_datetime = datetime(
-            2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 3, 12, 0, 0, tzinfo=UTC
         )
 
         regular_commit = Mock()
         regular_commit.hexsha = "regular_commit"
         regular_commit.committed_datetime = datetime(
-            2024, 1, 4, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 4, 12, 0, 0, tzinfo=UTC
         )
         regular_commit.parents = [regular_parent]
 
@@ -135,23 +123,17 @@ class TestBuildCommitGraph(unittest.TestCase):
         """Test a linear chain of commits."""
         commit1 = Mock()
         commit1.hexsha = "c1"
-        commit1.committed_datetime = datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-        )
+        commit1.committed_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
         commit1.parents = []
 
         commit2 = Mock()
         commit2.hexsha = "c2"
-        commit2.committed_datetime = datetime(
-            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
-        )
+        commit2.committed_datetime = datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC)
         commit2.parents = [commit1]
 
         commit3 = Mock()
         commit3.hexsha = "c3"
-        commit3.committed_datetime = datetime(
-            2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc
-        )
+        commit3.committed_datetime = datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC)
         commit3.parents = [commit2]
 
         graph = build_commit_graph([commit1, commit2, commit3])
@@ -166,9 +148,7 @@ class TestBuildCommitGraph(unittest.TestCase):
         """Test commit with no parents (initial commit)."""
         commit = Mock()
         commit.hexsha = "orphan"
-        commit.committed_datetime = datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-        )
+        commit.committed_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
         commit.parents = []
 
         graph = build_commit_graph([commit])
@@ -181,27 +161,23 @@ class TestBuildCommitGraph(unittest.TestCase):
         """Test mix of regular commits and merge commits."""
         parent = Mock()
         parent.hexsha = "parent"
-        parent.committed_datetime = datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-        )
+        parent.committed_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         regular_commit = Mock()
         regular_commit.hexsha = "regular"
         regular_commit.committed_datetime = datetime(
-            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 2, 12, 0, 0, tzinfo=UTC
         )
         regular_commit.parents = [parent]
 
         parent2 = Mock()
         parent2.hexsha = "parent2"
-        parent2.committed_datetime = datetime(
-            2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc
-        )
+        parent2.committed_datetime = datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC)
 
         merge_commit = Mock()
         merge_commit.hexsha = "merge"
         merge_commit.committed_datetime = datetime(
-            2024, 1, 4, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 4, 12, 0, 0, tzinfo=UTC
         )
         merge_commit.parents = [parent, parent2]
 
@@ -217,15 +193,11 @@ class TestBuildCommitGraph(unittest.TestCase):
         """Test that duplicate commits don't create duplicate nodes."""
         parent = Mock()
         parent.hexsha = "parent"
-        parent.committed_datetime = datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-        )
+        parent.committed_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         commit = Mock()
         commit.hexsha = "commit"
-        commit.committed_datetime = datetime(
-            2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc
-        )
+        commit.committed_datetime = datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC)
         commit.parents = [parent]
 
         # Pass the same commit twice

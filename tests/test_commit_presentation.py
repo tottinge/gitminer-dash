@@ -1,6 +1,6 @@
 """Tests for `algorithms/commit_presentation.py`."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from types import SimpleNamespace
 
 from algorithms.commit_presentation import present_commit
@@ -9,7 +9,7 @@ from algorithms.commit_presentation import present_commit
 def test_present_commit_default_message_parsing_and_truncation():
     commit = SimpleNamespace(
         hexsha="abcdef1234567890",
-        committed_datetime=datetime(2026, 6, 1, 9, 15, tzinfo=timezone.utc),
+        committed_datetime=datetime(2026, 6, 1, 9, 15, tzinfo=UTC),
         author=SimpleNamespace(name="Alice"),
         message=("first line is long " + "x" * 120 + "\nsecond line"),
     )
@@ -49,7 +49,7 @@ def test_present_commit_handles_missing_optional_fields():
 def test_present_commit_supports_custom_message_selector_without_truncation():
     commit = SimpleNamespace(
         hexsha="1234567890",
-        committed_datetime=datetime(2026, 6, 2, 10, 30, tzinfo=timezone.utc),
+        committed_datetime=datetime(2026, 6, 2, 10, 30, tzinfo=UTC),
         committer=SimpleNamespace(name="Bob"),
         summary="summary text that should remain whole",
     )

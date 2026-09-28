@@ -4,7 +4,7 @@ Unit tests for chain analyzer.
 
 import unittest
 from dataclasses import FrozenInstanceError
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import networkx as nx
 
@@ -28,17 +28,17 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         # Create a chain: c1 -> c2 -> c3
         graph.add_node(
             "c1",
-            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
             sha="c1",
         )
         graph.add_node(
             "c2",
-            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC),
             sha="c2",
         )
         graph.add_node(
             "c3",
-            committed=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC),
             sha="c3",
         )
         graph.add_edge("c1", "c2")
@@ -52,10 +52,10 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         assert chain.latest_sha == "c3"
         assert chain.commit_count == 3
         assert chain.early_timestamp == datetime(
-            2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 1, 12, 0, 0, tzinfo=UTC
         )
         assert chain.late_timestamp == datetime(
-            2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc
+            2024, 1, 3, 12, 0, 0, tzinfo=UTC
         )
         assert chain.duration == timedelta(days=2)
 
@@ -66,12 +66,12 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         # Chain 1: c1 -> c2
         graph.add_node(
             "c1",
-            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
             sha="c1",
         )
         graph.add_node(
             "c2",
-            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC),
             sha="c2",
         )
         graph.add_edge("c1", "c2")
@@ -79,12 +79,12 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         # Chain 2: c3 -> c4 (disconnected from chain 1)
         graph.add_node(
             "c3",
-            committed=datetime(2024, 2, 1, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 2, 1, 12, 0, 0, tzinfo=UTC),
             sha="c3",
         )
         graph.add_node(
             "c4",
-            committed=datetime(2024, 2, 2, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 2, 2, 12, 0, 0, tzinfo=UTC),
             sha="c4",
         )
         graph.add_edge("c3", "c4")
@@ -109,7 +109,7 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         graph = nx.Graph()
         graph.add_node(
             "c1",
-            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
             sha="c1",
         )
 
@@ -129,17 +129,17 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         # Add commits in non-chronological order
         graph.add_node(
             "c3",
-            committed=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC),
             sha="c3",
         )
         graph.add_node(
             "c1",
-            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
             sha="c1",
         )
         graph.add_node(
             "c2",
-            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC),
             sha="c2",
         )
         graph.add_edge("c3", "c2")
@@ -160,17 +160,17 @@ class TestAnalyzeCommitChains(unittest.TestCase):
 
         graph.add_node(
             "sha_z",
-            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
             sha="sha_z",
         )
         graph.add_node(
             "sha_a",
-            committed=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC),
             sha="sha_a",
         )
         graph.add_node(
             "sha_m",
-            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC),
             sha="sha_m",
         )
         graph.add_edge("sha_z", "sha_m")
@@ -189,7 +189,7 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         graph = nx.Graph()
         graph.add_node(
             "c1",
-            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            committed=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
             sha="c1",
         )
 
@@ -203,8 +203,8 @@ class TestAnalyzeCommitChains(unittest.TestCase):
     def test_chain_data_sortable(self):
         """Test that ChainData objects can be sorted by early_timestamp."""
         chain1 = ChainData(
-            early_timestamp=datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc),
-            late_timestamp=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+            early_timestamp=datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC),
+            late_timestamp=datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC),
             commit_count=2,
             duration=timedelta(days=1),
             earliest_sha="c2",
@@ -212,8 +212,8 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         )
 
         chain2 = ChainData(
-            early_timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            late_timestamp=datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc),
+            early_timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
+            late_timestamp=datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC),
             commit_count=2,
             duration=timedelta(days=1),
             earliest_sha="c1",
@@ -237,10 +237,10 @@ class TestAnalyzeCommitChains(unittest.TestCase):
         #    \  /
         #     c3
         times = {
-            "c1": datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            "c2": datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc),
-            "c3": datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
-            "c4": datetime(2024, 1, 4, 12, 0, 0, tzinfo=timezone.utc),
+            "c1": datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
+            "c2": datetime(2024, 1, 2, 12, 0, 0, tzinfo=UTC),
+            "c3": datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC),
+            "c4": datetime(2024, 1, 4, 12, 0, 0, tzinfo=UTC),
         }
 
         for sha, time in times.items():
